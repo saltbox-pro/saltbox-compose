@@ -1,0 +1,4 @@
+[submodule "fastms-core"]
+	path = fastms-core
+	url = git@gitlab.com:fastms/fastms-core.git
+	branch = US11_submodules
