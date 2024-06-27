@@ -1,5 +1,19 @@
 # FastMS Compose
 
+## Download
+
+Get repository with submodules:
+
+```bash
+git clone --recursive
+```
+
+To update all submodules to latest version:
+
+```bash
+git submodules update --recursive --remote
+```
+
 ## Run
 
 To run in developement mode:
