@@ -1,21 +1,6 @@
-# FastMS Core
+# FastMS Compose
 
-## Developement
-
-### Environment
-
-```bash
-python -m venv env
-source env/bin/activate
-pip3 install -e .[dev]
-```
-
-### pre-commit
-
-After deploying dev enivronment install pre-commit hooks with
-`pre-commit install` command.
-
-### Run
+## Run
 
 To run in developement mode:
 
