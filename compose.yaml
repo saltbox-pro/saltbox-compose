@@ -38,8 +38,20 @@ services:
       PORT: 8000
     ports:
       - '8000:8000'
-    restart: "no"
+    restart: no
     depends_on:
       - redis
+  fastms-frontend:
+    build:
+      context: fastms-frontend/
+    develop:
+      watch:
+        - action: rebuild
+          path: fastms-frontend/
+    container_name: fastms-frontend
+    env_file:
+      - .env
+    ports:
+      - '${FRONTEND_HTTP_PORT}:80'
 volumes:
   salt_master_pki: {}
