@@ -10,10 +10,6 @@ services:
     build:
       context: salt/
       target: salt-minion
-      args:
-        ALPINE_VERSION: ${ALPINE_VERSION}
-        SALT_VERSION: ${SALT_VERSION}
-        PYTHON_VERSION: ${SALT_PYTHON_VERSION}
     init: true
     develop:
       watch:
