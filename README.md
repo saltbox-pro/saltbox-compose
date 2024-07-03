@@ -11,12 +11,22 @@ git clone --recursive
 To update all submodules to latest version:
 
 ```bash
-git submodules update --recursive --remote
+git submodule update --recursive --remote
 ```
+
+## Build images
+
+To build clean images use command:
+```bash
+sudo docker compose -f compose.yaml build --no-cache
+```
+
+`--no-cache` guarantees build with last versions of dependencies.
+
 
 ## Run
 
-To run in developement mode:
+To build and run in development mode:
 
 ```bash
 sudo docker compose -f compose.yaml -f compose-dev-override.yaml up --build --watch
