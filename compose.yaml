@@ -4,10 +4,6 @@ services:
       context: salt/
       target: salt-master
     init: true
-    develop:
-      watch:
-        - action: rebuild
-          path: salt/
     container_name: fastms-salt-master
     ports:
       - '4505-4506:4505-4506'
@@ -21,10 +17,6 @@ services:
   fastms-core:
     build:
       context: fastms-core/
-    develop:
-      watch:
-        - action: rebuild
-          path: fastms-core/
     container_name: fastms-core
     env_file:
       - .env
