@@ -10,10 +10,10 @@ services:
     volumes:
       - 'salt_master_pki:/etc/salt/pki/'
     depends_on:
-      - redis
-  redis:
+      - redis-salt
+  redis-salt:
     image: redis:7.2-alpine
-    container_name: fastms-redis
+    container_name: fastms-redis-salt
   fastms-core:
     build:
       context: fastms-core/
@@ -22,12 +22,12 @@ services:
       - .env
     environment:
       SALT_URL: 'https://fastms-salt-master:8000'
-      REDIS_URL: 'redis://fastms-redis:6379/0'
+      REDIS_URL: 'redis://fastms-redis-salt:6379/0'
     ports:
       - '${BACKEND_HTTP_PORT}:8000'
     restart: no
     depends_on:
-      - redis
+      - redis-salt
   fastms-frontend:
     build:
       context: fastms-frontend/

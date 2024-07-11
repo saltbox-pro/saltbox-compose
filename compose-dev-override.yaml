@@ -12,7 +12,7 @@ services:
       watch:
         - action: rebuild
           path: fastms-core/
-  redis:
+  redis-salt:
     ports:
       - '6379:6379'
   mongo-express:
