@@ -43,5 +43,11 @@ services:
       - .env
     ports:
       - '${FRONTEND_HTTP_PORT}:80'
+  mongo:
+    image: mongo:7
+    environment:
+      # TODO Generate
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
 volumes:
   salt_master_pki: {}
