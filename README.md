@@ -8,10 +8,17 @@ Get repository with submodules:
 git clone --recursive
 ```
 
-To update all submodules to latest version:
+Update repository and top level submodules to fixed version:
 
 ```bash
-git submodule update --recursive --remote
+git pull --recurse-submodules
+```
+
+Update repository and top level submodules to latest version:
+
+```bash
+git pull
+git submodule update --remote
 ```
 
 ## Build images
