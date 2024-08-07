@@ -35,6 +35,9 @@ sudo docker compose -f compose.yaml build --no-cache
 
 To build and run in development mode:
 
+__ATTENTION!__ Do not use development mode on production environments cause it
+may change the data.
+
 ```bash
 sudo docker compose -f compose.yaml -f compose-dev-override.yaml up --build --watch
 ```

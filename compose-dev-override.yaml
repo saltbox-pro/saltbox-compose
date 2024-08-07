@@ -7,6 +7,15 @@ services:
       watch:
         - action: rebuild
           path: salt/
+  clean-keys-cmd:
+    image: fastms-salt-master
+    command: 'salt-key --delete-all --yes'
+    depends_on:
+      salt-master:
+        restart: true
+        condition: service_started
+    volumes:
+      - 'salt_master_pki:/etc/salt/pki/'
   fastms-core:
     develop:
       watch:
@@ -37,3 +46,7 @@ services:
     deploy:
       mode: replicated
       replicas: ${MINION_REPLICAS:-1}
+    depends_on:
+      clean-keys-cmd:
+        restart: true
+        condition: service_completed_successfully

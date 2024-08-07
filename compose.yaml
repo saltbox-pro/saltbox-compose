@@ -3,6 +3,7 @@ services:
     build:
       context: salt/
       target: salt-master
+    image: fastms-salt-master
     init: true
     container_name: fastms-salt-master
     ports:
