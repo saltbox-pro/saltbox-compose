@@ -32,7 +32,6 @@ services:
       - '${BACKEND_HTTP_PORT}:8000'
     restart: no
     depends_on:
-      - redis-salt
       - mongo
   fastms-frontend:
     build:
