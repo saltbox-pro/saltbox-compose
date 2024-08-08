@@ -35,6 +35,9 @@ sudo docker compose -f compose.yaml build --no-cache
 
 To build and run in development mode:
 
+__ATTENTION!__ Do not use development mode on production environments cause it
+may change the data.
+
 ```bash
 sudo docker compose -f compose.yaml -f compose-dev-override.yaml up --build --watch
 ```
@@ -47,3 +50,9 @@ To fix problems on start run before:
 ```bash
 sudo docker system prune --force
 ```
+
+## Development
+
+Hash name shoud be in form of `OBJ_TYPE:{ID}:DATA_TYPE` e.g.
+`minion:{MID}:grains`. Also mention single form of obj type and plural form for
+data type, because there are many values for the object.

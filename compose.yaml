@@ -3,6 +3,7 @@ services:
     build:
       context: salt/
       target: salt-master
+    image: fastms-salt-master
     init: true
     container_name: fastms-salt-master
     ports:
@@ -31,7 +32,6 @@ services:
       - '${BACKEND_HTTP_PORT}:8000'
     restart: no
     depends_on:
-      - redis-salt
       - mongo
   fastms-frontend:
     build:
