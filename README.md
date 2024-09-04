@@ -2,6 +2,12 @@
 
 ## Download
 
+Get repository for first time:
+
+```bash
+git submodule update --init --recursive
+```
+
 Get repository with submodules:
 
 ```bash
@@ -24,18 +30,18 @@ git submodule update --remote
 ## Build images
 
 To build clean images use command:
+
 ```bash
 sudo docker compose -f compose.yaml build --no-cache
 ```
 
 `--no-cache` guarantees build with last versions of dependencies.
 
-
 ## Run
 
 To build and run in development mode:
 
-__ATTENTION!__ Do not use development mode on production environments cause it
+**ATTENTION!** Do not use development mode on production environments cause it
 may change the data.
 
 ```bash
