@@ -9,6 +9,8 @@ services:
           path: nginx-proxy/
     env_file:
       - .env
+    environment:
+      BACKEND_HOSTNAME: fastms-core
     ports:
       - '80:80'
     depends_on:
@@ -69,7 +71,7 @@ services:
     environment:
       SALT_URL: 'https://fastms-salt-master:8000'
       REDIS_URL: 'redis://fastms-redis-salt:6379/0'
-      ROOT_PATH: '/api/core'
+      ROOT_PATH: ${BACKEND_BASE_URL}
     expose:
       - ${BACKEND_HTTP_PORT}
     restart: no
