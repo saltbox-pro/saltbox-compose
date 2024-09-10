@@ -3,11 +3,8 @@ services:
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
-    develop:
-      watch:
-        - action: rebuild
-          path: salt/
   clean-keys-cmd:
+    pull_policy: never
     image: fastms-salt-master
     command: 'salt-key --delete-all --yes'
     depends_on:
@@ -16,11 +13,6 @@ services:
         condition: service_started
     volumes:
       - 'salt_master_pki:/etc/salt/pki/'
-  fastms-core:
-    develop:
-      watch:
-        - action: rebuild
-          path: fastms-core/
   redis-salt:
     ports:
       - '6379:6379'

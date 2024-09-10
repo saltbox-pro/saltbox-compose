@@ -1,27 +1,20 @@
 services:
-  nginx:
-    image: nginx:latest
-    container_name: fastms-proxy-nginx
-    env_file:
-      - .env
-    environment:
-      BACKEND_HTTP_PORT: '${BACKEND_HTTP_PORT}'
-      KEYKOACK_BASE_URL: ${KEYKOACK_BASE_URL}
+  proxy:
+    build:
+      context: nginx-proxy/
+    container_name: proxy
     develop:
       watch:
         - action: rebuild
           path: nginx-proxy/
-    volumes:
-      - './nginx-proxy:/etc/nginx/conf.d'
+    env_file:
+      - .env
     ports:
-      - 80:80
+      - '80:80'
     depends_on:
       - fastms-core
       - fastms-frontend
       - keycloak
-    networks:
-      - default
-      - fastms-local
 
   keycloak:
     image: quay.io/keycloak/keycloak
@@ -36,9 +29,7 @@ services:
       HTTP_ADDRESS_FORWARDING: true
     expose:
         - 8080
-    networks:
-      - fastms-local
-  
+
   salt-master:
     build:
       context: salt/
@@ -46,6 +37,10 @@ services:
     image: fastms-salt-master
     init: true
     container_name: fastms-salt-master
+    develop:
+      watch:
+        - action: rebuild
+          path: salt/
     ports:
       - '4505-4506:4505-4506'
     volumes:
@@ -60,44 +55,43 @@ services:
       - --save 60 1
     volumes:
       - 'redis_salt_data:/data/'
-    networks:
-      - fastms-local
-  
+
   fastms-core:
     build:
       context: fastms-core/
     container_name: fastms-core
+    develop:
+      watch:
+        - action: rebuild
+          path: fastms-core/
     env_file:
       - .env
     environment:
       SALT_URL: 'https://fastms-salt-master:8000'
       REDIS_URL: 'redis://fastms-redis-salt:6379/0'
+      ROOT_PATH: '/api/core'
     expose:
       - ${BACKEND_HTTP_PORT}
     restart: no
     depends_on:
       - mongo
-    networks:
-      - fastms-local
-  
+
   fastms-frontend:
     build:
       context: fastms-frontend/
       args:
         VITE_API_URL_HTTP: 'http://${SERVER_NAME}${BACKEND_BASE_URL}'
         VITE_API_URL_WS: 'ws://${SERVER_NAME}${BACKEND_BASE_URL}'
+    container_name: fastms-frontend
     develop:
       watch:
         - action: rebuild
           path: fastms-frontend/
-    container_name: fastms-frontend
     env_file:
       - .env
     expose:
       - ${FRONTEND_HTTP_PORT}
-    networks:
-      - fastms-local
-  
+
   mongo:
     image: mongo:7
     command: --quiet
@@ -105,13 +99,7 @@ services:
       # TODO Generate
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
-    networks:
-      - fastms-local
 
 volumes:
   salt_master_pki: {}
   redis_salt_data: {}
-
-networks:
-  default:
-  fastms-local:
