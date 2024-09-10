@@ -20,7 +20,6 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak
-    container_name: fastms-keycloak
     command: start --optimized
     env_file:
       - .env
@@ -38,7 +37,6 @@ services:
       target: salt-master
     image: fastms-salt-master
     init: true
-    container_name: fastms-salt-master
     develop:
       watch:
         - action: rebuild
@@ -52,7 +50,6 @@ services:
 
   redis-salt:
     image: redis:7.2-alpine
-    container_name: fastms-redis-salt
     command:
       - --save 60 1
     volumes:
@@ -61,7 +58,6 @@ services:
   fastms-core:
     build:
       context: fastms-core/
-    container_name: fastms-core
     develop:
       watch:
         - action: rebuild
@@ -69,9 +65,10 @@ services:
     env_file:
       - .env
     environment:
-      SALT_URL: 'https://fastms-salt-master:8000'
-      REDIS_URL: 'redis://fastms-redis-salt:6379/0'
+      SALT_URL: 'https://salt-master:8000'
+      REDIS_URL: 'redis://redis-salt:6379/0'
       ROOT_PATH: ${BACKEND_BASE_URL}
+      TIMEOUT_GRACEFUL_SHUTDOWN: ${BACKEND_SHUTDOWN_TIMEOUT_SEC}
     expose:
       - ${BACKEND_HTTP_PORT}
     restart: no
@@ -82,9 +79,8 @@ services:
     build:
       context: fastms-frontend/
       args:
-        VITE_API_URL_HTTP: 'http://${SERVER_NAME}${BACKEND_BASE_URL}'
-        VITE_API_URL_WS: 'ws://${SERVER_NAME}${BACKEND_BASE_URL}'
-    container_name: fastms-frontend
+        VITE_API_URL_HTTP: 'http://${FRONTEND_SERVER_NAME}${BACKEND_BASE_URL}'
+        VITE_API_URL_WS: 'ws://${FRONTEND_SERVER_NAME}${BACKEND_BASE_URL}'
     develop:
       watch:
         - action: rebuild
