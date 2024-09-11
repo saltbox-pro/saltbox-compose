@@ -19,17 +19,22 @@ services:
       - keycloak
 
   keycloak:
-    image: quay.io/keycloak/keycloak
+    image: quay.io/keycloak/keycloak:25.0
     command: start --optimized
     env_file:
       - .env
     environment:
-      KC_HOSTNAME: 'http://${KEYCLOACK_HOST}${KEYKOACK_BASE_URL}'
-      KC_LOG_LEVEL: info
+      KC_HOSTNAME: 'http://localhost${KEYCLOAK_BASE_URL}'
+      KC_HOSTNAME_STRICT: false
       KC_HTTP_ENABLED: true
-      HTTP_ADDRESS_FORWARDING: true
+      KC_HTTP_RELATIVE_PATH: '/auth/keycloak'
+      KC_LOG_LEVEL: info
+      KC_PROXY: edge
+      KC_PROXY_HEADERS: xforwarded
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: password
     expose:
-        - 8080
+      - 8080
 
   salt-master:
     build:
@@ -74,6 +79,7 @@ services:
     restart: no
     depends_on:
       - mongo
+      - keycloak  # FIXME Must be ready, see 'service_started' option
 
   fastms-frontend:
     build:
