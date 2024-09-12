@@ -42,25 +42,24 @@ services:
 
   keycloak:
     <<: *default
-    image: quay.io/keycloak/keycloak:25.0
-    command: start
+    build:
+      context: keycloak
+      args:
+        KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
+    develop:
+      watch:
+        - action: rebuild
+          path: postgres/
+    command: start --optimized
     environment:
-      KC_DB: postgres
       KC_DB_PASSWORD: password # FIXME
       KC_DB_URL: 'jdbc:postgresql://postgres:5432/${KEYCLOAK_DATABASE}'
       KC_DB_USERNAME: keycloak-pg # FIXME
-      KC_HEALTH_ENABLED: false  # TODO
-      KC_HOSTNAME_STRICT: false  # FIXME Deprecated
-      KC_HTTP_ENABLED: true
-      KC_HTTP_RELATIVE_PATH: '/auth/keycloak'
-      KC_LOG_LEVEL: info
-      KC_PROXY_HEADERS: xforwarded
+      KC_HOSTNAME_STRICT: false
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: password  # FIXME
     expose:
       - 8080
-    ports:
-      - 9090:8080
     depends_on:
       - postgres
 
