@@ -15,7 +15,6 @@ server {
         proxy_set_header X-Forwarded-For $proxy_protocol_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
-        rewrite ^/auth/keycloak/(.*)$ /$1 break;
     }
 
     location ${BACKEND_BASE_URL}/ {

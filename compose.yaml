@@ -1,42 +1,71 @@
+x-default-service: &default
+  restart: unless-stopped
+  env_file:
+    - .env
+
 services:
+
   proxy:
+    <<: *default
     build:
-      context: nginx-proxy/
-    container_name: proxy
+      context: proxy/
     develop:
       watch:
         - action: rebuild
-          path: nginx-proxy/
-    env_file:
-      - .env
+          path: proxy/
     environment:
       BACKEND_HOSTNAME: fastms-core
     ports:
-      - '80:80'
+      - '${GLOBAL_PUBLIC_PORT}:80'
     depends_on:
       - fastms-core
       - fastms-frontend
       - keycloak
 
-  keycloak:
-    image: quay.io/keycloak/keycloak:25.0
-    command: start --optimized
-    env_file:
-      - .env
+  postgres:
+    <<: *default
+    build:
+      context: postgres/
+    develop:
+      watch:
+        - action: rebuild
+          path: postgres/
+    #image: postgres:16-alpine
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data/'
     environment:
-      KC_HOSTNAME: 'http://localhost${KEYCLOAK_BASE_URL}'
-      KC_HOSTNAME_STRICT: false
+      POSTGRES_DB: ${KEYCLOAK_DATABASE}
+      POSTGRES_PASSWORD: password  # FIXME
+      POSTGRES_USER: keycloak-pg # FIXME
+    expose:
+      - 5432
+
+  keycloak:
+    <<: *default
+    image: quay.io/keycloak/keycloak:25.0
+    command: start
+    environment:
+      KC_DB: postgres
+      KC_DB_PASSWORD: password # FIXME
+      KC_DB_URL: 'jdbc:postgresql://postgres:5432/${KEYCLOAK_DATABASE}'
+      KC_DB_USERNAME: keycloak-pg # FIXME
+      KC_HEALTH_ENABLED: false  # TODO
+      KC_HOSTNAME_STRICT: false  # FIXME Deprecated
       KC_HTTP_ENABLED: true
       KC_HTTP_RELATIVE_PATH: '/auth/keycloak'
       KC_LOG_LEVEL: info
-      KC_PROXY: edge
       KC_PROXY_HEADERS: xforwarded
       KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: password
+      KEYCLOAK_ADMIN_PASSWORD: password  # FIXME
     expose:
       - 8080
+    ports:
+      - 9090:8080
+    depends_on:
+      - postgres
 
   salt-master:
+    <<: *default
     build:
       context: salt/
       target: salt-master
@@ -54,21 +83,23 @@ services:
       - redis-salt
 
   redis-salt:
+    <<: *default
     image: redis:7.2-alpine
     command:
       - --save 60 1
     volumes:
       - 'redis_salt_data:/data/'
+    expose:
+      - 6379
 
   fastms-core:
+    <<: *default
     build:
       context: fastms-core/
     develop:
       watch:
         - action: rebuild
           path: fastms-core/
-    env_file:
-      - .env
     environment:
       SALT_URL: 'https://salt-master:8000'
       REDIS_URL: 'redis://redis-salt:6379/0'
@@ -76,12 +107,12 @@ services:
       TIMEOUT_GRACEFUL_SHUTDOWN: ${BACKEND_SHUTDOWN_TIMEOUT_SEC}
     expose:
       - ${BACKEND_HTTP_PORT}
-    restart: no
     depends_on:
       - mongo
       - keycloak  # FIXME Must be ready, see 'service_started' option
 
   fastms-frontend:
+    <<: *default
     build:
       context: fastms-frontend/
       args:
@@ -91,12 +122,11 @@ services:
       watch:
         - action: rebuild
           path: fastms-frontend/
-    env_file:
-      - .env
     expose:
       - ${FRONTEND_HTTP_PORT}
 
   mongo:
+    <<: *default
     image: mongo:7
     command: --quiet
     environment:
@@ -107,3 +137,4 @@ services:
 volumes:
   salt_master_pki: {}
   redis_salt_data: {}
+  postgres_data: {}
