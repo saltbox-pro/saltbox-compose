@@ -22,15 +22,9 @@ services:
       - fastms-frontend
       - keycloak
 
-  postgres:
+  keycloak-db:
     <<: *default
-    build:
-      context: postgres/
-    develop:
-      watch:
-        - action: rebuild
-          path: postgres/
-    #image: postgres:16-alpine
+    image: postgres:16-alpine
     volumes:
       - 'postgres_data:/var/lib/postgresql/data/'
     environment:
@@ -49,11 +43,11 @@ services:
     develop:
       watch:
         - action: rebuild
-          path: postgres/
+          path: keycloak/
     command: start --optimized
     environment:
       KC_DB_PASSWORD: password # FIXME
-      KC_DB_URL: 'jdbc:postgresql://postgres:5432/${KEYCLOAK_DATABASE}'
+      KC_DB_URL: 'jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DATABASE}'
       KC_DB_USERNAME: keycloak-pg # FIXME
       KC_HOSTNAME_STRICT: false
       KEYCLOAK_ADMIN: admin
@@ -61,7 +55,7 @@ services:
     expose:
       - 8080
     depends_on:
-      - postgres
+      - keycloak-db
 
   salt-master:
     <<: *default
