@@ -8,11 +8,15 @@ ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
 ENV KC_HTTP_RELATIVE_PATH=$KC_HTTP_RELATIVE_PATH
 
-WORKDIR /opt/keycloak
+WORKDIR /opt/keycloak/
+COPY realm_fastms.json data/import/
+COPY quarkus.properties conf/
 RUN /opt/keycloak/bin/kc.sh build
 
 FROM $BASE_IMAGE
-COPY --from=builder /opt/keycloak/ /opt/keycloak/
+
+WORKDIR /opt/keycloak/
+COPY --from=builder /opt/keycloak/ ./
 
 ENV KC_HTTP_ENABLED=true
 ENV KC_LOG_LEVEL=info
