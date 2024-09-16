@@ -17,9 +17,10 @@ FROM $BASE_IMAGE
 
 WORKDIR /opt/keycloak/
 COPY --from=builder /opt/keycloak/ ./
+COPY startup.sh /usr/local/bin/
 
 ENV KC_HTTP_ENABLED=true
 ENV KC_LOG_LEVEL=info
 ENV KC_PROXY_HEADERS=xforwarded
 
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
+ENTRYPOINT ["/usr/local/bin/startup.sh"]

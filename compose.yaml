@@ -52,7 +52,8 @@ services:
       KC_DB_USERNAME: keycloak-pg # FIXME
       KC_HOSTNAME_STRICT: false
       KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: password  # FIXME
+    secrets:
+      - keycloak_admin_password
     expose:
       - 8080
     depends_on:
@@ -132,3 +133,7 @@ volumes:
   salt_master_pki: {}
   redis_salt_data: {}
   keycloak-db_data: {}
+
+secrets:
+  keycloak_admin_password:
+    file: secrets/keycloak_admin_password
