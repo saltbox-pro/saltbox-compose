@@ -41,6 +41,13 @@ sudo docker compose -f compose.yaml build --no-cache
 
 ## Run
 
+Initially secrets must be created in the `./secrets/` subdirectory. It may be
+done with helper script:
+
+```bash
+./make_secrets.py
+```
+
 To build and run in development mode:
 
 **ATTENTION!** Do not use development mode on production environments cause it
