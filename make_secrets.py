@@ -10,6 +10,8 @@ from pathlib import Path
 SECRETS = (
     'keycloak_admin_password',
     'keycloak_database_password',
+    'keycloak_client_fastms_core_password',
+    'mongo_admin_password',
 )
 
 

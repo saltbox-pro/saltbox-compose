@@ -45,7 +45,6 @@ services:
       watch:
         - action: rebuild
           path: keycloak/
-    # FIXME Get realm secrets
     command: start --optimized --import-realm
     environment:
       KC_DB_URL: 'jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DATABASE}'
@@ -55,6 +54,7 @@ services:
     secrets:
       - keycloak_admin_password
       - keycloak_database_password
+      - keycloak_client_fastms_core_password
     expose:
       - 8080
     depends_on:
@@ -126,9 +126,10 @@ services:
     image: mongo:7
     command: --quiet
     environment:
-      # FIXME Generate
       MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_admin_password
+    secrets:
+      - mongo_admin_password
 
 volumes:
   salt_master_pki: {}
@@ -141,3 +142,7 @@ secrets:
     file: secrets/keycloak_admin_password
   keycloak_database_password:
     file: secrets/keycloak_database_password
+  mongo_admin_password:
+    file: secrets/mongo_admin_password
+  keycloak_client_fastms_core_password:
+    file: secrets/keycloak_client_fastms_core_password

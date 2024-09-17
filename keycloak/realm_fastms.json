@@ -788,7 +788,7 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "LC6sQvf5t7ZXyhG1BsCtyIve2JpZjMx4",
+      "secret": "${CLIENT_FASTMS_CORE_PASSWORD}",
       "redirectUris": [
         "/*"
       ],
