@@ -7,12 +7,13 @@ import sys
 
 from pathlib import Path
 
-SECRETS = (
-    'keycloak_admin_password',
-    'keycloak_database_password',
-    'keycloak_client_fastms_core_password',
-    'mongo_admin_password',
-)
+SECRETS = {
+    'keycloak_admin_password': 16,
+    'keycloak_database_password': 16,
+    'keycloak_client_fastms_core_password': 16,
+    'mongo_admin_password': 16,
+    'salt_api_password': 32,
+}
 
 
 def make_secret(length=16, alphabet=string.ascii_letters + string.digits) -> str:
@@ -33,9 +34,10 @@ def write_file(path: Path, secret: str, overwrite=False) -> None:
 
 
 def main(secrets_dir: Path, overwrite: bool) -> None:
-    for sec in SECRETS:
+    for sec, length in SECRETS.items():
         path = secrets_dir / sec
-        write_file(path=path, secret=make_secret(), overwrite=overwrite)
+        secret = make_secret(length=length)
+        write_file(path=path, secret=secret, overwrite=overwrite)
 
 
 if __name__ == '__main__':

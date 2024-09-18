@@ -22,5 +22,6 @@ COPY startup.sh /usr/local/bin/
 ENV KC_HTTP_ENABLED=true
 ENV KC_LOG_LEVEL=info
 ENV KC_PROXY_HEADERS=xforwarded
+EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/startup.sh"]

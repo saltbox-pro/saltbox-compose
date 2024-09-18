@@ -55,8 +55,6 @@ services:
       - keycloak_admin_password
       - keycloak_database_password
       - keycloak_client_fastms_core_password
-    expose:
-      - 8080
     depends_on:
       - keycloak-db
 
@@ -65,12 +63,16 @@ services:
     build:
       context: salt/
       target: salt-master
+      args:
+        SALT_API_USER: ${SALT_API_USER}
     image: fastms-salt-master
     init: true
     develop:
       watch:
         - action: rebuild
           path: salt/
+    secrets:
+      - salt_api_password
     ports:
       - '4505-4506:4505-4506'
     volumes:
@@ -98,9 +100,12 @@ services:
           path: fastms-core/
     environment:
       SALT_URL: 'https://salt-master:8000'
+      SALT_USER: ${SALT_API_USER}
       REDIS_URL: 'redis://redis-salt:6379/0'
       ROOT_PATH: ${BACKEND_BASE_URL}
       TIMEOUT_GRACEFUL_SHUTDOWN: ${BACKEND_SHUTDOWN_TIMEOUT_SEC}
+    secrets:
+      - salt_api_password
     expose:
       - ${BACKEND_HTTP_PORT}
     depends_on:
@@ -137,12 +142,13 @@ volumes:
   keycloak-db_data: {}
 
 secrets:
-  # FIXME FastMS Core SALT_PASSWORD
   keycloak_admin_password:
     file: secrets/keycloak_admin_password
+  keycloak_client_fastms_core_password:
+    file: secrets/keycloak_client_fastms_core_password
   keycloak_database_password:
     file: secrets/keycloak_database_password
   mongo_admin_password:
     file: secrets/mongo_admin_password
-  keycloak_client_fastms_core_password:
-    file: secrets/keycloak_client_fastms_core_password
+  salt_api_password:
+    file: secrets/salt_api_password
