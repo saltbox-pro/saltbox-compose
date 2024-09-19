@@ -60,11 +60,29 @@ sudo docker compose -f compose.yaml -f compose-dev-override.yaml up --build --wa
 `--build` flag rebuilds images, `--watch` flag rebuilds some images on src files
 changes. `compose-dev-override.yaml` exposes additional ports.
 
-To fix problems on start run before:
+## Cleanup
+
+After changes created containers and volumes may become incompatible with
+current code without special migrations.
+
+To fix startup problems on developement environment stop containters with `^C`
+and make them down:
+
+```bash
+sudo docker compose -f compose.yaml -f compose-dev-override.yaml down --volumes
+```
+
+**ATTENTION!** The `--volumes` flag will purge attached volumes and will lead
+to data lost. Be sure to not lost production data.
+
+While changins code and configs new layers and other objects are created. To
+free resources run time to time the following command:
 
 ```bash
 sudo docker system prune --force
 ```
+
+Usually it is safe and deletes only stale data.
 
 ## Development
 
