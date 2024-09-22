@@ -39,13 +39,14 @@ services:
     <<: *default
     build:
       context: keycloak
+      target: keycloak
       args:
         KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
     develop:
       watch:
         - action: rebuild
           path: keycloak/
-    command: start --optimized --import-realm
+    command: start --optimized
     environment:
       KC_DB_URL: 'jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DATABASE}'
       KC_DB_USERNAME: ${KEYCLOAK_DATABASE_USER}
@@ -56,7 +57,23 @@ services:
       - keycloak_database_password
       - keycloak_client_fastms_core_password
     depends_on:
-      - keycloak-db
+      keycloak-db:
+        condition: service_started
+
+  keycloak-init:
+    <<: *default
+    build:
+      context: keycloak
+      target: keycloak-init
+    restart: on-failure
+    environment:
+      KEYCLOAK_URL: "http://keycloak:8080${KEYCLOAK_BASE_URL}"
+    secrets:
+      - keycloak_admin_password
+      - keycloak_client_fastms_core_password
+    depends_on:
+      keycloak:
+        condition: service_healthy
 
   salt-master:
     <<: *default
