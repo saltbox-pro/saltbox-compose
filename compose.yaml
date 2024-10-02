@@ -121,8 +121,11 @@ services:
       REDIS_URL: 'redis://redis-salt:6379/0'
       ROOT_PATH: ${BACKEND_BASE_URL}
       TIMEOUT_GRACEFUL_SHUTDOWN: ${BACKEND_SHUTDOWN_TIMEOUT_SEC}
+      MONGO_USER: ${MONGO_USER}
+      MONGO_DB: ${MONGO_DB}
     secrets:
       - salt_api_password
+      - mongo_admin_password
     expose:
       - ${BACKEND_HTTP_PORT}
     depends_on:
@@ -148,7 +151,7 @@ services:
     image: mongo:7
     command: --quiet
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_admin_password
     secrets:
       - mongo_admin_password
