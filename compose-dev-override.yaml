@@ -1,8 +1,21 @@
+# Local generic does not override original
+x-default-service: &default
+  restart: unless-stopped
+  stop_grace_period: ${STOP_GRACE_PERIOD}
+  env_file:
+    - .env
+
 services:
+# Overrides
   salt-master:
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
+  redis-salt:
+    ports:
+      - '6379:6379'
+
+# Additional services
   # FIXME Clean inside container with script
   clean-keys-cmd:
     pull_policy: never
@@ -14,10 +27,8 @@ services:
         condition: service_started
     volumes:
       - 'salt_master_pki:/etc/salt/pki/'
-  redis-salt:
-    ports:
-      - '6379:6379'
   mongo-express:
+    <<: *default
     image: mongo-express:1
     ports:
       - '8081:8081'
@@ -28,6 +39,7 @@ services:
       ME_CONFIG_MONGODB_URL: 'mongodb://root:example@mongo:27017/'
       ME_CONFIG_BASICAUTH: false
   salt-minion:
+    <<: *default
     build:
       context: salt/
       target: salt-minion

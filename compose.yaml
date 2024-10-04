@@ -1,5 +1,6 @@
 x-default-service: &default
   restart: unless-stopped
+  stop_grace_period: ${STOP_GRACE_PERIOD}
   env_file:
     - .env
 
