@@ -15,6 +15,13 @@ services:
     ports:
       - '6379:6379'
 
+  mongo:
+    ports:
+      - ${MONGO_PORT:-27017}:${MONGO_PORT:-27017}
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+
 # Additional services
   # FIXME Clean inside container with script
   clean-keys-cmd:
@@ -55,3 +62,7 @@ services:
       clean-keys-cmd:
         restart: true
         condition: service_completed_successfully
+
+volumes:
+  mongo_data: {}
+  mongo_config: {}
