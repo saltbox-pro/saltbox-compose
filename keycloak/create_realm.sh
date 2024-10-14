@@ -21,9 +21,8 @@ fi
 kcadm create realms -s "realm=${KEYCLOAK_REALM}" -s enabled=true
 kcadm create clients \
   -r "${KEYCLOAK_REALM}" \
+  -f ./client.json \
   -s "clientId=${KEYCLOAK_CLIENT}" \
-  -s "secret=${fastms_core_password}" \
-  -s serviceAccountsEnabled=true \
-  -s authorizationServicesEnabled=true
+  -s "secret=${fastms_core_password}" 
 
 echo "Realm ${KEYCLOAK_REALM} has been created"

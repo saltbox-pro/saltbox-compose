@@ -51,5 +51,6 @@ HEALTHCHECK --start-period=20s --start-interval=2s CMD wget \
 FROM keycloak as keycloak-init
 
 COPY create_realm.sh /usr/local/bin/
+COPY client.json ./
 
 ENTRYPOINT ["/usr/local/bin/create_realm.sh"]
