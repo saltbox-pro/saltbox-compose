@@ -9,8 +9,8 @@ mkdir -p "$html_dir"
 
 cat << EOF > "${html_dir}/env.json"
 {
-  "wsServerUrl": "$API_BASE_URL",
-  "apiBasePath": "$WS_SERVER_URL",
+  "wsServerUrl": "$WS_SERVER_URL",
+  "apiBasePath": "$API_BASE_URL",
   "openIdAuthority": "http://localhost/auth/keycloak/realms/fastms",
   "openIdClientId": "${OPEN_ID_CLIENT_ID}",
   "openIdClientSecret": "${open_id_client_secret}",

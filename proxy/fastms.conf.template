@@ -12,6 +12,7 @@ server {
     location /env.json {
         alias /srv/html/env.json;
         add_header Content-Type application/json;
+        add_header Access-Control-Allow-Origin *;
     }
 
     location '${KEYCLOAK_BASE_URL}/' {
@@ -21,11 +22,7 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
     }
-
-    location '${KEYCLOAK_BASE_URL}/admin/' { deny all; }
-    location '${KEYCLOAK_BASE_URL}/metrics/' { deny all; }
-    location '${KEYCLOAK_BASE_URL}/health/' { deny all; }
-
+    
     location ${BACKEND_BASE_URL}/ {
         proxy_pass 'http://${BACKEND_HOSTNAME}:${BACKEND_HTTP_PORT}';
         proxy_http_version 1.1;
