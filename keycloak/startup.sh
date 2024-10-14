@@ -2,8 +2,8 @@
 
 set -e
 
-export KEYCLOAK_ADMIN_PASSWORD=$(cat /run/secrets/keycloak_admin_password)
-export KC_DB_PASSWORD=$(cat /run/secrets/keycloak_database_password)
-export CLIENT_FASTMS_CORE_PASSWORD=$(cat /run/secrets/keycloak_client_fastms_core_password)
+KEYCLOAK_ADMIN_PASSWORD="$(cat /run/secrets/keycloak_admin_password)"
+KC_DB_PASSWORD="$(cat /run/secrets/keycloak_database_password)"
+export KEYCLOAK_ADMIN_PASSWORD KC_DB_PASSWORD
 
 /opt/keycloak/bin/kc.sh "$@"

@@ -15,12 +15,19 @@ services:
           path: proxy/
     environment:
       BACKEND_HOSTNAME: fastms-core
+      API_BASE_URL: 'http://${BACKEND_HOST}${BACKEND_BASE_URL}'
+      WS_SERVER_URL: 'ws://${BACKEND_HOST}${BACKEND_BASE_URL}'
+      OPEN_ID_AUTHORITY: 'http://${BACKEND_HOST}/${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
+      OPEN_ID_CLIENT_ID: ${KEYCLOAK_CLIENT}
+      OPEN_ID_REDIRECT_URL: ${FRONTEND_OPEN_ID_REDIRECT_URL}
     ports:
       - '${GLOBAL_PUBLIC_PORT}:80'
     depends_on:
       - fastms-core
       - fastms-frontend
       - keycloak
+    secrets:
+      - keycloak_client_fastms_core_password
 
   keycloak-db:
     <<: *default
@@ -56,7 +63,6 @@ services:
     secrets:
       - keycloak_admin_password
       - keycloak_database_password
-      - keycloak_client_fastms_core_password
     depends_on:
       keycloak-db:
         condition: service_started
@@ -137,9 +143,6 @@ services:
     <<: *default
     build:
       context: fastms-frontend/
-      args:
-        VITE_API_URL_HTTP: 'http://${FRONTEND_SERVER_NAME}${BACKEND_BASE_URL}'
-        VITE_API_URL_WS: 'ws://${FRONTEND_SERVER_NAME}${BACKEND_BASE_URL}'
     develop:
       watch:
         - action: rebuild
@@ -163,10 +166,12 @@ volumes:
   keycloak-db_data: {}
 
 secrets:
+  # BUILD TIME secrets
   keycloak_admin_password:
     file: secrets/keycloak_admin_password
-  keycloak_client_fastms_core_password:
+  keycloak_client_fastms_core_password:  # Not private: exposed in /env.json
     file: secrets/keycloak_client_fastms_core_password
+  # RUNTIME secrets
   keycloak_database_password:
     file: secrets/keycloak_database_password
   mongo_admin_password:

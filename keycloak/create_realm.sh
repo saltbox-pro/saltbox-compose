@@ -13,7 +13,7 @@ kcadm config credentials \
   --user admin \
   --password "$admin_password"
 
-if kcadm get realms/"${KEYCLOAK_REALM}" --fields id; then
+if kcadm get realms/"${KEYCLOAK_REALM}" --fields id > /dev/null; then
   echo REALM Already exists
   exit 0
 fi
@@ -23,6 +23,6 @@ kcadm create clients \
   -r "${KEYCLOAK_REALM}" \
   -f ./client.json \
   -s "clientId=${KEYCLOAK_CLIENT}" \
-  -s "secret=${fastms_core_password}" 
+  -s "secret=${fastms_core_password}"
 
 echo "Realm ${KEYCLOAK_REALM} has been created"
