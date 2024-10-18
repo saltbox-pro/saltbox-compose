@@ -91,3 +91,7 @@ Usually it is safe and deletes only stale data.
 Hash name shoud be in form of `OBJ_TYPE:{ID}:DATA_TYPE` e.g.
 `minion:{MID}:grains`. Also mention single form of obj type and plural form for
 data type, because there are many values for the object.
+
+### Keycloak
+
+Set password for `admin`: http://localhost/auth/keycloak/
