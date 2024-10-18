@@ -94,4 +94,4 @@ data type, because there are many values for the object.
 
 ### Keycloak
 
-Set password for `admin`: http://localhost/auth/keycloak/
+Keycloak for `admin` user (password in file `./secrets/keycloak_admin_password`): http://localhost/auth/keycloak/
