@@ -1,8 +1,0 @@
-[submodule "fastms-core"]
-	path = fastms-core
-	url = git@dev.altlab.su:fastms/fastms-core.git
-	branch = master
-[submodule "fastms-frontend"]
-	path = fastms-frontend
-	url = git@dev.altlab.su:fastms/fastms-frontend.git
-	branch = master
