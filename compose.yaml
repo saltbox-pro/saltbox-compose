@@ -4,6 +4,8 @@ x-default-service: &default
   env_file:
     - .env
 
+name: fastms-compose
+
 services:
   proxy:
     <<: *default
@@ -116,12 +118,7 @@ services:
 
   fastms-core:
     <<: *default
-    build:
-      context: fastms-core/
-    develop:
-      watch:
-        - action: rebuild
-          path: fastms-core/
+    image: '${IMAGE_REGISTRY}/fastms-core:${CORE_IMAGE_TAG}'
     environment:
       SALT_URL: 'https://salt-master:8000'
       SALT_USER: ${SALT_API_USER}
@@ -141,12 +138,7 @@ services:
 
   fastms-frontend:
     <<: *default
-    build:
-      context: fastms-frontend/
-    develop:
-      watch:
-        - action: rebuild
-          path: fastms-frontend/
+    image: '${IMAGE_REGISTRY}/fastms-frontend:${FRONTEND_IMAGE_TAG}'
     expose:
       - ${FRONTEND_HTTP_PORT}
 

@@ -1,6 +1,6 @@
 ARG BASE_IMAGE=quay.io/keycloak/keycloak:24.0
 
-FROM $BASE_IMAGE as builder
+FROM $BASE_IMAGE AS builder
 LABEL version='0.1'
 
 ARG KC_HTTP_RELATIVE_PATH
@@ -28,7 +28,7 @@ rpm --root /mnt/rootfs/ -e --nodeps setup
 EOF
 
 
-FROM $BASE_IMAGE as keycloak
+FROM $BASE_IMAGE AS keycloak
 
 WORKDIR /opt/keycloak/
 
@@ -48,7 +48,7 @@ HEALTHCHECK --start-period=20s --start-interval=2s CMD wget \
   "http://localhost:8080${KEYCLOAK_BASE_URL}/health/ready"
 
 
-FROM keycloak as keycloak-init
+FROM keycloak AS keycloak-init
 
 COPY create_realm.sh /usr/local/bin/
 COPY client.json ./
