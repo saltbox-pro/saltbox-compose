@@ -133,8 +133,10 @@ services:
     expose:
       - ${BACKEND_HTTP_PORT}
     depends_on:
-      - mongo
-      - keycloak  # TODO Must be ready, see 'service_started' option
+      keycloak:
+        condition: service_healthy
+      mongo:
+        condition: service_started
 
   fastms-frontend:
     <<: *default
