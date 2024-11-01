@@ -22,7 +22,7 @@ done with helper script:
 ./make_secrets.py
 ```
 
-Remember to tune the [`.env`](.env) file. Than run:
+Make copy of [`example.env`](example.env) file named `.env`. Tune it, than run:
 
 ```bash
 sudo docker compose up --build
@@ -35,8 +35,8 @@ sudo docker compose up --build
 Dev mode allows to build images instead of pulling pre-built and adds some
 useful overrides.
 
-Look at "Dev options" section of [`.env`](.env) file. To enable dev mode
-uncomment `COMPOSE_FILE=` line. Than run compose as usual.
+Look at "Dev options" section of your [`example.env`](example.env) file copy. To
+enable dev mode uncomment `COMPOSE_FILE=` line. Than run compose as usual.
 
 **ATTENTION!** Do not use development mode on production environments cause it
 may change the data.
