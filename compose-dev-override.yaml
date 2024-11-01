@@ -12,10 +12,9 @@ services:
   fastms-core:
     build:
       context: $CORE_BUILD_DIR
-    develop:  # FIXME mount
-      watch:
-        - action: rebuild
-          path: $CORE_BUILD_DIR
+      target: dev
+    volumes:
+      - '${CORE_BUILD_DIR}:/mnt/fastms_core'
   fastms-frontend:
     build:
       context: $FRONTEND_BUILD_DIR
