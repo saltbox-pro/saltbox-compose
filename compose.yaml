@@ -108,13 +108,15 @@ services:
 
   redis-salt:
     <<: *default
-    image: redis:7.2-alpine
+    image: '${IMAGE_REGISTRY}/fastms-compose/redis:latest'
     command:
       - --save 60 1
     volumes:
       - 'redis_salt_data:/data/'
     expose:
       - 6379
+    secrets:
+      - redis_salt_password
 
   fastms-core:
     <<: *default
@@ -172,3 +174,5 @@ secrets:
     file: secrets/mongo_admin_password
   salt_api_password:
     file: secrets/salt_api_password
+  redis_salt_password:
+    file: secrets/redis_salt_password

@@ -13,6 +13,7 @@ SECRETS = {
     'keycloak_client_fastms_core_password': 16,
     'mongo_admin_password': 16,
     'salt_api_password': 32,
+    'redis_salt_password': 16,
 }
 
 
