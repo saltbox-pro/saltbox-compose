@@ -86,12 +86,7 @@ services:
 
   salt-master:
     <<: *default
-    build:
-      context: salt/
-      target: salt-master
-      args:
-        SALT_API_USER: ${SALT_API_USER}
-    image: fastms-salt-master
+    image: '${IMAGE_REGISTRY}/fastms-compose/salt-master:master'
     init: true
     develop:
       watch:
