@@ -15,7 +15,7 @@
     - docker pull $CI_REGISTRY_IMAGE$ADDITIONAL_PATH:$IMAGE_TAG || true
     - >
       docker build
-      --target '$TARGET'
+      --target "$TARGET"
       --build-arg BUILDKIT_INLINE_CACHE=1
       --cache-from $CI_REGISTRY_IMAGE$ADDITIONAL_PATH:$IMAGE_TAG
       --tag $CI_REGISTRY_IMAGE$ADDITIONAL_PATH:$CI_COMMIT_SHA
