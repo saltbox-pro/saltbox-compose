@@ -99,6 +99,7 @@ services:
           path: salt/
     secrets:
       - salt_api_password
+      - redis_salt_password
     ports:
       - '4505-4506:4505-4506'
     volumes:
@@ -108,7 +109,7 @@ services:
 
   redis-salt:
     <<: *default
-    image: '${IMAGE_REGISTRY}/fastms-compose/redis:latest'
+    image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
     command:
       - --save 60 1
     volumes:
