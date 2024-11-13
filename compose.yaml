@@ -76,7 +76,7 @@ services:
       target: keycloak-init
     restart: on-failure
     environment:
-      KEYCLOAK_URL: "http://keycloak:8080${KEYCLOAK_BASE_URL}"
+      KEYCLOAK_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
     secrets:
       - keycloak_admin_password
       - keycloak_client_fastms_core_password
@@ -109,6 +109,7 @@ services:
       - --save 60 1
     volumes:
       - 'redis_salt_data:/data/'
+      - './certs/:/etc/redis/ssl/'
     expose:
       - 6379
     secrets:
