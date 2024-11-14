@@ -8,7 +8,7 @@ mkdir --parents "$(dirname "$conf_file")"
 cat <<EOF > "$conf_file"
 # Allow all exclusively for user ${REDIS_USERNAME} by password
 
-user default off
+user default reset nopass on -@all ~*
 user ${REDIS_USERNAME} reset nopass on +@all ~* >${password}
 EOF
 
