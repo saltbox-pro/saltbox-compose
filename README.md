@@ -22,6 +22,10 @@ done with helper script:
 ./make_secrets.py
 ```
 
+Create certificates for Redis TLS with [`make_cert.py`](./make_cert.py) or put
+your certificates into `certs/` respecting
+[`redis/redis.conf`](./redis/redis.conf).
+
 Make copy of [`example.env`](example.env) file named `.env`. Tune it, than run:
 
 ```bash

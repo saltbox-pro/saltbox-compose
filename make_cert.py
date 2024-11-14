@@ -31,6 +31,21 @@ RFC5280_UNDEFINED_NOT_AFTER = datetime(
     second=59,
     tzinfo=UTC
 )
+DEFAULT_CA_KEY_USAGE={
+    'digital_signature': True,
+    'content_commitment': False,
+    'key_encipherment': False,
+    'data_encipherment': False,
+    'key_agreement': False,
+    'key_cert_sign': True,
+    'crl_sign': True,
+    'encipher_only': False,
+    'decipher_only': False,
+}
+DEFAULT_END_ENTITY_KEY_USAGE = DEFAULT_CA_KEY_USAGE | {
+    'key_encipherment': True,
+    'key_cert_sign': False,
+}
 
 
 class MakeCertError(RuntimeError):
@@ -75,13 +90,28 @@ def create_ec_key() -> ec.EllipticCurvePrivateKey:
 
 
 def create_cert(
-    save_to: None | Path,
-    relative_distinguished_name: x509.RelativeDistinguishedName,
+    subject: x509.Name,
     key: KeyType,
+    root_cert: None | x509.Certificate = None,
+    root_key: None | KeyType = None,
     not_valid_after_days=None
 ) -> x509.Certificate:
+    """
+    :param ca_cert: root certificate, create root cert if None
+    """
+    is_root = root_cert is None
+    if is_root:
+        issuer = subject
+        key_usage = x509.KeyUsage(**DEFAULT_CA_KEY_USAGE)
+        sign_key = key
+    else:
+        issuer = ca_cert.subject
+        key_usage = x509.KeyUsage(**DEFAULT_END_ENTITY_KEY_USAGE)
+        if not root_key:
+            raise MakeCertError('Missing root key for singing')
+        sign_key = root_key
 
-    subject = issuer = x509.Name(relative_distinguished_name)
+    key_identifier = x509.SubjectKeyIdentifier.from_public_key(key.public_key())
 
     now = datetime.now(UTC)
     not_valid_after = RFC5280_UNDEFINED_NOT_AFTER
@@ -89,35 +119,67 @@ def create_cert(
         not_valid_after = now + timedelta(days=not_valid_after_days)
 
     alternative_name = x509.SubjectAlternativeName([x509.DNSName('localhost')])
+    #alternative_name = x509.IPAddress([x509.IPAddress('')])
+    # FIXME .add_extension(alternative_name, critical=False)\
 
-    cert = x509.CertificateBuilder()\
-        .subject_name(subject).issuer_name(issuer)\
+    builder = x509.CertificateBuilder()\
+        .subject_name(subject)\
+        .issuer_name(issuer)\
         .public_key(key.public_key())\
         .serial_number(x509.random_serial_number())\
         .not_valid_before(now)\
         .not_valid_after(not_valid_after)\
-        .add_extension(alternative_name, critical=False)\
-        .sign(key, hashes.SHA256())
+        .add_extension(x509.BasicConstraints(ca=is_root, path_length=None), critical=True)\
+        .add_extension(key_usage, critical=True)\
+        .add_extension(key_identifier, critical=False)
 
-    print(f'Certificate for {relative_distinguished_name.rfc4514_string()} has been created')
+    if root_cert:
+        ext_key_usage = x509.ExtendedKeyUsage([
+            x509.ExtendedKeyUsageOID.CLIENT_AUTH,
+            x509.ExtendedKeyUsageOID.SERVER_AUTH,
+        ])
+        ext = root_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier).value
+        auth_key_indent = x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext)
+        builder = builder\
+            .add_extension(ext_key_usage, critical=False)\
+            .add_extension(auth_key_indent, critical=False)
+
+    cert = builder.sign(key, hashes.SHA256())
+
+    type_srt = 'Root' if is_root else 'Endpoint'
+    print(f'{type_srt} certificate for {subject.rfc4514_string()} has been created')
     return cert
 
 
 if __name__ == '__main__':
-    key_path = Path('certs/redis.key')
-    cert_path = Path('certs/redis.crt')
+    certs_dir = Path('certs/')
+    # TODO config: overwrite
+    # TODO config: Name
+    subject = x509.Name(x509.RelativeDistinguishedName([
+        x509.NameAttribute(NameOID.COUNTRY_NAME, 'US'),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, 'California'),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, 'San Francisco'),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, 'My Company'),
+        x509.NameAttribute(NameOID.COMMON_NAME, 'mysite'),
+    ]))
     try:
-        key = create_rsa_key()
-        save_key(key, save_to=key_path)
-        rdn = x509.RelativeDistinguishedName([
-            x509.NameAttribute(NameOID.COUNTRY_NAME, 'US'),
-            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, 'California'),
-            x509.NameAttribute(NameOID.LOCALITY_NAME, 'San Francisco'),
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, 'My Company'),
-            x509.NameAttribute(NameOID.COMMON_NAME, 'mysite'),
-        ])
-        cert = create_cert(save_to=cert_path, relative_distinguished_name=rdn, key=key)
-        save_cert(cert, save_to=cert_path)
+        ca_key = create_ec_key()
+        save_key(ca_key, save_to=certs_dir / 'ca.key')
+        ca_cert = create_cert(subject=subject, key=ca_key)
+        save_cert(ca_cert, save_to=certs_dir / 'ca.crt')
+        ee_key = create_ec_key()
+        save_key(ee_key, save_to=certs_dir / 'redis.key')
+        ee_cert = create_cert(subject=subject, key=ee_key, root_cert=ca_cert, root_key=ca_key)
+        save_cert(ee_cert, save_to=certs_dir / 'redis.crt')
+
+        # TODO
+        #from cryptography.x509 import DNSName
+        #from cryptography.x509.verification import PolicyBuilder, Store
+        #store = Store([ca_cert])
+        #builder = PolicyBuilder().store(store)
+        #verifier = builder.build_server_verifier(DNSName("localhost"))
+        #chain = verifier.verify(ee_cert, [ca_cert])
+        #print(len(chain))
     except MakeCertError as err:
-        print(err, file=sys.stderr)
+        print(f'ERROR: {err}', file=sys.stderr)
         exit(1)
