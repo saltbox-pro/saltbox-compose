@@ -1,0 +1,29 @@
+---
+
+# TODO Documentate sample config.
+# TODO Decide what keys are optional.
+
+names:
+  fastms:
+    country_name: RU
+    state_or_province_name: Central Federal District
+    locality_name: Moscow
+    organization_name: FastMS
+    common_name: redis-salt
+
+certs:
+  ./certs/ca.crt:
+    subject: fastms
+    not_valid_after_days: null
+    key_type: ec
+    key_passphrase: null
+    issue:
+      ./certs/redis.crt:
+        subject: fastms
+        not_valid_after_days: null
+        key_type: ec
+        key_passphrase: null
+        alternative_name:
+          - localhost
+          - redis-salt
+        ip_address: []

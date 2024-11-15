@@ -2,16 +2,19 @@
 # flake8: noqa: E501
 
 ##
-## Requires python-cryptography >= 42
+## Requires python-cryptography >= 42, pyyaml
 ##
 
 from __future__ import annotations
 
+import argparse
 import sys
 
 from datetime import datetime, timedelta, UTC
 from pathlib import Path
-from typing import TypeVar
+from typing import Any
+
+import yaml
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -19,7 +22,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from cryptography.x509.oid import NameOID
 
-KeyType = TypeVar('KeyType', rsa.RSAPrivateKey, ec.EllipticCurvePrivateKey)
+KeyType = rsa.RSAPrivateKey | ec.EllipticCurvePrivateKey
 
 
 RFC5280_UNDEFINED_NOT_AFTER = datetime(
@@ -46,6 +49,15 @@ DEFAULT_END_ENTITY_KEY_USAGE = DEFAULT_CA_KEY_USAGE | {
     'key_encipherment': True,
     'key_cert_sign': False,
 }
+
+
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog='make_cert',
+        description='Create x509 certificates heirarhy',
+    )
+    parser.add_argument('filename')
+    return parser.parse_args()
 
 
 class MakeCertError(RuntimeError):
@@ -92,24 +104,24 @@ def create_ec_key() -> ec.EllipticCurvePrivateKey:
 def create_cert(
     subject: x509.Name,
     key: KeyType,
-    root_cert: None | x509.Certificate = None,
-    root_key: None | KeyType = None,
+    issuer_cert: None | x509.Certificate = None,
+    signing_key: None | KeyType = None,
     not_valid_after_days=None
 ) -> x509.Certificate:
     """
     :param ca_cert: root certificate, create root cert if None
     """
-    is_root = root_cert is None
-    if is_root:
+    is_root = issuer_cert is None
+    if issuer_cert is None:
         issuer = subject
         key_usage = x509.KeyUsage(**DEFAULT_CA_KEY_USAGE)
-        sign_key = key
+        signing_key = key
     else:
-        issuer = ca_cert.subject
+        issuer = issuer_cert.subject
         key_usage = x509.KeyUsage(**DEFAULT_END_ENTITY_KEY_USAGE)
-        if not root_key:
-            raise MakeCertError('Missing root key for singing')
-        sign_key = root_key
+
+    if not signing_key:
+        raise MakeCertError('Missing root key for singing')
 
     key_identifier = x509.SubjectKeyIdentifier.from_public_key(key.public_key())
 
@@ -133,53 +145,94 @@ def create_cert(
         .add_extension(key_usage, critical=True)\
         .add_extension(key_identifier, critical=False)
 
-    if root_cert:
+    if issuer_cert:
         ext_key_usage = x509.ExtendedKeyUsage([
             x509.ExtendedKeyUsageOID.CLIENT_AUTH,
             x509.ExtendedKeyUsageOID.SERVER_AUTH,
         ])
-        ext = root_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier).value
+        # TODO  SubjectKeyInd
+        ext = issuer_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier).value
         auth_key_indent = x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(ext)
         builder = builder\
             .add_extension(ext_key_usage, critical=False)\
             .add_extension(auth_key_indent, critical=False)
 
-    cert = builder.sign(key, hashes.SHA256())
+    cert = builder.sign(signing_key, hashes.SHA256())
 
     type_srt = 'Root' if is_root else 'Endpoint'
     print(f'{type_srt} certificate for {subject.rfc4514_string()} has been created')
     return cert
 
 
-if __name__ == '__main__':
-    certs_dir = Path('certs/')
-    # TODO config: overwrite
-    # TODO config: Name
-    subject = x509.Name(x509.RelativeDistinguishedName([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, 'US'),
-        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, 'California'),
-        x509.NameAttribute(NameOID.LOCALITY_NAME, 'San Francisco'),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, 'My Company'),
-        x509.NameAttribute(NameOID.COMMON_NAME, 'mysite'),
-    ]))
-    try:
-        ca_key = create_ec_key()
-        save_key(ca_key, save_to=certs_dir / 'ca.key')
-        ca_cert = create_cert(subject=subject, key=ca_key)
-        save_cert(ca_cert, save_to=certs_dir / 'ca.crt')
-        ee_key = create_ec_key()
-        save_key(ee_key, save_to=certs_dir / 'redis.key')
-        ee_cert = create_cert(subject=subject, key=ee_key, root_cert=ca_cert, root_key=ca_key)
-        save_cert(ee_cert, save_to=certs_dir / 'redis.crt')
+def name_from_dict(data: dict[str, str]) -> x509.Name:
+    attrs_list = []
+    for k, val in data.items():
+        attr_type = getattr(NameOID, k.upper())
+        attr = x509.NameAttribute(attr_type, val)
+        attrs_list.append(attr)
+    return x509.Name(x509.RelativeDistinguishedName(attrs_list))
 
-        # TODO
-        #from cryptography.x509 import DNSName
-        #from cryptography.x509.verification import PolicyBuilder, Store
-        #store = Store([ca_cert])
-        #builder = PolicyBuilder().store(store)
-        #verifier = builder.build_server_verifier(DNSName("localhost"))
-        #chain = verifier.verify(ee_cert, [ca_cert])
-        #print(len(chain))
-    except MakeCertError as err:
-        print(f'ERROR: {err}', file=sys.stderr)
-        exit(1)
+
+def cert_from_dict(
+    cert_path: Path,
+    options: dict[str, Any],
+    subjects: dict[str, x509.Name],
+    issuer_cert: None | x509.Certificate = None,
+    signing_key: None | KeyType = None,
+) -> None:
+    print(f'Processing {cert_path} entry...')
+
+    # TODO load if exists
+    cert_dir = cert_path.parent
+    key_path = cert_dir / f'{cert_path.stem}.key'
+    key_type = options['key_type']
+
+    if key_type == 'rsa':
+        key: KeyType = create_rsa_key()
+    elif key_type == 'ec':
+        key = create_ec_key()
+    else:
+        raise MakeCertError(f'Unknown key_type == {key_type}')
+
+    save_key(key, save_to=key_path)
+
+    # TODO load if exists
+    subject = subjects[options['subject']]
+    cert = create_cert(
+        subject=subject,
+        key=key,
+        issuer_cert=issuer_cert,
+        signing_key=signing_key,
+        not_valid_after_days=options.get('not_valid_after_days')
+    )
+    save_cert(cert, save_to=cert_path)
+
+    for next_cert_path_str, next_cert_options in options.get('issue', {}).items():
+        next_cert_path = Path(next_cert_path_str)
+        cert_from_dict(
+            next_cert_path,
+            options=next_cert_options,
+            subjects=subjects,
+            issuer_cert=cert,
+            signing_key=key,
+        )
+
+
+def process_hier_file(hier_file_path: Path) -> None:
+    print(f'Creating certificates for {hier_file_path} hierarhy...')
+    # TODO Implement intermediate certs
+    with open(hier_file_path, 'r') as file:
+        data = yaml.safe_load(file)
+
+    names = {k: name_from_dict(val) for k, val in data['names'].items()}
+    certs: dict[str, x509.Certificate] = {}
+    keys: dict[str, KeyType] = {}
+
+    for cert_path_str, cert_dict in data['certs'].items():
+        cert_from_dict(Path(cert_path_str), options=cert_dict, subjects=names)
+    print(f'Hierarhy {hier_file_path} is done.')
+
+
+if __name__ == '__main__':
+    args = get_args()
+    process_hier_file(args.filename)
