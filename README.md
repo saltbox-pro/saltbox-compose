@@ -2,7 +2,7 @@
 
 # FastMS Compose
 
-## Run
+## Prepare
 
 While project is private, login required to obtain the images.
 
@@ -27,6 +27,8 @@ your certificates into `certs/` respecting
 [`redis/redis.conf`](./redis/redis.conf).
 
 Make copy of [`example.env`](example.env) file named `.env`. Tune it, than run:
+
+## Run
 
 ```bash
 sudo docker compose up --build
@@ -62,6 +64,17 @@ sudo docker compose build --no-cache
 ```
 
 `--no-cache` guarantees build with latest dependencies.
+
+### Connect to redis-salt Redis instance
+
+Dev mode allows to connect to the Redis instance by URL
+`rediss://localhost:6379` (SIC!). Since TLS is enabled client may skip
+a certificate validation (option like `--insecure`) or use a CA certificate.
+The last may be obtained with command:
+
+```bash
+sudo docker compose exec redis-salt cat /etc/redis/certs/ca.crt
+```
 
 ## Cleanup
 

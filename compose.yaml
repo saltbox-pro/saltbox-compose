@@ -102,6 +102,17 @@ services:
     depends_on:
       - redis-salt
 
+  make-redis-certs:
+    <<: *default
+    image: '${IMAGE_REGISTRY}/make-certs:master'
+    restart: on-failure
+    #environment:
+    command:
+      - '/root/hier.yaml'
+    volumes:
+      - './redis-salt-certs-hier.yaml:/root/hier.yaml'
+      - 'redis_salt_certs:/mnt/certs/'
+
   redis-salt:
     <<: *default
     image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
@@ -109,11 +120,13 @@ services:
       - --save 60 1
     volumes:
       - 'redis_salt_data:/data/'
-      - './certs/:/etc/redis/ssl/'
+      - 'redis_salt_certs:/etc/redis/certs/'
     expose:
       - 6379
     secrets:
       - redis_salt_password
+    depends_on:
+      - make-redis-certs
 
   fastms-core:
     <<: *default
@@ -156,6 +169,7 @@ services:
 volumes:
   salt_master_pki: {}
   redis_salt_data: {}
+  redis_salt_certs: {}
   keycloak-db_data: {}
 
 secrets:
