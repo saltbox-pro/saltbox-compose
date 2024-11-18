@@ -1,4 +1,4 @@
-#!/bin/env python3
+#! /bin/env python3
 
 import argparse
 import string
@@ -14,6 +14,8 @@ SECRETS = {
     'mongo_admin_password': 16,
     'salt_api_password': 32,
     'redis_salt_password': 16,
+    'redis_salt_ca_private_key_password': 16,
+    'redis_salt_private_key_password': 16,
 }
 
 

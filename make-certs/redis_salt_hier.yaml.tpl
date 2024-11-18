@@ -9,18 +9,18 @@ names:
     common_name: redis-salt
 
 certs:
-  /mnt/certs/ca.crt:
+  /mnt/redis_certs/ca.crt:
     subject: FastMS
     not_valid_after_days: null
-    key_password: null
+    key_password: '${CA_KEY_PASSWORD}'
     basic_constraints:
       ca: true
       path_length: 0  # No further CA certificates
     issue:
-      /mnt/certs/redis.crt:
+      /mnt/redis_certs/redis.crt:
         subject: FastMS
         not_valid_after_days: null
-        key_password: null
+        key_password: '${REDIS_KEY_PASSWORD}'
         basic_constraints:
           ca: false
           path_length: null
@@ -32,3 +32,5 @@ certs:
         extended_key_usage:
           server: true
           client: false
+
+# vi: syn=yaml

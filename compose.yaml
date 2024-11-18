@@ -102,31 +102,41 @@ services:
     depends_on:
       - redis-salt
 
-  make-redis-certs:
+  make-redis-salt-certs:
     <<: *default
-    image: '${IMAGE_REGISTRY}/make-certs:master'
+    build:
+      context: make-certs
+      args:
+        IMAGE: '${IMAGE_REGISTRY}/make-certs:master'
     restart: on-failure
-    #environment:
     command:
       - '/root/hier.yaml'
     volumes:
-      - './redis-salt-certs-hier.yaml:/root/hier.yaml'
-      - 'redis_salt_certs:/mnt/certs/'
+      - 'redis_salt_certs:/mnt/redis_certs/'
+    secrets:
+      - redis_salt_ca_private_key_password
+      - redis_salt_private_key_password
 
   redis-salt:
     <<: *default
     image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
+    environment:
+      TLS_AUTH_CLIENT: optional
     command:
       - --save 60 1
     volumes:
       - 'redis_salt_data:/data/'
-      - 'redis_salt_certs:/etc/redis/certs/'
+      - type: volume
+        source: redis_salt_certs
+        target: '/etc/redis/certs/'
+        read_only: true
     expose:
       - 6379
     secrets:
       - redis_salt_password
+      - redis_salt_private_key_password
     depends_on:
-      - make-redis-certs
+      - make-redis-salt-certs
 
   fastms-core:
     <<: *default
@@ -187,3 +197,7 @@ secrets:
     file: secrets/salt_api_password
   redis_salt_password:
     file: secrets/redis_salt_password
+  redis_salt_ca_private_key_password:
+    file: secrets/redis_salt_ca_private_key_password
+  redis_salt_private_key_password:
+    file: secrets/redis_salt_private_key_password
