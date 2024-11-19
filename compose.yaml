@@ -89,7 +89,7 @@ services:
     image: '${IMAGE_REGISTRY}/fastms-compose/salt-master:master'
     init: true
     environment:
-      REDIS_USERNAME: ${SALT_REDIS_USERNAME}
+      REDIS_USERNAME: ${REDIS_SALT_USERNAME}
     secrets:
       - salt_api_password
       - redis_salt_password
@@ -124,7 +124,7 @@ services:
     image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
     environment:
       TLS_AUTH_CLIENT: optional
-      REDIS_USERNAME: ${SALT_REDIS_USERNAME}
+      REDIS_USERNAME: ${REDIS_SALT_USERNAME}
     command:
       - --save 60 1
     volumes:
@@ -146,14 +146,22 @@ services:
     image: '${IMAGE_REGISTRY}/fastms-core:${CORE_IMAGE_TAG}'
     environment:
       SALT_URL: 'https://salt-master:8000'
-      SALT_USER: ${SALT_API_USER}
-      REDIS_URL: 'redis://redis-salt:6379/0'
-      BASE_URL_ROOT_PATH: ${BACKEND_BASE_URL}
-      TIMEOUT_GRACEFUL_SHUTDOWN: ${BACKEND_SHUTDOWN_TIMEOUT_SEC}
-      MONGO_USER: ${MONGO_USER}
-      MONGO_DB: ${MONGO_DB}
+      SALT_USER: '${SALT_API_USER}'
+      REDIS_URL: 'rediss://redis-salt:6379/0'
+      REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
+      REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
+      BASE_URL_ROOT_PATH: '${BACKEND_BASE_URL}'
+      TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
+      MONGO_USER: '${MONGO_USER}'
+      MONGO_DB: '${MONGO_DB}'
+    volumes:
+      - type: volume
+        source: redis_salt_certs
+        target: '/etc/redis/certs/'
+        read_only: true
     secrets:
       - salt_api_password
+      - redis_salt_password
       - mongo_admin_password
     expose:
       - ${BACKEND_HTTP_PORT}
