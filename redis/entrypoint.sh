@@ -12,8 +12,8 @@ mkdir --parents "$conf_subdir"
 cat <<EOF > "$acl_conf_file"
 # Allow all exclusively for user ${REDIS_USERNAME} by password
 
-user default reset nopass on -@all ~*
-user ${REDIS_USERNAME} reset nopass on +@all ~* >${password}
+user default reset nopass on -@all ~* &*
+user ${REDIS_USERNAME} reset nopass on +@all ~* &* >${password}
 EOF
 
 cat <<EOF > "$tls_conf_file"

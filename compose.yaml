@@ -88,10 +88,8 @@ services:
     <<: *default
     image: '${IMAGE_REGISTRY}/fastms-compose/salt-master:master'
     init: true
-    develop:
-      watch:
-        - action: rebuild
-          path: salt/
+    environment:
+      REDIS_USERNAME: ${SALT_REDIS_USERNAME}
     secrets:
       - salt_api_password
       - redis_salt_password
@@ -99,6 +97,10 @@ services:
       - '4505-4506:4505-4506'
     volumes:
       - 'salt_master_pki:/etc/salt/pki/'
+      - type: volume
+        source: redis_salt_certs
+        target: '/etc/redis/certs/'
+        read_only: true
     depends_on:
       - redis-salt
 
@@ -122,6 +124,7 @@ services:
     image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
     environment:
       TLS_AUTH_CLIENT: optional
+      REDIS_USERNAME: ${SALT_REDIS_USERNAME}
     command:
       - --save 60 1
     volumes:

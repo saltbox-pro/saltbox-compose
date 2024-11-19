@@ -9,26 +9,38 @@ services:
 ################################################################################
 ## Overrides
 ################################################################################
+# TODO: Move build overrides to separate files to switch with COMPOSE_FILE=...
   fastms-core:
     build:
       context: $CORE_BUILD_DIR
       target: dev
-    image: fastms-core:dev
+    image: 'fastms-core:dev'
     volumes:
       - '${CORE_BUILD_DIR}:/mnt/fastms_core'
   fastms-frontend:
     build:
       context: $FRONTEND_BUILD_DIR
-    image: fastms-frontend:dev
+    image: 'fastms-frontend:dev'
     develop:
       watch:
         - action: rebuild
           path: $FRONTEND_BUILD_DIR
   salt-master:
+    build:
+      context: salt/
+      target: salt-master
+    image: 'salt-master:dev'
+    develop:
+      watch:
+        - action: rebuild
+          path: salt/
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
   redis-salt:
+    build:
+      context: redis/
+    image: 'redis-salt:dev'
     ports:
       - '6379:6379'
 
