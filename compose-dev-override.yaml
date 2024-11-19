@@ -54,7 +54,6 @@ services:
 ################################################################################
 ## Additional services
 ################################################################################
-  # FIXME Clean inside container with script
   clean-keys-cmd:
     pull_policy: never
     image: fastms-salt-master

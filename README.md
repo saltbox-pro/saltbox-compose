@@ -76,6 +76,22 @@ The last may be obtained with command:
 sudo docker compose exec redis-salt cat /etc/redis/certs/ca.crt
 ```
 
+### Dev minions
+
+Dev mode provides amount of impersistent minions in replica mode. Look for
+options in the [`example.env`](./example.env) file.
+
+Dev minions does not keep their keys between restarts so keys will be dropped
+on the master. Some operations may lead to lost minions. It that keys try the
+following command, which should reconnect minions:
+
+```bash
+sudo docker compose restart salt-master
+```
+
+Note: `docker compose up --force-recreate salt-master` not regenerates
+minions.
+
 ## Cleanup
 
 ### Cleanup data
