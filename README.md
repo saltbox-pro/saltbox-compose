@@ -45,15 +45,16 @@ sudo sysctl -p /etc/sysctl.d/fastms.conf
 Dev mode allows to build images instead of pulling pre-built and adds some
 useful overrides.
 
-Look at "Dev options" section of your [`example.env`](example.env) file copy. To
-enable dev mode uncomment `COMPOSE_FILE=` line. Than run compose as usual.
+Look at "Dev options" section of your [`example.env`](example.env) file copy.
+To enable dev options uncomment required `COMPOSE_FILE=` lines. Than run
+compose as usual.
 
 **ATTENTION!** Do not use development mode on production environments cause it
 may change the data.
 
 ### Build images in dev mode
 
-To build clean images use command:
+To build clean images use command with enabled `COMPOSE_FILE` overrides:
 
 ```bash
 sudo docker compose build --no-cache

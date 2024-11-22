@@ -1,3 +1,7 @@
+---
+
+## FastMS Compose SaltStack override file for dev-mode.
+#
 # Local generic does not override original
 x-default-service: &default
   restart: unless-stopped
@@ -6,25 +10,7 @@ x-default-service: &default
     - .env
 
 services:
-################################################################################
-## Overrides
-################################################################################
-# TODO: Move build overrides to separate files to switch with COMPOSE_FILE=...
-  fastms-core:
-    build:
-      context: $CORE_BUILD_DIR
-      target: dev
-    image: 'fastms-core:dev'
-    volumes:
-      - '${CORE_BUILD_DIR}:/mnt/fastms_core'
-  fastms-frontend:
-    build:
-      context: $FRONTEND_BUILD_DIR
-    image: 'fastms-frontend:dev'
-    develop:
-      watch:
-        - action: rebuild
-          path: $FRONTEND_BUILD_DIR
+  # Override
   salt-master:
     build:
       context: salt/
@@ -37,23 +23,8 @@ services:
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
-  redis-salt:
-    build:
-      context: redis/
-    image: 'redis-salt:dev'
-    ports:
-      - '6379:6379'
 
-  mongo:
-    ports:
-      - ${MONGO_PORT:-27017}:${MONGO_PORT:-27017}
-    volumes:
-      - mongo_data:/data/db
-      - mongo_config:/data/configdb
-
-################################################################################
-## Additional services
-################################################################################
+  # Additional services
   clean-keys-cmd:
     pull_policy: never
     image: fastms-salt-master
@@ -85,7 +56,3 @@ services:
       clean-keys-cmd:
         restart: true
         condition: service_completed_successfully
-
-volumes:
-  mongo_data: {}
-  mongo_config: {}

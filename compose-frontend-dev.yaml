@@ -1,0 +1,13 @@
+---
+
+## FastMS Compose frontend override file for dev-mode.
+
+services:
+  fastms-frontend:
+    build:
+      context: $FRONTEND_BUILD_DIR
+    image: 'fastms-frontend:dev'
+    develop:
+      watch:
+        - action: rebuild
+          path: $FRONTEND_BUILD_DIR
