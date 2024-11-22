@@ -101,6 +101,8 @@ services:
         source: redis_salt_certs
         target: '/etc/redis/certs/'
         read_only: true
+    profiles:
+      - salt-master
     depends_on:
       - redis-salt
 

@@ -58,6 +58,8 @@ services:
     pull_policy: never
     image: fastms-salt-master
     command: 'salt-key --delete-all --yes'
+    profiles:
+      - salt-master
     depends_on:
       salt-master:
         restart: true
@@ -77,6 +79,8 @@ services:
     deploy:
       mode: replicated
       replicas: ${SALT_MINION_REPLICAS:-1}
+    profiles:
+      - salt-master
     depends_on:
       clean-keys-cmd:
         restart: true
