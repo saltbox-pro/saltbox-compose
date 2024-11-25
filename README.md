@@ -30,6 +30,13 @@ Make copy of [`example.env`](example.env) file named `.env`. Tune it, than run:
 sudo docker compose up --build
 ```
 
+To update outer images:
+```bash
+sudo docker compose pull
+```
+
+than restart e.g. with `sudo docker compose down && sudo docker compose up -d`.
+
 For production use following commands are recommended:
 ```bash
 sudo sh -c "echo 'vm.overcommit_memory=1' > /etc/sysctl.d/fastms.conf"
