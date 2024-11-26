@@ -9,13 +9,16 @@ x-default-service: &default
   env_file:
     - .env
 
-services:
-  # Override
-  salt-master:
+x-salt-service: &salt
     build:
       context: salt/
       target: salt-master
     image: 'salt-master:dev'
+
+services:
+  # Override
+  salt-master:
+    <<: *salt
     develop:
       watch:
         - action: rebuild
@@ -23,18 +26,18 @@ services:
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
+    depends_on:
+      clean-keys-cmd:
+        condition: service_completed_successfully
+        required: false
+        restart: false
 
   # Additional services
   clean-keys-cmd:
-    pull_policy: never
-    image: fastms-salt-master
+    <<: *salt
     command: 'salt-key --delete-all --yes'
     profiles:
       - salt-master
-    depends_on:
-      salt-master:
-        restart: true
-        condition: service_started
     volumes:
       - 'salt_master_pki:/etc/salt/pki/'
   salt-minion:
@@ -53,6 +56,4 @@ services:
     profiles:
       - salt-master
     depends_on:
-      clean-keys-cmd:
-        restart: true
-        condition: service_completed_successfully
+      - salt-master
