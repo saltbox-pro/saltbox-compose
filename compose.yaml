@@ -80,6 +80,7 @@ services:
     secrets:
       - keycloak_admin_password
       - keycloak_client_fastms_core_password
+      - keycloak_user_password
     depends_on:
       keycloak:
         condition: service_healthy
@@ -189,6 +190,8 @@ services:
     secrets:
       - mongo_admin_password
 
+configs: {}
+
 volumes:
   salt_master_pki: {}
   redis_salt_data: {}
@@ -204,6 +207,8 @@ secrets:
   # RUNTIME secrets
   keycloak_database_password:
     file: secrets/keycloak_database_password
+  keycloak_user_password:
+    file: secrets/keycloak_user_password
   mongo_admin_password:
     file: secrets/mongo_admin_password
   salt_api_password:

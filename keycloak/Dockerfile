@@ -29,12 +29,13 @@ EOF
 
 
 FROM $BASE_IMAGE AS keycloak
+LABEL version='0.2'
 
 WORKDIR /opt/keycloak/
 
 COPY --from=ubi-micro-build /mnt/rootfs /
 COPY --from=builder /opt/keycloak/ ./
-COPY startup.sh create_realm.sh /usr/local/bin/
+COPY startup.sh /usr/local/bin/
 
 ENV KEYCLOAK_BASE_URL=/
 ENV KC_HTTP_ENABLED=true
@@ -49,6 +50,12 @@ HEALTHCHECK --start-period=20s --start-interval=2s CMD wget \
 
 
 FROM keycloak AS keycloak-init
+LABEL version='0.2'
+
+ENV KEYCLOAK_USER_NAME=''
+ENV KEYCLOAK_USER_EMAIL=''
+ENV KEYCLOAK_USER_FIRSTNAME=''
+ENV KEYCLOAK_USER_LASTNAME=''
 
 COPY create_realm.sh /usr/local/bin/
 COPY client.json ./
