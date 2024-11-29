@@ -3,13 +3,17 @@
 ## FastMS Compose backend override file for dev-mode.
 
 services:
-  fastms-core:
+  fastms-core: &core
     build:
       context: $CORE_BUILD_DIR
       target: dev
     image: 'fastms-core:dev'
     volumes:
       - '${CORE_BUILD_DIR}:/mnt/fastms_core'
+  fastms-core-celery-beat:
+    <<: *core
+  fastms-core-celery-worker-tasks:
+    <<: *core
   redis-salt:
     build:
       context: redis/

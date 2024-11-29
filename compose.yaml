@@ -56,7 +56,9 @@ services:
       watch:
         - action: rebuild
           path: keycloak/
-    command: start --optimized
+    command:
+      - 'start'
+      - '--optimized'
     environment:
       KC_DB_URL: 'jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DATABASE}'
       KC_DB_USERNAME: ${KEYCLOAK_DATABASE_USER}
@@ -144,10 +146,50 @@ services:
     depends_on:
       - make-redis-salt-certs
 
-  fastms-core:
+    # TODO At once with redis-salt?
+#   make-redis-celery-certs:
+#     <<: *default
+#     build:
+#       context: make-certs
+#       args:
+#         IMAGE: '${IMAGE_REGISTRY}/make-certs:master'
+#     restart: on-failure
+#     command:
+#       - '/root/hier.yaml'
+#     volumes:
+#       - 'redis_celery_certs:/mnt/celery_certs/'
+#     secrets:
+#       - redis_celery_ca_private_key_password
+#       - redis_celery_private_key_password
+
+  redis-celery:
+    <<: *default
+    # TODO image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
+    image: 'redis:7-alpine'
+    #environment:
+    #  TLS_AUTH_CLIENT: optional
+    #  REDIS_USERNAME: ${REDIS_CELERY_USERNAME}
+    command:
+      - --save 60 1
+    # volumes:
+    # - 'redis_celery_data:/data/'
+    # - type: volume
+    #   source: redis_celery_certs
+    #   target: '/etc/redis/certs/'
+    #   read_only: true
+    expose:
+      - 6379
+    #secrets:
+    #se- redis_celery_password
+    #se- redis_celery_private_key_password
+    #depends_on:
+    #  - make-redis-celery-certs
+
+  fastms-core: &core
     <<: *default
     image: '${IMAGE_REGISTRY}/fastms-core:${CORE_IMAGE_TAG}'
     environment:
+      CELERY_BROKER_URL: 'redis://redis-celery:6379/0'
       SALT_URL: 'https://salt-master:8000'
       SALT_USER: '${SALT_API_USER}'
       REDIS_URL: 'rediss://redis-salt:6379/0'
@@ -162,6 +204,7 @@ services:
         source: redis_salt_certs
         target: '/etc/redis/certs/'
         read_only: true
+      - 'fastms_core_var:/var/fastms-core/'
     secrets:
       - salt_api_password
       - redis_salt_password
@@ -173,6 +216,21 @@ services:
         condition: service_healthy
       mongo:
         condition: service_started
+      redis-celery:
+        condition: service_started
+
+  fastms-core-celery-beat:
+    <<: *core
+    entrypoint: '/usr/local/bin/celery-beat.sh'
+    expose: []
+
+  fastms-core-celery-worker-tasks:
+    <<: *core
+    entrypoint: '/usr/local/bin/celery-worker.sh'
+    command:
+      - 'tasks'
+      - '--concurrency 4'
+    expose: []
 
   fastms-frontend:
     <<: *default
@@ -193,10 +251,13 @@ services:
 configs: {}
 
 volumes:
-  salt_master_pki: {}
-  redis_salt_data: {}
-  redis_salt_certs: {}
+  fastms_core_var: {}
   keycloak-db_data: {}
+  redis_salt_certs: {}
+  redis_salt_data: {}
+  redis_celery_certs: {}
+  redis_celery_data: {}
+  salt_master_pki: {}
 
 secrets:
   # BUILD TIME secrets
@@ -219,3 +280,7 @@ secrets:
     file: secrets/redis_salt_ca_private_key_password
   redis_salt_private_key_password:
     file: secrets/redis_salt_private_key_password
+#  redis_celery_ca_private_key_password:
+#    file: secrets/redis_celery_ca_private_key_password
+#  redis_celery_private_key_password:
+#    file: secrets/redis_celery_private_key_password
