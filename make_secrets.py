@@ -9,14 +9,15 @@ from pathlib import Path
 
 SECRETS = {
     'keycloak_admin_password': 16,
-    'keycloak_database_password': 16,
     'keycloak_client_fastms_core_password': 16,
-    'mongo_admin_password': 16,
-    'salt_api_password': 32,
-    'redis_salt_password': 16,
-    'redis_salt_ca_private_key_password': 16,
-    'redis_salt_private_key_password': 16,
+    'keycloak_database_password': 16,
     'keycloak_user_password': 12,
+    'mongo_admin_password': 16,
+    'redis_celery_password': 16,
+    'redis_salt_ca_private_key_password': 16,
+    'redis_salt_password': 16,
+    'redis_salt_private_key_password': 16,
+    'salt_api_password': 32,
 }
 
 

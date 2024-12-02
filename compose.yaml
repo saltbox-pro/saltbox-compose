@@ -128,8 +128,11 @@ services:
     <<: *default
     image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
     environment:
+      REDIS_ENCRYPTION: 'on'
       TLS_AUTH_CLIENT: optional
       REDIS_USERNAME: ${REDIS_SALT_USERNAME}
+      REDIS_PASSWORD_SECRET: '/run/secrets/redis_salt_password'
+      REDIS_PRIVATE_KEY_PASSWORD_SECRET: '/run/secrets/redis_salt_private_key_password'
     command:
       - --save 60 1
     volumes:
@@ -146,44 +149,21 @@ services:
     depends_on:
       - make-redis-salt-certs
 
-    # TODO At once with redis-salt?
-#   make-redis-celery-certs:
-#     <<: *default
-#     build:
-#       context: make-certs
-#       args:
-#         IMAGE: '${IMAGE_REGISTRY}/make-certs:master'
-#     restart: on-failure
-#     command:
-#       - '/root/hier.yaml'
-#     volumes:
-#       - 'redis_celery_certs:/mnt/celery_certs/'
-#     secrets:
-#       - redis_celery_ca_private_key_password
-#       - redis_celery_private_key_password
-
   redis-celery:
     <<: *default
-    # TODO image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
-    image: 'redis:7-alpine'
-    #environment:
-    #  TLS_AUTH_CLIENT: optional
-    #  REDIS_USERNAME: ${REDIS_CELERY_USERNAME}
+    image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
+    environment:
+      REDIS_ENCRYPTION: 'off'
+      REDIS_USERNAME: ${REDIS_CELERY_USERNAME}
+      REDIS_PASSWORD_SECRET: '/run/secrets/redis_celery_password'
     command:
       - --save 60 1
-    # volumes:
-    # - 'redis_celery_data:/data/'
-    # - type: volume
-    #   source: redis_celery_certs
-    #   target: '/etc/redis/certs/'
-    #   read_only: true
+    volumes:
+      - 'redis_celery_data:/data/'
     expose:
       - 6379
-    #secrets:
-    #se- redis_celery_password
-    #se- redis_celery_private_key_password
-    #depends_on:
-    #  - make-redis-celery-certs
+    secrets:
+      - redis_celery_password
 
   fastms-core: &core
     <<: *default
@@ -280,7 +260,5 @@ secrets:
     file: secrets/redis_salt_ca_private_key_password
   redis_salt_private_key_password:
     file: secrets/redis_salt_private_key_password
-#  redis_celery_ca_private_key_password:
-#    file: secrets/redis_celery_ca_private_key_password
-#  redis_celery_private_key_password:
-#    file: secrets/redis_celery_private_key_password
+  redis_celery_password:
+    file: secrets/redis_celery_password
