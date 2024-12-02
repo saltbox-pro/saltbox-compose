@@ -169,7 +169,10 @@ services:
     <<: *default
     image: '${IMAGE_REGISTRY}/fastms-core:${CORE_IMAGE_TAG}'
     environment:
-      CELERY_BROKER_URL: 'redis://redis-celery:6379/0'
+      REDIS_CELERY_PASSWORD_SECRET: '/run/secrets/redis_celery_password'
+      REDIS_CELERY_HOST: redis-celery
+      REDIS_CELERY_PORT: 6379
+      REDIS_CELERY_DB: 0
       SALT_URL: 'https://salt-master:8000'
       SALT_USER: '${SALT_API_USER}'
       REDIS_URL: 'rediss://redis-salt:6379/0'
@@ -187,6 +190,7 @@ services:
       - 'fastms_core_var:/var/fastms-core/'
     secrets:
       - salt_api_password
+      - redis_celery_password
       - redis_salt_password
       - mongo_admin_password
     expose:
