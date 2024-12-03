@@ -1,19 +1,9 @@
-# Local generic does not override original
-x-default-service: &default
-  restart: unless-stopped
-  stop_grace_period: ${STOP_GRACE_PERIOD}
-  env_file:
-    - .env
-
 services:
-################################################################################
-## Overrides
-################################################################################
   proxy:
     environment:
-      API_BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_NAME}${BACKEND_BASE_URL}'
-      WS_SERVER_URL: '${WEB_WS_SCHEME}://${WEB_SERVER_NAME}${BACKEND_BASE_URL}'
-      OPEN_ID_AUTHORITY: '${WEB_SERVER_SCHEME}://${WEB_SERVER_NAME}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
+      API_BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_HOST}${BACKEND_BASE_URL}'
+      WS_SERVER_URL: '${WEB_SERVER_WS_SCHEME}://${WEB_SERVER_HOST}${BACKEND_BASE_URL}'
+      OPEN_ID_AUTHORITY: '${WEB_SERVER_SCHEME}://${WEB_SERVER_HOST}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
   keycloak:
     environment:
       KC_HOSTNAME_STRICT_HTTPS: false
