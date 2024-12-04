@@ -22,7 +22,7 @@ done with helper script:
 ./make_secrets.py
 ```
 
-Make copy of [`example.env`](example.env) file named `.env`. Tune it, than run:
+Make copy of [`example.env`](example.env) file named `.env`. Tune it before run.
 
 ## Run
 

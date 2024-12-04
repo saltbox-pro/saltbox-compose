@@ -1,6 +1,7 @@
 x-default-service: &default
   restart: unless-stopped
   stop_grace_period: ${STOP_GRACE_PERIOD}
+  # FIXME
   env_file:
     - .env
 
@@ -17,9 +18,9 @@ services:
           path: proxy/
     environment:
       BACKEND_HOSTNAME: fastms-core
-      API_BASE_URL: 'http://${BACKEND_HOST}${BACKEND_BASE_URL}'
-      WS_SERVER_URL: 'ws://${BACKEND_HOST}${BACKEND_BASE_URL}'
-      OPEN_ID_AUTHORITY: 'http://${BACKEND_HOST}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
+      API_BASE_URL: '${WEB_SERVER_BASE_URL}${BACKEND_PATH}'
+      WS_SERVER_URL: '${WEB_SERVER_WS_SCHEME}://${WEB_SERVER_SOCKET}${BACKEND_PATH}'
+      OPEN_ID_AUTHORITY: '${WEB_SERVER_BASE_URL}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
       OPEN_ID_CLIENT_ID: ${KEYCLOAK_CLIENT}
       OPEN_ID_REDIRECT_URL: ${FRONTEND_OPEN_ID_REDIRECT_URL}
     ports:
@@ -178,7 +179,7 @@ services:
       REDIS_URL: 'rediss://redis-salt:6379/0'
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
-      BASE_URL_ROOT_PATH: '${BACKEND_BASE_URL}'
+      BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
       MONGO_USER: '${MONGO_USER}'
       MONGO_DB: '${MONGO_DB}'

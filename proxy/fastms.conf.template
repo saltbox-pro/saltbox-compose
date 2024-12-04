@@ -23,7 +23,7 @@ server {
         proxy_set_header X-Forwarded-Host $host;
     }
     
-    location ${BACKEND_BASE_URL}/ {
+    location ${BACKEND_PATH}/ {
         proxy_pass 'http://${BACKEND_HOSTNAME}:${BACKEND_HTTP_PORT}';
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -31,7 +31,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
-        rewrite ^${BACKEND_BASE_URL}/(.*)$ /$1 break;
+        rewrite ^${BACKEND_PATH}/(.*)$ /$1 break;
     }
 }
 
