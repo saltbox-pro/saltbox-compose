@@ -7,6 +7,8 @@ html_dir=/srv/html/
 
 mkdir -p "$html_dir"
 
+# FIXME apiBasePath -> apiBaseUrl
+# FIXME openIdClientSecret -> openIdClientToken
 cat << EOF > "${html_dir}/env.json"
 {
   "wsServerUrl": "${WS_SERVER_URL}",
