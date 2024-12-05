@@ -197,6 +197,8 @@ services:
       SALT_URL: 'https://salt-master:8000'
       SALT_USERNAME: '${SALT_API_USER}'
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
+      KC_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
+      KC_REALM_NAME: '${KEYCLOAK_REALM}'
     volumes:
       - type: volume
         source: redis_salt_certs
