@@ -1,9 +1,6 @@
 x-default-service: &default
   restart: unless-stopped
   stop_grace_period: ${STOP_GRACE_PERIOD}
-  # FIXME
-  env_file:
-    - .env
 
 name: fastms-compose
 
@@ -17,12 +14,17 @@ services:
         - action: rebuild
           path: proxy/
     environment:
-      BACKEND_HOSTNAME: fastms-core
       API_BASE_URL: '${WEB_SERVER_BASE_URL}${BACKEND_PATH}'
-      WS_SERVER_URL: '${WEB_SERVER_WS_SCHEME}://${WEB_SERVER_SOCKET}${BACKEND_PATH}'
+      BACKEND_HOSTNAME: fastms-core
+      BACKEND_HTTP_PORT: '${BACKEND_HTTP_PORT}'
+      BACKEND_PATH: '${BACKEND_PATH}'
+      KEYCLOAK_BASE_URL: '${KEYCLOAK_BASE_URL}'
       OPEN_ID_AUTHORITY: '${WEB_SERVER_BASE_URL}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
-      OPEN_ID_CLIENT_ID: ${KEYCLOAK_CLIENT}
-      OPEN_ID_REDIRECT_URL: ${FRONTEND_OPEN_ID_REDIRECT_URL}
+      OPEN_ID_CLIENT_ID: '${KEYCLOAK_CLIENT}'
+      OPEN_ID_REDIRECT_URL: '${FRONTEND_OPEN_ID_REDIRECT_URL}'
+      WS_SERVER_URL: '${WEB_SERVER_WS_SCHEME}://${WEB_SERVER_SOCKET}${BACKEND_PATH}'
+      WEB_SERVER_WS_SCHEME: '${WEB_SERVER_WS_SCHEME}'
+      WEB_SERVER_SCHEME: '${WEB_SERVER_SCHEME}'
     ports:
       - '${WEB_SERVER_PORT}:80'
     depends_on:
@@ -64,7 +66,14 @@ services:
       KC_DB_URL: 'jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DATABASE}'
       KC_DB_USERNAME: ${KEYCLOAK_DATABASE_USER}
       KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_BACKCHANNEL: '${KEYCLOAK_STRICT_HTTPS-true}'
+      KC_HOSTNAME_STRICT_HTTPS: '${KEYCLOAK_STRICT_HTTPS-true}'
       KEYCLOAK_ADMIN: admin
+      KEYCLOAK_BASE_URL: '${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_USER_EMAIL: '${KEYCLOAK_USER_EMAIL}'
+      KEYCLOAK_USER_FIRSTNAME: '${KEYCLOAK_USER_FIRSTNAME}'
+      KEYCLOAK_USER_LASTNAME: '${KEYCLOAK_USER_LASTNAME}'
+      KEYCLOAK_USER_NAME: '${KEYCLOAK_USER_NAME}'
     secrets:
       - keycloak_admin_password
       - keycloak_database_password
@@ -93,7 +102,10 @@ services:
     image: '${IMAGE_REGISTRY}/fastms-compose/salt-master:master'
     init: true
     environment:
-      REDIS_USERNAME: ${REDIS_SALT_USERNAME}
+      REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
+      SALT_API_LOG_LEVEL: '${SALT_API_LOG_LEVEL}'
+      SALT_API_USER: '${SALT_API_USER}'
+      SALT_MASTER_LOG_LEVEL: '${SALT_MASTER_LOG_LEVEL}'
     secrets:
       - salt_api_password
       - redis_salt_password
@@ -170,19 +182,21 @@ services:
     <<: *default
     image: '${IMAGE_REGISTRY}/fastms-core:${CORE_IMAGE_TAG}'
     environment:
-      REDIS_CELERY_PASSWORD_SECRET: '/run/secrets/redis_celery_password'
-      REDIS_CELERY_HOST: redis-celery
-      REDIS_CELERY_PORT: 6379
+      BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
+      MONGO_DB: '${MONGO_DB}'
+      MONGO_USER: '${MONGO_USER}'
+      REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
       REDIS_CELERY_DB: 0
-      SALT_URL: 'https://salt-master:8000'
-      SALT_USER: '${SALT_API_USER}'
+      REDIS_CELERY_HOST: redis-celery
+      REDIS_CELERY_PASSWORD_SECRET: '/run/secrets/redis_celery_password'
+      REDIS_CELERY_PORT: 6379
+      REDIS_CELERY_USERNAME: '${REDIS_CELERY_USERNAME}'
       REDIS_URL: 'rediss://redis-salt:6379/0'
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
-      REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
-      BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
+      SALT_EAUTH: file
+      SALT_URL: 'https://salt-master:8000'
+      SALT_USERNAME: '${SALT_API_USER}'
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
-      MONGO_USER: '${MONGO_USER}'
-      MONGO_DB: '${MONGO_DB}'
     volumes:
       - type: volume
         source: redis_salt_certs
