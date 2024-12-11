@@ -70,10 +70,6 @@ services:
       KC_HOSTNAME_STRICT_HTTPS: '${KEYCLOAK_STRICT_HTTPS-true}'
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_BASE_URL: '${KEYCLOAK_BASE_URL}'
-      KEYCLOAK_USER_EMAIL: '${KEYCLOAK_USER_EMAIL}'
-      KEYCLOAK_USER_FIRSTNAME: '${KEYCLOAK_USER_FIRSTNAME}'
-      KEYCLOAK_USER_LASTNAME: '${KEYCLOAK_USER_LASTNAME}'
-      KEYCLOAK_USER_NAME: '${KEYCLOAK_USER_NAME}'
     secrets:
       - keycloak_admin_password
       - keycloak_database_password
@@ -88,7 +84,13 @@ services:
       target: keycloak-init
     restart: on-failure
     environment:
+      KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
+      KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_USER_EMAIL: '${KEYCLOAK_USER_EMAIL}'
+      KEYCLOAK_USER_FIRSTNAME: '${KEYCLOAK_USER_FIRSTNAME}'
+      KEYCLOAK_USER_LASTNAME: '${KEYCLOAK_USER_LASTNAME}'
+      KEYCLOAK_USER_NAME: '${KEYCLOAK_USER_NAME}'
     secrets:
       - keycloak_admin_password
       - keycloak_client_fastms_core_password
@@ -197,8 +199,8 @@ services:
       SALT_URL: 'https://salt-master:8000'
       SALT_USERNAME: '${SALT_API_USER}'
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
-      KC_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
-      KC_REALM_NAME: '${KEYCLOAK_REALM}'
+      KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_REALM_NAME: '${KEYCLOAK_REALM}'
     volumes:
       - type: volume
         source: redis_salt_certs

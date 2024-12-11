@@ -8,6 +8,12 @@ admin_password=$(cat /run/secrets/keycloak_admin_password)
 fastms_core_password=$(cat /run/secrets/keycloak_client_fastms_core_password)
 user_password=$(cat /run/secrets/keycloak_user_password)
 
+
+if [ -z "$KEYCLOAK_REALM" ]; then
+  >&2 echo 'Missing KEYCLOAK_REALM value'
+  exit 1
+fi
+
 kcadm config credentials \
   --server "${KEYCLOAK_URL}" \
   --realm master \
