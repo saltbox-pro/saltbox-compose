@@ -4,7 +4,7 @@
 #
 # Local generic does not override original
 x-default-service: &default
-  restart: unless-stopped
+  restart: 'on-failure'
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
 # FIXME Do not clean keys on restart
@@ -61,6 +61,3 @@ services:
         condition: service_completed_successfully
         required: false
         restart: true
-      salt-master:
-        condition: service_started
-        restart: false
