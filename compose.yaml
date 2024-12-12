@@ -122,7 +122,9 @@ services:
     profiles:
       - salt-master
     depends_on:
-      - redis-salt
+      redis-salt:
+        condition: service_started
+        restart: false  # TODO Subject to decide
 
   make-redis-salt-certs:
     <<: *default
@@ -219,10 +221,13 @@ services:
     depends_on:
       keycloak:
         condition: service_healthy
+        restart: false
       mongo:
         condition: service_started
+        restart: false
       redis-celery:
         condition: service_started
+        restart: false
 
   fastms-core-celery-beat:
     <<: *core

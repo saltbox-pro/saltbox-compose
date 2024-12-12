@@ -6,35 +6,34 @@
 x-default-service: &default
   restart: unless-stopped
   stop_grace_period: ${STOP_GRACE_PERIOD}
-  env_file:
-    - .env
 
-x-salt-service: &salt
+# FIXME Do not clean keys on restart
+services:
+  # Override
+  salt-master:
     build:
       context: salt/
       target: salt-master
     image: 'salt-master:dev'
-
-services:
-  # Override
-  salt-master:
-    <<: *salt
     develop:
       watch:
-        - action: rebuild
-          path: salt/
+        - path: salt/
+          action: rebuild
+          ignore:
+            - 'config/minion.yaml'
+            - '**/*.md'
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
-    depends_on:
-      clean-keys-cmd:
-        condition: service_completed_successfully
-        required: false
-        restart: false
 
   # Additional services
   clean-keys-cmd:
-    <<: *salt
+    <<: *default
+    build:
+      context: salt/
+      target: salt-master
+    image: 'salt-master:dev'
+    restart: 'on-failure:3'
     command: 'salt-key --delete-all --yes'
     profiles:
       - salt-master
@@ -48,12 +47,20 @@ services:
     init: true
     develop:
       watch:
-        - action: rebuild
-          path: salt/
+        - path: 'salt/config/minion.yaml'
+          action: rebuild
+        - path: 'salt/Dockerfile'
+          action: rebuild
     deploy:
       mode: replicated
       replicas: ${SALT_MINION_REPLICAS:-1}
     profiles:
       - salt-master
     depends_on:
-      - salt-master
+      clean-keys-cmd:
+        condition: service_completed_successfully
+        required: false
+        restart: true
+      salt-master:
+        condition: service_started
+        restart: false

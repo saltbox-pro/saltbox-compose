@@ -56,6 +56,9 @@ Look at "Dev options" section of your [`example.env`](example.env) file copy.
 To enable dev options uncomment required `COMPOSE_FILE=` lines. Than run
 compose as usual.
 
+Use `--watch` flag or toggle watch with `w` in attached mode to rebuld
+dev-services on changes.
+
 **ATTENTION!** Do not use development mode on production environments cause it
 may change the data.
 
