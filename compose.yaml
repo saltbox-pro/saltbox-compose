@@ -158,6 +158,8 @@ services:
         read_only: true
     expose:
       - 6379
+    ports:
+      - '${REDIS_SALT_OUTER_SOCKET}:6379'
     secrets:
       - redis_salt_password
       - redis_salt_private_key_password
