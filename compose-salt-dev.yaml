@@ -44,7 +44,6 @@ services:
     build:
       context: salt/
       target: salt-minion
-    init: true
     develop:
       watch:
         - path: 'salt/config/minion.yaml'
@@ -54,6 +53,8 @@ services:
     deploy:
       mode: replicated
       replicas: ${SALT_MINION_REPLICAS:-1}
+      restart_policy:
+        condition: any
     profiles:
       - salt-master
     depends_on:
