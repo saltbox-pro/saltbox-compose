@@ -116,10 +116,6 @@ services:
         read_only: true
     profiles:
       - salt-master
-    depends_on:
-      redis-salt:
-        condition: service_started
-        restart: false  # TODO Subject to decide
 
   make-redis-salt-certs:
     <<: *default
