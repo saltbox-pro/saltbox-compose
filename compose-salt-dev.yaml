@@ -7,7 +7,6 @@ x-default-service: &default
   restart: 'on-failure'
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
-# FIXME Do not clean keys on restart
 services:
   # Override
   salt-master:
@@ -17,11 +16,21 @@ services:
     image: 'salt-master:dev'
     develop:
       watch:
-        - path: salt/
-          action: rebuild
-          ignore:
-            - 'config/minion.yaml'
-            - '**/*.md'
+        - path: 'salt/templates/'
+          action: 'sync+restart'
+          target: '/root/templates/'
+        - path: 'salt/config/supervisor.conf'
+          action: 'sync+restart'
+          target: '/etc/supervisor.conf'
+        - path: 'salt/config/netapi.conf'
+          action: 'sync+restart'
+          target: '/etc/salt/master.d/netapi.conf'
+        - path: 'salt/engines/redis_bridge.py'
+          action: 'sync+restart'
+          target: '/src/salt_extmod/engines/redis_bridge.py'
+        - path: 'salt/prepare_configs.sh'
+          action: 'sync+restart'
+          target: '/usr/local/bin/prepare_configs.sh'
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
@@ -44,17 +53,15 @@ services:
     build:
       context: salt/
       target: salt-minion
+    image: 'salt-minion:dev'
     develop:
       watch:
-        - path: 'salt/config/minion.yaml'
-          action: rebuild
-        - path: 'salt/Dockerfile'
-          action: rebuild
+        - path: 'salt/minion/minion.yaml'
+          action: 'sync+restart'
+          target: '/etc/salt/minion.d/minion.conf'
     deploy:
       mode: replicated
-      replicas: ${SALT_MINION_REPLICAS:-1}
-      restart_policy:
-        condition: any
+      replicas: '${SALT_MINION_REPLICAS:-1}'
     profiles:
       - salt-master
     depends_on:
