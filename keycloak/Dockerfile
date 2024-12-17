@@ -35,7 +35,7 @@ WORKDIR /opt/keycloak/
 
 COPY --from=ubi-micro-build /mnt/rootfs /
 COPY --from=builder /opt/keycloak/ ./
-COPY startup.sh /usr/local/bin/
+COPY --chmod=755 startup.sh /usr/local/bin/
 
 ENV KEYCLOAK_BASE_URL=/
 ENV KC_HTTP_ENABLED=true
@@ -51,14 +51,14 @@ HEALTHCHECK --start-period=20s --start-interval=2s CMD wget \
 
 
 FROM keycloak AS keycloak-init
-LABEL version='0.2'
+LABEL version='0.3'
 
 ENV KEYCLOAK_USER_NAME=''
 ENV KEYCLOAK_USER_EMAIL=''
 ENV KEYCLOAK_USER_FIRSTNAME=''
 ENV KEYCLOAK_USER_LASTNAME=''
 
-COPY create_realm.sh /usr/local/bin/
+COPY --chmod=755 kcadm.sh kcadm-init.sh create-realm.sh /usr/local/bin/
 COPY client.json ./
 
-ENTRYPOINT ["/usr/local/bin/create_realm.sh"]
+ENTRYPOINT ["/usr/local/bin/create-realm.sh"]
