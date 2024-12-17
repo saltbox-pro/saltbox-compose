@@ -275,6 +275,41 @@ services:
     secrets:
       - mongo_admin_password
 
+  autotests:
+    profiles:
+      - test
+    image: '${IMAGE_REGISTRY}/fastms-core/autotests:${CORE_AUTOTESTS_TAG}'
+    environment:
+      RESOURCE_URL: 'http://proxy/${BACKEND_PATH}'
+      RESOURCE_WS_URL: 'ws://proxy/${BACKEND_PATH}'
+      LOGGING: 'True'
+      REDIS_HOST: redis-salt
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
+      REDIS_PASSWORD_FILE: '/run/secrets/redis_salt_password'
+      USER_NAME: '${KEYCLOAK_USER_NAME}'
+      USER_PASSWORD_FILE: '/run/secrets/keycloak_user_password'
+      CLIENT_SECRET_FILE: '/run/secrets/keycloak_client_fastms_core_password'
+      GET_TOKEN_ENDPOINT: 'http://proxy/${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token'
+    secrets:
+      - redis_salt_password
+      - keycloak_user_password
+      - keycloak_client_fastms_core_password
+    depends_on:
+      proxy:
+        condition: service_started
+        restart: false
+      keycloak:
+        condition: service_healthy
+        restart: false
+      redis-salt:
+        condition: service_started
+        restart: false
+      fastms-core:
+        condition: service_started
+        restart: false
+
 configs: {}
 
 volumes:
