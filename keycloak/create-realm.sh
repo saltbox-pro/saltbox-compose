@@ -22,6 +22,7 @@ kcadm.sh create clients \
   --target-realm "${KEYCLOAK_REALM}" \
   --file ./client.json \
   --set "clientId=${KEYCLOAK_CLIENT}" \
+  --set "directAccessGrantsEnabled=${KEYCLOAK_CLIENT_DIRECT_ACCESS:-false}" \
   --set "secret=${fastms_core_password}"
 
 echo "Realm ${KEYCLOAK_REALM} has been created"

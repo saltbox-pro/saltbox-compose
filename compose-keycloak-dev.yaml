@@ -1,0 +1,8 @@
+---
+
+## FastMS Compose Keycloak override file for dev-mode.
+#
+services:
+  keycloak:
+    environment:
+      KEYCLOAK_CLIENT_DIRECT_ACCESS: 'true'
