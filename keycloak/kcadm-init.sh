@@ -1,6 +1,7 @@
 #! /bin/sh
 
 set -e
+trap '[ $? -eq 0 ] && exit 0 || echo "ERROR on $0 line ${LINENO}"' EXIT
 
 admin_password=$(cat /run/secrets/keycloak_admin_password)
 

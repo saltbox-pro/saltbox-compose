@@ -2,6 +2,7 @@
 # shellcheck disable=SC2016
 
 set -e
+trap '[ $? -eq 0 ] && exit 0 || echo "ERROR on $0 line ${LINENO}"' EXIT
 
 CA_KEY_PASSWORD="$(cat /run/secrets/redis_salt_ca_private_key_password)"
 REDIS_KEY_PASSWORD="$(cat /run/secrets/redis_salt_private_key_password)"

@@ -1,6 +1,7 @@
 #! /bin/sh
 
 set -e
+trap '[ $? -eq 0 ] && exit 0 || echo "ERROR on $0 line ${LINENO}"' EXIT
 
 fastms_core_password=$(cat /run/secrets/keycloak_client_fastms_core_password)
 user_password=$(cat /run/secrets/keycloak_user_password)

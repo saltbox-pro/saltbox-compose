@@ -30,6 +30,9 @@ Make copy of [`example.env`](example.env) file named `.env`. Tune it before run.
 sudo docker compose up --build
 ```
 
+**ATTENTION!** Check there are no warnings on not setted variables to avoid
+confusing errors.
+
 To update outer images:
 ```bash
 sudo docker compose pull

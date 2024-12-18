@@ -1,5 +1,7 @@
 #! /bin/bash
+
 set -e
+trap 'echo Last command: ${BASH_COMMAND}' ERR
 
 output_dir='./images/'
 
