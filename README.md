@@ -1,6 +1,6 @@
 > **ATTENTION!** Project is on the early stage and is not ready for usage.
 
-# FastMS Compose
+# salt.box compose
 
 ## Prepare
 
@@ -42,8 +42,8 @@ than restart e.g. with `sudo docker compose down && sudo docker compose up -d`.
 
 For production use following commands are recommended:
 ```bash
-sudo sh -c "echo 'vm.overcommit_memory=1' > /etc/sysctl.d/fastms.conf"
-sudo sysctl -p /etc/sysctl.d/fastms.conf
+sudo sh -c "echo 'vm.overcommit_memory=1' > /etc/sysctl.d/salt-box.conf"
+sudo sysctl -p /etc/sysctl.d/salt-box.conf
 ```
 
 `vm.overcommit_memory=1` is a Redis requirement.

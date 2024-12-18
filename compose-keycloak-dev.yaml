@@ -1,6 +1,6 @@
 ---
 
-## FastMS Compose Keycloak override file for dev-mode.
+## salt.box compose Keycloak override file for dev-mode.
 #
 services:
   keycloak:

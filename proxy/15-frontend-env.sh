@@ -3,7 +3,7 @@
 set -e
 trap '[ $? -eq 0 ] && exit 0 || echo "ERROR on $0 line ${LINENO}"' EXIT
 
-open_id_client_secret="$(cat /run/secrets/keycloak_client_fastms_core_password)"
+open_id_client_secret="$(cat /run/secrets/keycloak_client_salt_box_core_password)"
 
 html_dir=/srv/html/
 

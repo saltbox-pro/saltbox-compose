@@ -2,8 +2,6 @@ x-default-service: &default
   restart: 'on-failure'
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
-name: fastms-compose
-
 services:
   proxy:
     <<: *default
@@ -15,7 +13,7 @@ services:
           path: proxy/
     environment:
       API_BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${BACKEND_PATH}'
-      BACKEND_HOSTNAME: fastms-core
+      BACKEND_HOSTNAME: salt-box-core
       BACKEND_HTTP_PORT: '${BACKEND_HTTP_PORT}'
       BACKEND_PATH: '${BACKEND_PATH}'
       KEYCLOAK_BASE_URL: '${KEYCLOAK_BASE_URL}'
@@ -28,12 +26,12 @@ services:
     ports:
       - '${WEB_SERVER_PORT}:80'
     secrets:
-      - keycloak_client_fastms_core_password
+      - keycloak_client_salt_box_core_password
     depends_on:
-      fastms-core:
+      salt-box-core:
         condition: service_started
         restart: false
-      fastms-frontend:
+      salt-box-frontend:
         condition: service_started
         restart: false
       keycloak:
@@ -112,7 +110,7 @@ services:
       KEYCLOAK_USER_NAME: '${KEYCLOAK_USER_NAME}'
     secrets:
       - keycloak_admin_password
-      - keycloak_client_fastms_core_password
+      - keycloak_client_salt_box_core_password
       - keycloak_user_password
     depends_on:
       keycloak:
@@ -121,7 +119,7 @@ services:
 
   salt-master:
     <<: *default
-    image: '${IMAGE_REGISTRY}/fastms-compose/salt-master:master'
+    image: '${IMAGE_REGISTRY}/salt-box-compose/salt-master:master'
     init: true
     environment:
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
@@ -158,7 +156,7 @@ services:
 
   redis-salt:
     <<: *default
-    image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
+    image: '${IMAGE_REGISTRY}/salt-box-compose/redis:master'
     environment:
       REDIS_ENCRYPTION: 'on'
       TLS_AUTH_CLIENT: optional
@@ -185,7 +183,7 @@ services:
 
   redis-celery:
     <<: *default
-    image: '${IMAGE_REGISTRY}/fastms-compose/redis:master'
+    image: '${IMAGE_REGISTRY}/salt-box-compose/redis:master'
     environment:
       REDIS_ENCRYPTION: 'off'
       REDIS_USERNAME: ${REDIS_CELERY_USERNAME}
@@ -199,9 +197,9 @@ services:
     secrets:
       - redis_celery_password
 
-  fastms-core: &core
+  salt-box-core: &core
     <<: *default
-    image: '${IMAGE_REGISTRY}/fastms-core:${CORE_IMAGE_TAG}'
+    image: '${IMAGE_REGISTRY}/salt-box-core:${CORE_IMAGE_TAG}'
     environment:
       BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
       MONGO_DB: '${MONGO_DB}'
@@ -225,7 +223,7 @@ services:
         source: redis_salt_certs
         target: '/etc/redis/certs/'
         read_only: true
-      - 'fastms_core_var:/var/fastms-core/'
+      - 'salt_box_core_var:/var/salt-box-core/'
     secrets:
       - salt_api_password
       - redis_celery_password
@@ -238,7 +236,7 @@ services:
         condition: service_started
         restart: false
 
-  fastms-core-celery-beat:
+  salt-box-core-celery-beat:
     <<: *core
     entrypoint: '/usr/local/bin/celery-beat.sh'
     expose: []
@@ -247,7 +245,7 @@ services:
         condition: service_started
         restart: false
 
-  fastms-core-celery-worker-tasks:
+  salt-box-core-celery-worker-tasks:
     <<: *core
     entrypoint: '/usr/local/bin/celery-worker.sh'
     command:
@@ -259,9 +257,9 @@ services:
         condition: service_started
         restart: false
 
-  fastms-frontend:
+  salt-box-frontend:
     <<: *default
-    image: '${IMAGE_REGISTRY}/fastms-frontend:${FRONTEND_IMAGE_TAG}'
+    image: '${IMAGE_REGISTRY}/salt-box-frontend:${FRONTEND_IMAGE_TAG}'
     expose:
       - ${FRONTEND_HTTP_PORT}
 
@@ -278,7 +276,7 @@ services:
   autotests:
     profiles:
       - test
-    image: '${IMAGE_REGISTRY}/fastms-core/autotests:${CORE_AUTOTESTS_TAG}'
+    image: '${IMAGE_REGISTRY}/salt-box-core/autotests:${CORE_AUTOTESTS_TAG}'
     environment:
       RESOURCE_URL: 'http://proxy/${BACKEND_PATH}'
       RESOURCE_WS_URL: 'ws://proxy/${BACKEND_PATH}'
@@ -290,12 +288,12 @@ services:
       REDIS_PASSWORD_FILE: '/run/secrets/redis_salt_password'
       USER_NAME: '${KEYCLOAK_USER_NAME}'
       USER_PASSWORD_FILE: '/run/secrets/keycloak_user_password'
-      CLIENT_SECRET_FILE: '/run/secrets/keycloak_client_fastms_core_password'
+      CLIENT_SECRET_FILE: '/run/secrets/keycloak_client_salt_box_core_password'
       GET_TOKEN_ENDPOINT: 'http://proxy/${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token'
     secrets:
       - redis_salt_password
       - keycloak_user_password
-      - keycloak_client_fastms_core_password
+      - keycloak_client_salt_box_core_password
     depends_on:
       proxy:
         condition: service_started
@@ -306,14 +304,14 @@ services:
       redis-salt:
         condition: service_started
         restart: false
-      fastms-core:
+      salt-box-core:
         condition: service_started
         restart: false
 
 configs: {}
 
 volumes:
-  fastms_core_var: {}
+  salt_box_core_var: {}
   keycloak-db_data: {}
   redis_salt_certs: {}
   redis_salt_data: {}
@@ -325,8 +323,8 @@ secrets:
   # BUILD TIME secrets
   keycloak_admin_password:
     file: secrets/keycloak_admin_password
-  keycloak_client_fastms_core_password:  # Not private: exposed in /env.json
-    file: secrets/keycloak_client_fastms_core_password
+  keycloak_client_salt_box_core_password:  # Not private: exposed in /env.json
+    file: secrets/keycloak_client_salt_box_core_password
   # RUNTIME secrets
   keycloak_database_password:
     file: secrets/keycloak_database_password

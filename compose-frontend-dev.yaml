@@ -1,12 +1,12 @@
 ---
 
-## FastMS Compose frontend override file for dev-mode.
+## salt.box compose frontend override file for dev-mode.
 
 services:
-  fastms-frontend:
+  salt-box-frontend:
     build:
       context: $FRONTEND_BUILD_DIR
-    image: 'fastms-frontend:dev'
+    image: 'salt-box-frontend:dev'
     develop:
       watch:
         - action: rebuild

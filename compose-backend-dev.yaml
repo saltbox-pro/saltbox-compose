@@ -1,18 +1,18 @@
 ---
 
-## FastMS Compose backend override file for dev-mode.
+## salt.box compose backend override file for dev-mode.
 
 services:
-  fastms-core: &core
+  salt-box-core: &core
     build:
       context: $CORE_BUILD_DIR
       target: dev
-    image: 'fastms-core:dev'
+    image: 'salt-box-core:dev'
     volumes:
-      - '${CORE_BUILD_DIR}:/mnt/fastms_core'
-  fastms-core-celery-beat:
+      - '${CORE_BUILD_DIR}:/mnt/salt_box_core'
+  salt-box-core-celery-beat:
     <<: *core
-  fastms-core-celery-worker-tasks:
+  salt-box-core-celery-worker-tasks:
     <<: *core
   redis-salt:
     build:

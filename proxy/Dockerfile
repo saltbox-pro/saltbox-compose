@@ -6,7 +6,7 @@ RUN \
 <<EOF
 rm /etc/nginx/conf.d/default.conf
 mkdir -p /etc/nginx/templates/
-cp /mnt/fastms.conf.template /etc/nginx/templates/
+cp /mnt/salt-box.conf.template /etc/nginx/templates/
 EOF
 
 COPY 15-frontend-env.sh /docker-entrypoint.d/

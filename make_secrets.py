@@ -9,7 +9,7 @@ from pathlib import Path
 
 SECRETS = {
     'keycloak_admin_password': 16,
-    'keycloak_client_fastms_core_password': 16,
+    'keycloak_client_salt_box_core_password': 16,
     'keycloak_database_password': 16,
     'keycloak_user_password': 12,
     'mongo_admin_password': 16,
@@ -48,7 +48,7 @@ def main(secrets_dir: Path, overwrite: bool) -> None:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog='make_secrets',
-        description='Generate passwords for FastMS installation',)
+        description='Generate passwords for salt.box installation',)
     parser.add_argument(
         '-w',
         '--overwrite',

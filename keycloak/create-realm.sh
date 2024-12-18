@@ -3,7 +3,7 @@
 set -e
 trap '[ $? -eq 0 ] && exit 0 || echo "ERROR on $0 line ${LINENO}"' EXIT
 
-fastms_core_password=$(cat /run/secrets/keycloak_client_fastms_core_password)
+salt_box_core_password=$(cat /run/secrets/keycloak_client_salt_box_core_password)
 user_password=$(cat /run/secrets/keycloak_user_password)
 
 if [ -z "$KEYCLOAK_REALM" ]; then
@@ -24,7 +24,7 @@ kcadm.sh create clients \
   --file ./client.json \
   --set "clientId=${KEYCLOAK_CLIENT}" \
   --set "directAccessGrantsEnabled=${KEYCLOAK_CLIENT_DIRECT_ACCESS:-false}" \
-  --set "secret=${fastms_core_password}"
+  --set "secret=${salt_box_core_password}"
 
 echo "Realm ${KEYCLOAK_REALM} has been created"
 
