@@ -202,6 +202,7 @@ services:
     image: '${IMAGE_REGISTRY}/salt-box-core:${CORE_IMAGE_TAG}'
     environment:
       BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
+      CELERY_BEAT_SCHEDULE_FILENAME: '/var/salt-box-core/beat_schedule'
       MONGO_DB: '${MONGO_DB}'
       MONGO_USER: '${MONGO_USER}'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
