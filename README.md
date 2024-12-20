@@ -55,11 +55,16 @@ sudo sysctl -p /etc/sysctl.d/salt-box.conf
 
 ## Autotests
 
-To run test suites:
+To run test suites enable `compose-autotests.yaml` in the local`.env` file.
+Then execute:
 
 ```bash
 sudo docker compose up autotests
 ```
+
+Autotests depends on direct access to Keycloak API, so existing realm should be
+recreated. As alternative the "Direct access grants" checkbox may be checked at
+Keycloak client settings.
 
 To prevent pulling a new image:
 
