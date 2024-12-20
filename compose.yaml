@@ -278,6 +278,9 @@ services:
     profiles:
       - test
     image: '${IMAGE_REGISTRY}/salt-box-core/autotests:${CORE_AUTOTESTS_TAG}'
+    pull_policy: always
+    command:
+      - '--color=yes'
     environment:
       RESOURCE_URL: 'http://proxy/${BACKEND_PATH}'
       RESOURCE_WS_URL: 'ws://proxy/${BACKEND_PATH}'
