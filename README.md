@@ -34,19 +34,38 @@ sudo docker compose up --build
 confusing errors.
 
 To update outer images:
+
 ```bash
 sudo docker compose pull
 ```
 
 than restart e.g. with `sudo docker compose down && sudo docker compose up -d`.
 
+It is possible to pull images on start with an additional flag `sudo
+docker compose up --build --pull=always`.
+
 For production use following commands are recommended:
+
 ```bash
 sudo sh -c "echo 'vm.overcommit_memory=1' > /etc/sysctl.d/salt-box.conf"
 sudo sysctl -p /etc/sysctl.d/salt-box.conf
 ```
 
 `vm.overcommit_memory=1` is a Redis requirement.
+
+## Autotests
+
+To run test suites:
+
+```bash
+sudo docker compose up autotests
+```
+
+To prevent pulling a new image:
+
+```bash
+sudo docker compose up autotests --pull=never
+```
 
 ## Dev mode
 
