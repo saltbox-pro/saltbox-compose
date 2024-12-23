@@ -11,7 +11,7 @@ services:
   # Override
   salt-master:
     build:
-      context: salt/
+      context: '${SALT_BUILD_DIR}'
       target: salt-master
     image: 'salt-master:dev'
     develop:
@@ -47,7 +47,7 @@ services:
   clean-keys-cmd:
     <<: *default
     build:
-      context: salt/
+      context: '${SALT_BUILD_DIR}'
       target: salt-master
     image: 'salt-master:dev'
     restart: 'on-failure:3'
@@ -59,7 +59,7 @@ services:
   salt-minion:
     <<: *default
     build:
-      context: salt/
+      context: '${SALT_BUILD_DIR}'
       target: salt-minion
     image: 'salt-minion:dev'
     develop:

@@ -4,44 +4,24 @@ include:
   - project: 'salt.box/ci-lib'
     file: 'build-image.yml'
 
-
-Build Redis image for tag:
+.build-redis-image:
   extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/redis'
     CONTEXT_PATH: 'redis/'
+
+
+Build Redis image for tag:
+  extends: .build-redis-image
+  variables:
     IMAGE_TAG: '$CI_COMMIT_TAG'
   rules:
     - if: '$CI_COMMIT_TAG'
 
 
 Build Redis image for branch:
-  extends: .build-image
+  extends: .build-redis-image
   variables:
-    REGISTRY_ADDITIONAL_PATH: '/redis'
-    CONTEXT_PATH: 'redis/'
-    IMAGE_TAG: $CI_COMMIT_BRANCH
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
-
-
-Build salt-master for tag:
-  extends: .build-image
-  variables:
-    TARGET: salt-master
-    REGISTRY_ADDITIONAL_PATH: '/salt-master'
-    CONTEXT_PATH: 'salt/'
-    IMAGE_TAG: '$CI_COMMIT_TAG'
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-Build salt-master image for branch:
-  extends: .build-image
-  variables:
-    TARGET: salt-master
-    REGISTRY_ADDITIONAL_PATH: '/salt-master'
-    CONTEXT_PATH: 'salt/'
     IMAGE_TAG: '$CI_COMMIT_BRANCH'
   rules:
     - if: '$CI_COMMIT_BRANCH'

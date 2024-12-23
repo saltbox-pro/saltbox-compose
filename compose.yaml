@@ -119,7 +119,7 @@ services:
 
   salt-master:
     <<: *default
-    image: '${IMAGE_REGISTRY}/salt-box-compose/salt-master:master'
+    image: '${IMAGE_REGISTRY}/salt-box-bridge/salt-master:master'
     init: true
     environment:
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
