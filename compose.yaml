@@ -174,7 +174,7 @@ services:
     expose:
       - 6379
     ports:
-      - '${REDIS_SALT_OUTER_SOCKET}:6379'
+      - '${REDIS_SALT_EXPOSE_SOCKET}:6379'
     secrets:
       - redis_salt_password
       - redis_salt_private_key_password
@@ -271,18 +271,25 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_admin_password
+    ports:
+      - '${MONGO_EXPOSE_SOCKET}:27017'
+    volumes:
+      - mongo_config:/data/configdb
+      - mongo_data:/data/db
     secrets:
       - mongo_admin_password
 
 configs: {}
 
 volumes:
-  salt_box_core_var: {}
   keycloak-db_data: {}
-  redis_salt_certs: {}
-  redis_salt_data: {}
+  mongo_config: {}
+  mongo_data: {}
   redis_celery_certs: {}
   redis_celery_data: {}
+  redis_salt_certs: {}
+  redis_salt_data: {}
+  salt_box_core_var: {}
   salt_master_pki: {}
 
 secrets:

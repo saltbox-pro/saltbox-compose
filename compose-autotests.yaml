@@ -5,6 +5,7 @@
 ## autotests one-shot service requires direct access to Keycloak API.
 ## It will be setted, if the Keycloak realm is not created yet. Also it can be
 ## setted manually.
+##
 
 x-default-service: &default
   restart: 'on-failure'
