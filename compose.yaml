@@ -236,6 +236,9 @@ services:
       mongo:
         condition: service_started
         restart: false
+      redis-salt:
+        condition: service_healthy
+        restart: true
 
   salt-box-core-celery-beat:
     <<: *core

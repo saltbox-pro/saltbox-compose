@@ -37,11 +37,6 @@ services:
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
-    depends_on:
-      clean-keys-cmd:
-        condition: service_completed_successfully
-        required: false
-        restart: false
 
   # Additional services
   clean-keys-cmd:
