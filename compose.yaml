@@ -123,8 +123,10 @@ services:
     init: true
     environment:
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
+      REDIS_PASSWORD_FILE: '/run/secrets/redis_salt_password'
       SALT_API_LOG_LEVEL: '${SALT_API_LOG_LEVEL}'
       SALT_API_USER: '${SALT_API_USER}'
+      SALT_API_PASSWORD_FILE: '/run/secrets/salt_api_password'
       SALT_MASTER_LOG_LEVEL: '${SALT_MASTER_LOG_LEVEL}'
     secrets:
       - salt_api_password
