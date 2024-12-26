@@ -141,6 +141,10 @@ services:
         read_only: true
     profiles:
       - salt-master
+    depends_on:
+      redis-salt:
+        condition: service_healthy
+        restart: false
 
   make-redis-salt-certs:
     <<: *default
@@ -162,11 +166,20 @@ services:
     environment:
       REDIS_ENCRYPTION: 'on'
       TLS_AUTH_CLIENT: optional
-      REDIS_USERNAME: ${REDIS_SALT_USERNAME}
+      REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
+      # TODO rename *_SECRET to *_FILE
       REDIS_PASSWORD_SECRET: '/run/secrets/redis_salt_password'
       REDIS_PRIVATE_KEY_PASSWORD_SECRET: '/run/secrets/redis_salt_private_key_password'
     command:
       - --save 60 1
+    healthcheck:
+      test: >
+        redis-cli --tls
+        --user ${REDIS_SALT_USERNAME}
+        --pass "$(cat "$REDIS_PASSWORD_SECRET")"
+        --cacert /etc/redis/certs/ca.crt ping
+      interval: '5s'
+      retries: 6
     volumes:
       - 'redis_salt_data:/data/'
       - type: volume
@@ -240,7 +253,7 @@ services:
         restart: false
       redis-salt:
         condition: service_healthy
-        restart: true
+        restart: false
 
   salt-box-core-celery-beat:
     <<: *core

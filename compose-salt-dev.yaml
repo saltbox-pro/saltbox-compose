@@ -72,3 +72,6 @@ services:
         condition: service_completed_successfully
         required: false
         restart: true
+      salt-master:
+        condition: service_started
+        restart: false
