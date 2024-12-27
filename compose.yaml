@@ -259,7 +259,7 @@ services:
 
   salt-box-core-minions-consumer:
     <<: *core
-    entrypoint: '/usr/local/bin/minions-consumer.sh'
+    entrypoint: 'entrypoint.sh salt-box-minions-consumer'
     expose: []
     depends_on:
       redis-celery:
@@ -268,7 +268,7 @@ services:
 
   salt-box-core-tasks-watcher:
     <<: *core
-    entrypoint: '/usr/local/bin/tasks-watcher.sh'
+    entrypoint: 'entrypoint.sh salt-box-tasks-watcher'
     expose: []
     depends_on:
       redis-celery:
