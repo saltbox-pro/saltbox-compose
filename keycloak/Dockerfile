@@ -29,7 +29,7 @@ EOF
 
 
 FROM $BASE_IMAGE AS keycloak
-LABEL version='0.2'
+LABEL version='0.3'
 
 WORKDIR /opt/keycloak/
 
@@ -45,7 +45,7 @@ ENV KC_PROXY_ADDRESS_FORWARDING=true
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/startup.sh"]
-HEALTHCHECK --start-period=20s --start-interval=2s CMD wget \
+HEALTHCHECK --start-period=30s CMD wget \
   --no-verbose --tries=1 --spider \
   "http://localhost:8080${KEYCLOAK_BASE_URL}/health/ready"
 
