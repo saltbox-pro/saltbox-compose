@@ -255,6 +255,24 @@ services:
         condition: service_healthy
         restart: false
 
+  salt-box-core-minions-consumer:
+    <<: *core
+    entrypoint: '/usr/local/bin/minions-consumer.sh'
+    expose: []
+    depends_on:
+      redis-celery:
+        condition: service_started
+        restart: false
+
+  salt-box-core-tasks-watcher:
+    <<: *core
+    entrypoint: '/usr/local/bin/tasks-watcher.sh'
+    expose: []
+    depends_on:
+      redis-celery:
+        condition: service_started
+        restart: false
+
   salt-box-core-celery-beat:
     <<: *core
     entrypoint: '/usr/local/bin/celery-beat.sh'
