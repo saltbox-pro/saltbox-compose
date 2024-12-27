@@ -176,10 +176,12 @@ services:
       test: >
         redis-cli --tls
         --user ${REDIS_SALT_USERNAME}
-        --pass "$(cat "$REDIS_PASSWORD_SECRET")"
+        --pass "$(cat "$$REDIS_PASSWORD_SECRET")"
         --cacert /etc/redis/certs/ca.crt ping
-      interval: '5s'
-      retries: 6
+      start_period: '20s'
+      start_interval: '2s'
+      interval: '15s'
+      retries: 3
     volumes:
       - 'redis_salt_data:/data/'
       - type: volume
