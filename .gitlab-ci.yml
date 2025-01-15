@@ -34,7 +34,7 @@ Build Redis image for branch:
 
 
 Build Nginx image for tag:
-  extends: .build-redis-image
+  extends: .build-nginx-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_TAG'
   rules:
@@ -42,7 +42,7 @@ Build Nginx image for tag:
 
 
 Build Nginx image for branch:
-  extends: .build-redis-image
+  extends: .build-nginx-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_BRANCH'
   rules:
