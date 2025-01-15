@@ -7,6 +7,8 @@ services:
     <<: *default
     build:
       context: proxy/
+      args:
+        IMAGE: '${IMAGE_REGISTRY}/salt-box-compose/nginx:master'
     develop:
       watch:
         - action: rebuild
