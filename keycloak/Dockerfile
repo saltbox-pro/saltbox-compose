@@ -1,5 +1,6 @@
-FROM registry.altlinux.org/alt/alt:p11 AS keycloak
+ARG BASE_IMG=registry.altlinux.org/alt/alt:p11
 
+FROM "$BASE_IMG" AS builder
 LABEL version='1.0'
 
 RUN \
@@ -9,7 +10,7 @@ RUN \
 set -e
 mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
-apt-get install -y java-21-openjdk keycloak wget
+apt-get install -y java-21-openjdk keycloak
 EOF
 
 ENV PATH="${PATH}:/usr/share/keycloak/bin/"
@@ -20,8 +21,21 @@ ENV KC_HTTP_RELATIVE_PATH=$KC_HTTP_RELATIVE_PATH
 
 RUN kc.sh build
 
+FROM "$BASE_IMG" AS keycloak
+RUN \
+  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+<<EOF
+set -e
+mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
+apt-get update
+apt-get install -y java-21-openjdk wget
+EOF
+
+COPY --from=builder /usr/share/keycloak/ /srv/keycloak
 COPY --chmod=755 startup.sh /usr/local/bin/
 
+ENV PATH="${PATH}:/srv/keycloak/bin/"
 ENV KEYCLOAK_BASE_URL=/
 ENV KC_HTTP_ENABLED=true
 ENV KC_LOG_LEVEL=info
