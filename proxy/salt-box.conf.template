@@ -25,7 +25,7 @@ server {
         proxy_set_header X-Forwarded-Proto ${WEB_SERVER_SCHEME};
         proxy_set_header X-Forwarded-Host $host;
     }
-    
+
     location '${BACKEND_PATH}/' {
         proxy_pass 'http://${BACKEND_HOSTNAME}:${BACKEND_HTTP_PORT}';
         proxy_http_version 1.1;

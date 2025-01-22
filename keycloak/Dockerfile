@@ -1,40 +1,25 @@
-ARG BASE_IMAGE=quay.io/keycloak/keycloak:24.0
+FROM registry.altlinux.org/alt/alt:p11 AS keycloak
 
-FROM $BASE_IMAGE AS builder
-LABEL version='0.1'
+LABEL version='1.0'
 
+RUN \
+  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+<<EOF
+set -e
+mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
+apt-get update
+apt-get install -y java-21-openjdk keycloak wget
+EOF
+
+ENV PATH="${PATH}:/usr/share/keycloak/bin/"
 ARG KC_HTTP_RELATIVE_PATH
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
 ENV KC_HTTP_RELATIVE_PATH=$KC_HTTP_RELATIVE_PATH
 
-WORKDIR /opt/keycloak/
-COPY quarkus.properties conf/
-RUN /opt/keycloak/bin/kc.sh build
+RUN kc.sh build
 
-
-# Install additional RPM-packages
-FROM almalinux/9-base:9.3 AS ubi-micro-build
-ENV EXTRA_PACKAGES=wget
-RUN --mount=type=cache,target=/var/cache/dnf/,sharing=locked <<EOF
-set -e
-mkdir -p /mnt/rootfs
-dnf install \
-  --installroot /mnt/rootfs/ \
-  --releasever 9 --setopt install_weak_deps=false --nodocs -y \
-  "${EXTRA_PACKAGES}"
-dnf --installroot /mnt/rootfs/ clean all
-rpm --root /mnt/rootfs/ -e --nodeps setup
-EOF
-
-
-FROM $BASE_IMAGE AS keycloak
-LABEL version='0.3'
-
-WORKDIR /opt/keycloak/
-
-COPY --from=ubi-micro-build /mnt/rootfs /
-COPY --from=builder /opt/keycloak/ ./
 COPY --chmod=755 startup.sh /usr/local/bin/
 
 ENV KEYCLOAK_BASE_URL=/
@@ -60,7 +45,7 @@ ENV KEYCLOAK_USER_LASTNAME=''
 # false | true to control access to API
 ENV KEYCLOAK_CLIENT_DIRECT_ACCESS='false'
 
-COPY --chmod=755 kcadm.sh kcadm-init.sh create-realm.sh /usr/local/bin/
+COPY --chmod=755 kcadm-init.sh create-realm.sh /usr/local/bin/
 COPY client.json ./
 
 ENTRYPOINT ["/usr/local/bin/create-realm.sh"]
