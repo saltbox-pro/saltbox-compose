@@ -17,7 +17,6 @@ SECRETS = {
     'redis_salt_ca_private_key_password': 16,
     'redis_salt_password': 16,
     'redis_salt_private_key_password': 16,
-    'salt_api_password': 32,
 }
 
 
