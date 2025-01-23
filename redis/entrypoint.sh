@@ -15,7 +15,7 @@ err() {
 conf_subdir='/etc/redis/redis.conf.d'
 acl_conf_file="${conf_subdir}/10-acl.conf"
 tls_conf_file="${conf_subdir}/10-tls.conf"
-password="$(cat "$REDIS_PASSWORD_SECRET")"
+password="$(cat "$REDIS_PASSWORD_SECRET_FILE")"
 
 if [ -z "$REDIS_USERNAME" ]; then err 'Empty or missing REDIS_USERNAME'; fi
 
