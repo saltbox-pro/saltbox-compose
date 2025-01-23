@@ -28,6 +28,8 @@ services:
         - path: '${SALT_BUILD_DIR}/runners/'
           action: 'sync+restart'
           target: '/srv/salt_extmod/runners/'
+        # Rebuilding kills replicated salt-minion containers for some reason.
+        # Its may be raised again with `sudo docker compose up salt-minion -d`
         - path: '${SALT_BUILD_DIR}/salt_box_bridge_service/'
           action: 'rebuild'
         - path: '${SALT_BUILD_DIR}/pyproject.toml'
