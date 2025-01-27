@@ -228,8 +228,10 @@ services:
       REDIS_URL: 'rediss://redis-salt:6379/0'
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
-      KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
-      KEYCLOAK_REALM_NAME: '${KEYCLOAK_REALM}'
+      KEYCLOAK_SERVER_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
+      KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
+      OPA_URL: 'http://opa:8181'
     volumes:
       - type: volume
         source: redis_salt_certs
@@ -309,6 +311,29 @@ services:
       - mongo_data:/data/db
     secrets:
       - mongo_admin_password
+
+  opa:
+    image: openpolicyagent/opa:latest-istio-static
+    restart: unless-stopped
+    command:
+      - 'run'
+      - '--server'
+      - '--addr=0.0.0.0:8181'
+      - '--watch'
+      - '--log-format=json-pretty'
+      # - "--log-level=debug"
+      - '--set=decision_logs.console=true'
+      - '/policies/'
+      # - '/data/'
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8181/health"]
+    #   interval: 5s
+    #   timeout: 10s
+    #   retries: 3
+    ports:
+      - 8181:8181
+    volumes:
+      - ./opa/policies:/policies
 
 configs: {}
 
