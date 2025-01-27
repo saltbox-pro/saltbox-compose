@@ -2,6 +2,8 @@ package core.collections
 
 default allow = false
 
+allow if is_admin
+
 # Allow users to get client based on their role collections:retrieve:linux
 allow if {
     some role in input.user.roles
@@ -61,4 +63,9 @@ can_create if {
     count(role_parts) == 2
     role_parts[0] == input.path[0]
     role_parts[1] == "create"
+}
+
+is_admin if {
+    some role in input.user.roles
+    role == "collections_admin"
 }
