@@ -75,10 +75,6 @@ services:
       target: keycloak
       args:
         KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
-    develop:
-      watch:
-        - action: rebuild
-          path: keycloak/
     command:
       - 'start'
       - '--optimized'
@@ -102,6 +98,10 @@ services:
     build:
       context: keycloak
       target: keycloak-init
+    develop:
+      watch:
+        - action: rebuild
+          path: keycloak/
     environment:
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
@@ -110,6 +110,10 @@ services:
       KEYCLOAK_USER_FIRSTNAME: '${KEYCLOAK_USER_FIRSTNAME}'
       KEYCLOAK_USER_LASTNAME: '${KEYCLOAK_USER_LASTNAME}'
       KEYCLOAK_USER_NAME: '${KEYCLOAK_USER_NAME}'
+      KEYCLOAK_USER_ADMIN_EMAIL: '${KEYCLOAK_USER_ADMIN_EMAIL}'
+      KEYCLOAK_USER_ADMIN_FIRSTNAME: '${KEYCLOAK_USER_ADMIN_FIRSTNAME}'
+      KEYCLOAK_USER_ADMIN_LASTNAME: '${KEYCLOAK_USER_ADMIN_LASTNAME}'
+      KEYCLOAK_USER_ADMIN_NAME: '${KEYCLOAK_USER_ADMIN_NAME}'
     secrets:
       - keycloak_admin_password
       - keycloak_client_salt_box_core_password
