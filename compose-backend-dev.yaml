@@ -21,4 +21,6 @@ services:
   redis-salt:
     build:
       context: redis/
-    image: 'redis-salt:dev'
+    image: 'redis-salt-box:dev'
+  redis-celery:
+    image: 'redis-salt-box:dev'

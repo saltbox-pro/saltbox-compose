@@ -201,7 +201,7 @@ services:
     environment:
       REDIS_ENCRYPTION: 'off'
       REDIS_USERNAME: ${REDIS_CELERY_USERNAME}
-      REDIS_PASSWORD_SECRET_FILE: '/run/secrets/redis_celery_password'
+      REDIS_PASSWORD_SECRET_FILE: '/run/secrets/redis_password'
     command:
       - --save 60 1
     volumes:
@@ -209,7 +209,7 @@ services:
     expose:
       - 6379
     secrets:
-      - redis_celery_password
+      - redis_password
 
   salt-box-core: &core
     <<: *default
@@ -371,3 +371,7 @@ secrets:
     file: secrets/redis_salt_private_key_password
   redis_celery_password:
     file: secrets/redis_celery_password
+  redis_password:
+    file: secrets/redis_celery_password
+  redis_private_key_password:
+    file: secrets/redis_salt_private_key_password
