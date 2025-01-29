@@ -1,2 +1,8 @@
 /.env
 /images/
+
+# Editors
+/.vscode
+/.idea
+.ruff.toml
+.mypy.ini
