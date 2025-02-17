@@ -7,6 +7,9 @@ services:
     build:
       context: $CORE_BUILD_DIR
       target: dev
+    environment:
+      - DEBUG=True
+    tty: true  # colorize logs
     image: 'salt-box-core:dev'
     volumes:
       - '${CORE_BUILD_DIR}:/mnt/salt_box_core'
