@@ -1,7 +1,7 @@
 ARG BASE_IMG=registry.altlinux.org/alt/alt:p11
 
 FROM "$BASE_IMG" AS builder
-LABEL version='1.0'
+LABEL version='1.1'
 
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -10,18 +10,19 @@ RUN \
 set -e
 mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
-apt-get install -y java-21-openjdk keycloak
+apt-get install -y keycloak
 EOF
 
-ENV PATH="${PATH}:/usr/share/keycloak/bin/"
 ARG KC_HTTP_RELATIVE_PATH
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
 ENV KC_HTTP_RELATIVE_PATH=$KC_HTTP_RELATIVE_PATH
 
-RUN kc.sh build
+RUN kc.sh build --verbose
 
 FROM "$BASE_IMG" AS keycloak
+LABEL version='1.0'
+
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
@@ -32,7 +33,7 @@ apt-get update
 apt-get install -y java-21-openjdk wget
 EOF
 
-COPY --from=builder /usr/share/keycloak/ /srv/keycloak
+COPY --from=builder /usr/lib/keycloak/ /srv/keycloak
 COPY --chmod=755 startup.sh /usr/local/bin/
 
 ENV PATH="${PATH}:/srv/keycloak/bin/"
