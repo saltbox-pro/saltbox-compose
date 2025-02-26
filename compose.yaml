@@ -2,18 +2,6 @@ x-default-service: &default
   restart: 'on-failure'
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
-x-keycloak: &keycloak
-  <<: *default
-  build:
-    context: keycloak
-    target: keycloak
-    args:
-      KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
-  develop:
-    watch:
-      - action: rebuild
-        path: keycloak/
-
 services:
   proxy:
     <<: *default
@@ -81,7 +69,16 @@ services:
       - 5432
 
   keycloak:
-    <<: *keycloak
+    <<: *default
+    build:
+      context: keycloak
+      target: keycloak
+      args:
+        KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
+    develop:
+      watch:
+        - action: rebuild
+          path: keycloak/
     command:
       - 'start'
       - '--optimized'
@@ -99,7 +96,16 @@ services:
         condition: service_healthy
 
   keycloak-init:
-    <<: *keycloak
+    <<: *default
+    build:
+      context: keycloak
+      target: keycloak-init
+      args:
+        KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
+    develop:
+      watch:
+        - action: rebuild
+          path: keycloak/
     environment:
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'

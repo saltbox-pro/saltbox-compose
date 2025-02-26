@@ -1,5 +1,8 @@
 #! /bin/sh
 
+# TODO Implement "migrations"
+# Script should check if every object exists to be extandable between versions.
+
 set -e
 trap '[ $? -eq 0 ] && exit 0 || echo "ERROR on $0 line ${LINENO}"' EXIT
 

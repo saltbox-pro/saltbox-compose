@@ -21,7 +21,7 @@ ENV KC_HTTP_RELATIVE_PATH=$KC_HTTP_RELATIVE_PATH
 RUN kc.sh build --verbose
 
 FROM "$BASE_IMG" AS keycloak
-LABEL version='1.0'
+LABEL version='1.1'
 
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -37,17 +37,21 @@ COPY --from=builder /usr/lib/keycloak/ /srv/keycloak
 COPY --chmod=755 startup.sh /usr/local/bin/
 
 ENV PATH="${PATH}:/srv/keycloak/bin/"
-ENV KEYCLOAK_BASE_URL=/
+# For single node setup
+ENV KC_CACHE=local
+
 ENV KC_HTTP_ENABLED=true
 ENV KC_LOG_LEVEL=info
-ENV KC_PROXY_HEADERS=xforwarded
 ENV KC_PROXY_ADDRESS_FORWARDING=true
+ENV KC_PROXY_HEADERS=xforwarded
+ENV KEYCLOAK_BASE_URL=/
+
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/startup.sh"]
 HEALTHCHECK --start-period=30s CMD wget \
   --no-verbose --tries=1 --spider \
-  "http://localhost:8080${KEYCLOAK_BASE_URL}/health/ready"
+  "http://localhost:9000${KEYCLOAK_BASE_URL}/health/ready"
 
 
 FROM keycloak AS keycloak-init
