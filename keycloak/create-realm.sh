@@ -1,10 +1,38 @@
 #! /bin/sh
+# shellcheck disable=SC3043
+
+# The script creates and populates the realm for Salt.Box.
 
 # TODO Implement "migrations"
 # Script should check if every object exists to be extandable between versions.
 
 set -e
 trap '[ $? -eq 0 ] && exit 0 || echo "ERROR on $0 line ${LINENO}"' EXIT
+
+
+salt_box_create_user() {
+  local _username="$1"
+  local _email="$2"
+  local _firstName="$3"
+  local _lastName="$4"
+
+  local user_id
+  user_id="$(kcadm.sh create users \
+    --target-realm "$KEYCLOAK_REALM" \
+    --set "username=${_username}" \
+    --set "firstName=${_firstName}" \
+    --set "lastName=${_lastName}" \
+    --set "email=${_email}" \
+    --set enabled=true \
+    --id)"
+  kcadm.sh set-password \
+    --target-realm "$KEYCLOAK_REALM" \
+    --userid "$user_id" \
+    --new-password "$user_password"
+
+  echo "User '${_username}' in realm '${KEYCLOAK_REALM}' has been created"
+}
+
 
 salt_box_core_password=$(cat /run/secrets/keycloak_client_salt_box_core_password)
 user_password=$(cat /run/secrets/keycloak_user_password)
@@ -38,55 +66,37 @@ KEYCLOAK_CLIENT_ID=$(kcadm.sh create clients \
   --set "clientId=${KEYCLOAK_CLIENT}" \
   --set "directAccessGrantsEnabled=${KEYCLOAK_CLIENT_DIRECT_ACCESS:-false}" \
   --set "secret=${salt_box_core_password}" -i)
-echo "Created new client with id '${KEYCLOAK_CLIENT_ID}'"
-kcadm.sh create clients/${KEYCLOAK_CLIENT_ID}/roles \
-  -r "${KEYCLOAK_REALM}" -s name="${collections_admin_role}" -s "description=Collections admin role"
+echo "Client with id '${KEYCLOAK_CLIENT_ID}' created"
+
+kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
+  -r "${KEYCLOAK_REALM}" \
+  -s name="${collections_admin_role}" \
+  -s "description=Collections admin role"
+echo "Admin role created"
 
 echo "Realm ${KEYCLOAK_REALM} has been created"
-
-function salt_box_create_user {
-  local _username=$1
-  local _email=$2
-  local _firstName=$3
-  local _lastName=$4
-
-  local user_id=$(
-    kcadm.sh create users \
-      --target-realm "$KEYCLOAK_REALM" \
-      --set "username=${_username}" \
-      --set "firstName=${_firstName}" \
-      --set "lastName=${_lastName}" \
-      --set "email=${_email}" \
-      --set enabled=true \
-      --id
-  )
-  kcadm.sh set-password \
-    --target-realm "$KEYCLOAK_REALM" \
-    --userid "$user_id" \
-    --new-password "$user_password"
-
-  echo "User '${_username}' for realm '${KEYCLOAK_REALM}' has been created"
-}
 
 if [ -z "$KEYCLOAK_USER_NAME" ]; then
   echo No user to create
 else
-  salt_box_create_user "${KEYCLOAK_USER_NAME}" \
+  salt_box_create_user \
+    "${KEYCLOAK_USER_NAME}" \
     "${KEYCLOAK_USER_EMAIL}" \
     "${KEYCLOAK_USER_FIRSTNAME}" \
     "${KEYCLOAK_USER_LASTNAME}"
 fi
 
-if [ -z "$KEYCLOAK_USER_ADMIN_NAME" ]; then
+if [ -z "$KEYCLOAK_ADMIN_NAME" ]; then
   echo No admin to create
 else
-  salt_box_create_user "${KEYCLOAK_USER_ADMIN_NAME}" \
-    "${KEYCLOAK_USER_ADMIN_EMAIL}" \
-    "${KEYCLOAK_USER_ADMIN_FIRSTNAME}" \
-    "${KEYCLOAK_USER_ADMIN_LASTNAME}"
+  salt_box_create_user \
+    "${KEYCLOAK_ADMIN_NAME}" \
+    "${KEYCLOAK_ADMIN_EMAIL}" \
+    "${KEYCLOAK_ADMIN_FIRSTNAME}" \
+    "${KEYCLOAK_ADMIN_LASTNAME}"
 
   kcadm.sh add-roles -r "${KEYCLOAK_REALM}" \
-    --uusername "${KEYCLOAK_USER_ADMIN_NAME}" \
+    --uusername "${KEYCLOAK_ADMIN_NAME}" \
     --cclientid "${KEYCLOAK_CLIENT}" \
     --rolename "${collections_admin_role}"
 fi
