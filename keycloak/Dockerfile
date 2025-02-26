@@ -21,7 +21,7 @@ ENV KC_HTTP_RELATIVE_PATH=$KC_HTTP_RELATIVE_PATH
 RUN kc.sh build --verbose
 
 FROM "$BASE_IMG" AS keycloak
-LABEL version='1.1'
+LABEL version='1.2'
 
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -34,7 +34,7 @@ apt-get install -y java-21-openjdk wget
 EOF
 
 COPY --from=builder /usr/lib/keycloak/ /srv/keycloak
-COPY --chmod=755 startup.sh /usr/local/bin/
+COPY --chmod=755 bin/startup.sh /usr/local/bin/
 
 ENV PATH="${PATH}:/srv/keycloak/bin/"
 # For single node setup
@@ -55,7 +55,7 @@ HEALTHCHECK --start-period=30s CMD wget \
 
 
 FROM keycloak AS keycloak-init
-LABEL version='0.3'
+LABEL version='0.4'
 
 ENV KEYCLOAK_USER_NAME=''
 ENV KEYCLOAK_USER_EMAIL=''
@@ -64,7 +64,8 @@ ENV KEYCLOAK_USER_LASTNAME=''
 # false | true to control access to API
 ENV KEYCLOAK_CLIENT_DIRECT_ACCESS='false'
 
-COPY --chmod=755 kcadm-init.sh create-realm.sh /usr/local/bin/
+COPY --chmod=755 salt-box-create-realm /usr/local/lib/salt-box/
+COPY --chmod=755 bin/kcadm-init.sh bin/create-realm.sh /usr/local/bin/
 COPY client.json ./
 
 ENTRYPOINT ["/usr/local/bin/create-realm.sh"]
