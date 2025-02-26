@@ -121,7 +121,8 @@ services:
     secrets:
       - keycloak_admin_password
       - keycloak_client_salt_box_core_password
-      - keycloak_user_password
+      - salt_box_admin_password
+      - salt_box_user_password
     depends_on:
       keycloak:
         condition: service_healthy
@@ -359,6 +360,7 @@ volumes:
 
 secrets:
   # BUILD TIME secrets
+  # TODO Is build time?
   keycloak_admin_password:
     file: secrets/keycloak_admin_password
   keycloak_client_salt_box_core_password:  # Not private: exposed in /env.json
@@ -366,12 +368,14 @@ secrets:
   # RUNTIME secrets
   keycloak_database_password:
     file: secrets/keycloak_database_password
-  keycloak_user_password:
-    file: secrets/keycloak_user_password
   mongo_admin_password:
     file: secrets/mongo_admin_password
-  salt_api_password:
+  salt_api_password:  # TODO Is in use?
     file: secrets/salt_api_password
+  salt_box_admin_password:
+    file: secrets/salt_box_user_password
+  salt_box_user_password:
+    file: secrets/salt_box_user_password
   redis_salt_password:
     file: secrets/redis_salt_password
   redis_salt_ca_private_key_password:

@@ -34,6 +34,6 @@ if [ -z "$KEYCLOAK_REALM" ]; then
 fi
 
 _salt_box_core_password=$(cat /run/secrets/keycloak_client_salt_box_core_password)
-_user_password=$(cat /run/secrets/keycloak_user_password)
-# TODO _admin_password=$(cat /run/secrets/keycloak_???admin_password)
+_sb_user_password=$(cat /run/secrets/salt_box_user_password)
+_sb_admin_password=$(cat /run/secrets/salt_box_admin_password)
 _collections_admin_role="collections_admin"

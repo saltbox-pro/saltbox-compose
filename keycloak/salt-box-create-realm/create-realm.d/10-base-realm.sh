@@ -40,7 +40,7 @@ else
     "${KEYCLOAK_USER_EMAIL}" \
     "${KEYCLOAK_USER_FIRSTNAME}" \
     "${KEYCLOAK_USER_LASTNAME}" \
-    "${_user_password}"
+    "${_sb_user_password}"
 fi
 
 if [ -z "$KEYCLOAK_ADMIN_NAME" ]; then
@@ -51,8 +51,7 @@ else
     "${KEYCLOAK_ADMIN_EMAIL}" \
     "${KEYCLOAK_ADMIN_FIRSTNAME}" \
     "${KEYCLOAK_ADMIN_LASTNAME}" \
-    "$_user_password"
-    # TODO "${_admin_password}"
+    "${_sb_admin_password}"
 
   kcadm.sh add-roles -r "${KEYCLOAK_REALM}" \
     --uusername "${KEYCLOAK_ADMIN_NAME}" \
