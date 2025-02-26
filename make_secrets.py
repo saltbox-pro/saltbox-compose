@@ -20,6 +20,8 @@ SECRETS = {
     'redis_salt_private_key_password': 16,
 }
 
+SECRET_ALPHABET = string.ascii_letters + string.digits
+
 
 def rm(path: Path) -> None:
     if path.is_dir():
@@ -28,7 +30,11 @@ def rm(path: Path) -> None:
         path.unlink()
 
 
-def make_secret(length=16, alphabet=string.ascii_letters + string.digits) -> str:
+def path_of_secret(secrets_dir: Path, secret_name: str) -> Path:
+    return secrets_dir / secret_name
+
+
+def make_secret(length=16, alphabet=SECRET_ALPHABET) -> str:
     return ''.join(secrets.choice(alphabet) for i in range(length))
 
 
@@ -47,13 +53,13 @@ def write_file(path: Path, secret: str, overwrite=False) -> None:
 
 def main(secrets_dir: Path, overwrite: bool) -> None:
     for sec, length in SECRETS.items():
-        path = secrets_dir / sec
+        path = path_of_secret(secrets_dir, sec)
         secret = make_secret(length=length)
         write_file(path=path, secret=secret, overwrite=overwrite)
 
 
 def prune(secrets_dir: Path) -> None:
-    good_files = {secrets_dir / sec for sec in SECRETS}
+    good_files = {path_of_secret(secrets_dir, sec) for sec in SECRETS}
     for path in secrets_dir.iterdir():
         if path not in good_files and path and not path.name.startswith('.'):
             print(f'Delete {path}')
