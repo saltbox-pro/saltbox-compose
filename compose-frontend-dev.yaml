@@ -11,3 +11,5 @@ services:
       watch:
         - action: rebuild
           path: $FRONTEND_BUILD_DIR
+  proxy:
+    depends_on: !reset []
