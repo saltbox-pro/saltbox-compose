@@ -34,17 +34,18 @@
   "fullScopeAllowed": true,
   "nodeReRegistrationTimeout": -1,
   "defaultClientScopes": [
-    "web-origins",
     "acr",
+    "basic",
+    "email",
     "profile",
     "roles",
-    "email"
+    "web-origins"
   ],
   "optionalClientScopes": [
     "address",
-    "phone",
+    "microprofile-jwt",
     "offline_access",
-    "microprofile-jwt"
+    "phone"
   ],
   "access": {
     "view": true,
