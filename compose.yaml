@@ -71,10 +71,6 @@ services:
   keycloak:
     <<: *default
     image: '${IMAGE_REGISTRY}/salt-box-compose/keycloak:master'
-    develop:
-      watch:
-        - action: rebuild
-          path: keycloak/
     command:
       - 'start'
       - '--optimized'
@@ -94,10 +90,6 @@ services:
   keycloak-init:
     <<: *default
     image: '${IMAGE_REGISTRY}/salt-box-compose/keycloak-init:master'
-    develop:
-      watch:
-        - action: rebuild
-          path: keycloak/
     environment:
       KEYCLOAK_ADMIN_EMAIL: '${KEYCLOAK_ADMIN_EMAIL}'
       KEYCLOAK_ADMIN_FIRSTNAME: '${KEYCLOAK_ADMIN_FIRSTNAME}'
