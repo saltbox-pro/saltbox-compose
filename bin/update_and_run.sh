@@ -54,6 +54,8 @@ else
   warn "No $override_env file, using defaults"
 fi
 
+chown "$(stat -c %u:%g .)" "$env_file"
+
 set -x
 docker login registry.altlab.su
 docker compose pull --ignore-buildable
