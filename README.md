@@ -2,6 +2,18 @@
 
 # salt.box compose
 
+## Helper script
+
+```bash
+sudo ./bin/update_and_run.sh
+```
+
+Helper script merges `example.env` and `override.env` (if exists) into `.env`
+config, tries to login to registy, updates images, and runs the Salt.Box
+instance.
+
+Another way is to go step-by step.
+
 ## Prepare
 
 While project is private, login required to obtain the images.
@@ -25,6 +37,7 @@ done with helper script:
 Make copy of [`example.env`](example.env) file named `.env`. Tune it before run.
 
 ## Run
+
 
 ```bash
 sudo docker compose up --build
