@@ -81,7 +81,7 @@ if __name__ == '__main__':
         help='Delete files, which are not related to specified secrets',
         action='store_true',)
     args = parser.parse_args()
-    secrets_dir = Path(__file__).parent / 'secrets'
+    secrets_dir = Path(__file__).parent.parent / 'secrets'
     if args.prune:
         prune(secrets_dir)
     main(secrets_dir=secrets_dir, overwrite=args.overwrite)

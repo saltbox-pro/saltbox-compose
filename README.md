@@ -31,7 +31,7 @@ Initially secrets must be created in the `./secrets/` subdirectory. It may be
 done with helper script:
 
 ```bash
-./make_secrets.py
+./bin/make_secrets.py
 ```
 
 Make copy of [`example.env`](example.env) file named `.env`. Tune it before run.
