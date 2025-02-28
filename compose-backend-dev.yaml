@@ -3,6 +3,9 @@
 ## salt.box compose backend override file for dev-mode.
 
 services:
+  keycloak-init:
+    environment:
+      KEYCLOAK_CLIENT_DIRECT_ACCESS: 'true'
   salt-box-core: &core
     build:
       context: $CORE_BUILD_DIR

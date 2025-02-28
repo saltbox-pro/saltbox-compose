@@ -55,7 +55,17 @@ HEALTHCHECK --start-period=30s CMD wget \
 
 
 FROM keycloak AS keycloak-init
-LABEL version='0.4'
+LABEL version='0.5'
+
+RUN \
+  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+<<EOF
+set -e
+mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
+apt-get update
+apt-get install -y jq
+EOF
 
 ENV KEYCLOAK_USER_NAME=''
 ENV KEYCLOAK_USER_EMAIL=''
