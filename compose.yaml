@@ -70,11 +70,7 @@ services:
 
   keycloak:
     <<: *default
-    build:
-      context: keycloak
-      target: keycloak
-      args:
-        KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
+    image: '${IMAGE_REGISTRY}/salt-box-compose/keycloak:master'
     develop:
       watch:
         - action: rebuild
@@ -97,11 +93,7 @@ services:
 
   keycloak-init:
     <<: *default
-    build:
-      context: keycloak
-      target: keycloak-init
-      args:
-        KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
+    image: '${IMAGE_REGISTRY}/salt-box-compose/keycloak-init:master'
     develop:
       watch:
         - action: rebuild
