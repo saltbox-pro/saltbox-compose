@@ -2,6 +2,11 @@
 
 ## salt.box compose backend override file for dev-mode.
 
+x-redis-based: &redis
+  build:
+    context: redis/
+  image: 'redis-salt-box:dev'
+
 services:
   keycloak-init:
     environment:
@@ -25,8 +30,6 @@ services:
   salt-box-core-celery-worker-tasks:
     <<: *core
   redis-salt:
-    build:
-      context: redis/
-    image: 'redis-salt-box:dev'
+    <<: *redis
   redis-celery:
-    image: 'redis-salt-box:dev'
+    <<: *redis
