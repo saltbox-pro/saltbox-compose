@@ -25,9 +25,6 @@ if [ "$(id -u)" -ne 0 ]; then
   err "Root access required, try sudo $0"
 fi
 
-docker compose up --dry-run > /dev/null 2>&1 \
-  || err "Compose failed, check current dir and setup before run"
-
 up_args=()
 
 for i in "$@"; do
@@ -57,7 +54,8 @@ else
   warn "No $override_env file, using defaults"
 fi
 
+set -x
 docker login registry.altlab.su
-docker compose pull
+docker compose pull --ignore-buildable
 docker compose build
 docker compose up "${up_args[@]}"
