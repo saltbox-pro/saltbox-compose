@@ -1,17 +1,7 @@
-ARG BASE_IMG=registry.altlinux.org/alt/alt:p11
+ARG BASE_IMG="registry.altlab.su/salt.box/salt-box-compose/keycloak-base:master"
 
 FROM "$BASE_IMG" AS builder
-LABEL version='1.1'
-
-RUN \
-  --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
-<<EOF
-set -e
-mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
-apt-get update
-apt-get install -y keycloak
-EOF
+LABEL version='2.0'
 
 ARG KC_HTTP_RELATIVE_PATH=/auth/keycloak
 ENV KC_DB=postgres

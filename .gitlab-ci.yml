@@ -19,6 +19,14 @@ include:
     CONTEXT_PATH: 'nginx/'
 
 
+.build-keycloak-base-image:
+  extends: .build-image
+  variables:
+    REGISTRY_ADDITIONAL_PATH: '/keycloak-base'
+    DOCKERFILE: 'base.Dockerfile'
+    CONTEXT_PATH: 'keycloak/'
+
+
 .build-keycloak-image:
   extends: .build-image
   variables:
@@ -67,10 +75,27 @@ Build Nginx image for branch:
     - if: '$CI_COMMIT_BRANCH'
 
 
+Build keycloak-base image for tag:
+  extends: .build-keycloak-base-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_TAG'
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+
+Build keycloak-base image for branch:
+  extends: .build-keycloak-base-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
 Build Keycloak image for tag:
   extends: .build-keycloak-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_TAG'
+  dependencies:
+    - 'Build keycloak-base image for tag'
   rules:
     - if: '$CI_COMMIT_TAG'
 
@@ -79,6 +104,8 @@ Build Keycloak image for branch:
   extends: .build-keycloak-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  dependencies:
+    - 'Build keycloak-base image for branch'
   rules:
     - if: '$CI_COMMIT_BRANCH'
 
@@ -87,6 +114,8 @@ Build keycloak-init image for tag:
   extends: .build-keycloak-init-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_TAG'
+  dependencies:
+    - 'Build Keycloak image for tag'
   rules:
     - if: '$CI_COMMIT_TAG'
 
@@ -95,5 +124,7 @@ Build keycloak-init image for branch:
   extends: .build-keycloak-init-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  dependencies:
+    - 'Build Keycloak image for branch'
   rules:
     - if: '$CI_COMMIT_BRANCH'
