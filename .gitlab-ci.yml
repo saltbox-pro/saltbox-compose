@@ -6,12 +6,13 @@ include:
 
 
 stages:
-  - base
-  - main
+  - stage-0
+  - stage-1
+  - stage-2
 
 .default:
   extends: .build-image
-  stage: main
+  stage: stage-0
   dependencies: []
 
 
@@ -31,7 +32,6 @@ stages:
 
 .build-keycloak-base-image:
   extends: .default
-  stage: base
   variables:
     REGISTRY_ADDITIONAL_PATH: '/keycloak-base'
     DOCKERFILE: 'keycloak/base.Dockerfile'
@@ -40,6 +40,7 @@ stages:
 
 .build-keycloak-image:
   extends: .default
+  stage: stage-1
   variables:
     REGISTRY_ADDITIONAL_PATH: '/keycloak'
     CONTEXT_PATH: 'keycloak/'
@@ -48,6 +49,7 @@ stages:
 
 .build-keycloak-init-image:
   extends: .default
+  stage: stage-2
   variables:
     REGISTRY_ADDITIONAL_PATH: '/keycloak-init'
     CONTEXT_PATH: 'keycloak/'
@@ -105,8 +107,6 @@ Build Keycloak image for tag:
   extends: .build-keycloak-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_TAG'
-  dependencies:
-    - 'Build keycloak-base image for tag'
   rules:
     - if: '$CI_COMMIT_TAG'
 
@@ -115,8 +115,6 @@ Build Keycloak image for branch:
   extends: .build-keycloak-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_BRANCH'
-  dependencies:
-    - 'Build keycloak-base image for branch'
   rules:
     - if: '$CI_COMMIT_BRANCH'
 
@@ -125,8 +123,6 @@ Build keycloak-init image for tag:
   extends: .build-keycloak-init-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_TAG'
-  dependencies:
-    - 'Build Keycloak image for tag'
   rules:
     - if: '$CI_COMMIT_TAG'
 
@@ -135,7 +131,5 @@ Build keycloak-init image for branch:
   extends: .build-keycloak-init-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_BRANCH'
-  dependencies:
-    - 'Build Keycloak image for branch'
   rules:
     - if: '$CI_COMMIT_BRANCH'
