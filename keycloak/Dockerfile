@@ -1,7 +1,8 @@
-ARG BASE_IMG="registry.altlab.su/salt.box/salt-box-compose/keycloak-base:master"
+ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
+ARG KEYCLOAK_BASE_IMG="registry.altlab.su/salt.box/salt-box-compose/keycloak-base:master"
 
-FROM "$BASE_IMG" AS builder
-LABEL version='2.0'
+FROM "$KEYCLOAK_BASE_IMG" AS builder
+LABEL version="2.0"
 
 ARG KC_HTTP_RELATIVE_PATH=/auth/keycloak
 ENV KC_DB=postgres
@@ -11,7 +12,7 @@ ENV KC_HTTP_RELATIVE_PATH=$KC_HTTP_RELATIVE_PATH
 RUN kc.sh build --verbose
 
 FROM "$BASE_IMG" AS keycloak
-LABEL version='1.2'
+LABEL version="1.2"
 
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -45,7 +46,7 @@ HEALTHCHECK --start-period=30s CMD wget \
 
 
 FROM keycloak AS keycloak-init
-LABEL version='0.5'
+LABEL version="0.5"
 
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
