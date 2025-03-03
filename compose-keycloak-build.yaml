@@ -1,0 +1,26 @@
+---
+
+services:
+  keycloak:
+    build:
+      context: keycloak
+      target: keycloak
+      args:
+        KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
+    develop:
+      watch:
+        - action: rebuild
+          path: keycloak/
+    image: 'keycloak:custom'
+
+  keycloak-init:
+    build:
+      context: keycloak
+      target: keycloak-init
+      args:
+        KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
+    develop:
+      watch:
+        - action: rebuild
+          path: keycloak/
+    image: 'keycloak-init:custom'
