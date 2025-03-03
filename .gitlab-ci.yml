@@ -5,30 +5,41 @@ include:
     file: 'build-image.yml'
 
 
-.build-redis-image:
+stages:
+  - base
+  - main
+
+.default:
   extends: .build-image
+  stage: main
+  dependencies: []
+
+
+.build-redis-image:
+  extends: .default
   variables:
     REGISTRY_ADDITIONAL_PATH: '/redis'
     CONTEXT_PATH: 'redis/'
 
 
 .build-nginx-image:
-  extends: .build-image
+  extends: .default
   variables:
     REGISTRY_ADDITIONAL_PATH: '/nginx'
     CONTEXT_PATH: 'nginx/'
 
 
 .build-keycloak-base-image:
-  extends: .build-image
+  extends: .default
+  stage: base
   variables:
     REGISTRY_ADDITIONAL_PATH: '/keycloak-base'
-    DOCKERFILE: 'base.Dockerfile'
+    DOCKERFILE: 'keycloak/base.Dockerfile'
     CONTEXT_PATH: 'keycloak/'
 
 
 .build-keycloak-image:
-  extends: .build-image
+  extends: .default
   variables:
     REGISTRY_ADDITIONAL_PATH: '/keycloak'
     CONTEXT_PATH: 'keycloak/'
@@ -36,7 +47,7 @@ include:
 
 
 .build-keycloak-init-image:
-  extends: .build-image
+  extends: .default
   variables:
     REGISTRY_ADDITIONAL_PATH: '/keycloak-init'
     CONTEXT_PATH: 'keycloak/'
