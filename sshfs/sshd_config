@@ -1,0 +1,22 @@
+LogLevel VERBOSE
+PermitRootLogin no
+MaxAuthTries 6
+MaxSessions 10
+PubkeyAuthentication no
+PasswordAuthentication yes
+PermitEmptyPasswords no
+UsePAM yes
+AllowAgentForwarding no
+AllowTcpForwarding no
+X11Forwarding no
+PermitTTY no
+PrintMotd no
+TCPKeepAlive yes
+Compression delayed
+ClientAliveInterval 0
+ClientAliveCountMax 3
+PermitTunnel no
+ChrootDirectory none
+Banner none
+Subsystem sftp internal-sftp
+AllowGroups wheel users
