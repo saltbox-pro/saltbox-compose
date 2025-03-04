@@ -308,27 +308,38 @@ services:
       - mongo_admin_password
 
   opa:
+    # FIXME
     image: openpolicyagent/opa:latest-istio-static
-    restart: unless-stopped
     command:
       - 'run'
       - '--server'
       - '--addr=0.0.0.0:8181'
       - '--watch'
       - '--log-format=json-pretty'
-      # - "--log-level=debug"
+      - '--log-level=${OPA_LOG_LEVEL:-info}'
       - '--set=decision_logs.console=true'
       - '/policies/'
-      # - '/data/'
+    # FIXME
     # healthcheck:
     #   test: ["CMD", "curl", "-f", "http://localhost:8181/health"]
     #   interval: 5s
     #   timeout: 10s
     #   retries: 3
     ports:
-      - 8181:8181
+      - '8181:8181'
     volumes:
-      - ./opa/policies:/policies
+      - './opa/policies:/policies'  # FIXME Hide into volume
+
+  sshfs:
+    <<: *default
+    image: '${IMAGE_REGISTRY}/salt-box-compose/sshfs:master'
+    secrets:
+      - sshfs_user_password
+    # TODO Make direct access optional
+    ports:
+      - '${SSHFS_EXPOSE_SOCKET:-1022}:1022'
+    volumes:
+      - './files:/srv/sshfs/'
 
 configs: {}
 
@@ -356,6 +367,8 @@ secrets:
     file: secrets/salt_box_user_password
   salt_box_user_password:
     file: secrets/salt_box_user_password
+  sshfs_user_password:
+    file: secrets/sshfs_user_password
   redis_salt_password:
     file: secrets/redis_salt_password
   redis_salt_ca_private_key_password:

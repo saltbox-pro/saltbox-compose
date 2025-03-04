@@ -19,6 +19,7 @@ SECRETS = {
     'redis_salt_private_key_password': 16,
     'salt_box_admin_password': 12,
     'salt_box_user_password': 12,
+    'sshfs_user_password': 12,
 }
 
 SECRET_ALPHABET = string.ascii_letters + string.digits

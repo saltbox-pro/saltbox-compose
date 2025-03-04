@@ -21,6 +21,7 @@ RUN useradd \
   --groups users \
   --home-dir "$STORAGE_PATH" --create-home \
   "$USERNAME"
+VOLUME "$STORAGE_PATH"
 
 ENV PORT=1022
 EXPOSE $PORT
