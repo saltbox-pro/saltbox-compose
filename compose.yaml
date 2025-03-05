@@ -308,8 +308,7 @@ services:
       - mongo_admin_password
 
   opa:
-    # FIXME
-    image: openpolicyagent/opa:latest-istio-static
+    image: '${IMAGE_REGISTRY}/salt-box-compose/opa:master'
     command:
       - 'run'
       - '--server'
@@ -319,16 +318,8 @@ services:
       - '--log-level=${OPA_LOG_LEVEL:-info}'
       - '--set=decision_logs.console=true'
       - '/policies/'
-    # FIXME
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8181/health"]
-    #   interval: 5s
-    #   timeout: 10s
-    #   retries: 3
     ports:
       - '8181:8181'
-    volumes:
-      - './opa/policies:/policies'  # FIXME Hide into volume
 
   sshfs:
     <<: *default
