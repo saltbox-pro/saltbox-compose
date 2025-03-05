@@ -330,7 +330,7 @@ services:
     ports:
       - '${SSHFS_EXPOSE_SOCKET:-1022}:1022'
     volumes:
-      - '${SSHFS_STORAGE_PATH:-sshfs_storage}:/srv/sshfs/'
+      - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
 
 configs: {}
 
@@ -344,7 +344,6 @@ volumes:
   redis_salt_data: {}
   salt_box_core_var: {}
   salt_master_pki: {}
-  sshfs_storage: {}
 
 secrets:
   keycloak_admin_password:
