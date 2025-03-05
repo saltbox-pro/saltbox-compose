@@ -64,6 +64,13 @@ stages:
     CONTEXT_PATH: 'opa/'
 
 
+.sshfs:
+  extends: .default
+  variables:
+    REGISTRY_ADDITIONAL_PATH: '/sshfs'
+    CONTEXT_PATH: 'sshfs/'
+
+
 Build Redis image for tag:
   extends: .build-redis-image
   variables:
@@ -153,6 +160,22 @@ Build OPA image for tag:
 
 Build OPA image for branch:
   extends: .opa
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+
+Build SSHFS image for tag:
+  extends: .sshfs
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_TAG'
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+
+Build SSHFS image for branch:
+  extends: .sshfs
   variables:
     IMAGE_TAG: '$CI_COMMIT_BRANCH'
   rules:
