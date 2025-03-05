@@ -1,0 +1,90 @@
+---
+
+include:
+  - project: 'salt.box/ci-lib'
+    file: 'build-image.yml'
+
+
+stages:
+  - base
+  - main
+  - init
+
+
+.default:
+  extends: .build-image
+  dependencies: []
+
+
+.build-keycloak-base-image:
+  extends: .default
+  stage: base
+  variables:
+    REGISTRY_ADDITIONAL_PATH: '/keycloak-base'
+    DOCKERFILE: 'keycloak/base.Dockerfile'
+    CONTEXT_PATH: 'keycloak/'
+
+
+.build-keycloak-image:
+  extends: .default
+  stage: main
+  variables:
+    REGISTRY_ADDITIONAL_PATH: '/keycloak'
+    CONTEXT_PATH: 'keycloak/'
+    TARGET: keycloak
+
+
+.build-keycloak-init-image:
+  extends: .default
+  stage: init
+  variables:
+    REGISTRY_ADDITIONAL_PATH: '/keycloak-init'
+    CONTEXT_PATH: 'keycloak/'
+    TARGET: keycloak-init
+
+
+Build keycloak-base image for tag:
+  extends: .build-keycloak-base-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_TAG'
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+
+Build keycloak-base image for branch:
+  extends: .build-keycloak-base-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+Build Keycloak image for tag:
+  extends: .build-keycloak-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_TAG'
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+
+Build Keycloak image for branch:
+  extends: .build-keycloak-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+
+Build keycloak-init image for tag:
+  extends: .build-keycloak-init-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_TAG'
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+
+Build keycloak-init image for branch:
+  extends: .build-keycloak-init-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
