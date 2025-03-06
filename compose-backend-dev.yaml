@@ -21,7 +21,7 @@ services:
     image: 'salt-box-core:dev'
     volumes:
       - '${CORE_BUILD_DIR}:/mnt/salt_box_core'
-  salt-box-core-minions-consumer:
+  salt-box-core-salt-bridge-consumer:
     <<: *core
   salt-box-core-tasks-watcher:
     <<: *core

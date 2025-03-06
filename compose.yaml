@@ -247,9 +247,9 @@ services:
         condition: service_healthy
         restart: false
 
-  salt-box-core-minions-consumer:
+  salt-box-core-salt-bridge-consumer:
     <<: *core
-    entrypoint: 'entrypoint.sh salt-box-minions-consumer'
+    entrypoint: 'entrypoint.sh salt-box-salt-bridge-consumer'
     expose: []
     depends_on:
       redis-celery:
