@@ -115,6 +115,8 @@ services:
 
   salt-master:
     <<: *default
+    profiles:
+      - salt-master
     image: '${IMAGE_REGISTRY}/salt-box-bridge/salt-master:master'
     init: true
     environment:
@@ -126,17 +128,26 @@ services:
     ports:
       - '4505-4506:4505-4506'
     volumes:
+      - '${SALT_MASTER_STORAGE_PATH}:/srv/salt/'
       - 'salt_master_pki:/etc/salt/pki/'
       - type: volume
         source: redis_salt_certs
         target: '/etc/redis/certs/'
         read_only: true
-    profiles:
-      - salt-master
     depends_on:
       redis-salt:
         condition: service_healthy
         restart: false
+
+  downloader:
+    image: 'downloader:latest'
+    build:
+      context: downloader
+    environment:
+      SALT_REPO_ENABLED: 'true'
+      SALT_REPO_URL: 'https://dev.altlab.su/a.baikov/test-public-sls-repo.git'
+    volumes:
+      - '${SALT_MASTER_STORAGE_PATH}:/srv/salt/'
 
   make-redis-salt-certs:
     <<: *default
