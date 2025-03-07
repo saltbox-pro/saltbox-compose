@@ -140,9 +140,12 @@ services:
         restart: false
 
   downloader:
-    image: 'downloader:latest'
+    <<: *default
+    profiles:
+      - salt-master
     build:
       context: downloader
+    image: 'salt-box-downloader:latest'
     environment:
       SALT_REPO_ENABLED: 'true'
       SALT_REPO_URL: 'https://dev.altlab.su/a.baikov/test-public-sls-repo.git'
