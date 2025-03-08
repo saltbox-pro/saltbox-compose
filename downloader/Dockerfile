@@ -14,7 +14,7 @@ apt-get install --yes git
 EOF
 
 COPY --chmod=755 download.sh /usr/local/bin/
-COPY download.d/ /root/download.d
+COPY --chmod=755 download.d/ /root/download.d
 ENTRYPOINT /usr/local/bin/download.sh
 
 ENV SALT_REPO_URL=
