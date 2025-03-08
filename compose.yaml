@@ -128,6 +128,7 @@ services:
     ports:
       - '4505-4506:4505-4506'
     volumes:
+      - './salt/master_gitfs.conf:/etc/salt/master.d/master_gitfs.conf'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt/'
       - 'salt_master_pki:/etc/salt/pki/'
       - type: volume
@@ -139,10 +140,12 @@ services:
         condition: service_healthy
         restart: false
 
+  # TODO
   downloader:
     <<: *default
     profiles:
-      - salt-master
+      #- salt-master
+      - DISABLED
     build:
       context: downloader
     image: 'salt-box-downloader:latest'
