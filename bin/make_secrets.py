@@ -17,6 +17,7 @@ SECRETS = {
     'redis_salt_ca_private_key_password': 16,
     'redis_salt_password': 16,
     'redis_salt_private_key_password': 16,
+    'master_secret': 16,
     'salt_box_admin_password': 12,
     'salt_box_user_password': 12,
     'sshfs_user_password': 12,

@@ -122,9 +122,11 @@ services:
     environment:
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       REDIS_PASSWORD_FILE: '/run/secrets/redis_salt_password'
+      MASTER_SECRET_FILE: '/run/secrets/master_secret'
       SALT_MASTER_LOG_LEVEL: '${SALT_MASTER_LOG_LEVEL}'
     secrets:
       - redis_salt_password
+      - master_secret
     ports:
       - '4505-4506:4505-4506'
     volumes:
@@ -264,9 +266,9 @@ services:
         condition: service_healthy
         restart: false
 
-  salt-box-core-salt-bridge-consumer:
+  salt-box-core-faststream-redis:
     <<: *core
-    entrypoint: 'entrypoint.sh salt-box-salt-bridge-consumer'
+    entrypoint: 'entrypoint.sh salt-box-faststream-redis'
     expose: []
     depends_on:
       redis-celery:
@@ -383,6 +385,8 @@ secrets:
     file: secrets/redis_salt_ca_private_key_password
   redis_salt_private_key_password:
     file: secrets/redis_salt_private_key_password
+  master_secret:
+    file: secrets/master_secret
   redis_celery_password:
     file: secrets/redis_celery_password
   redis_password:
