@@ -208,36 +208,47 @@ services:
     depends_on:
       - make-redis-salt-certs
 
-  redis-celery:
+  redis-taskiq:
     <<: *default
     image: '${IMAGE_REGISTRY}/salt-box-compose/redis:master'
     environment:
       REDIS_ENCRYPTION: 'off'
-      REDIS_USERNAME: ${REDIS_CELERY_USERNAME}
+      REDIS_USERNAME: ${REDIS_TASKIQ_USERNAME}
       REDIS_PASSWORD_SECRET_FILE: '/run/secrets/redis_password'
     command:
       - --save 60 1
     volumes:
-      - 'redis_celery_data:/data/'
+      - 'redis_taskiq_data:/data/'
     expose:
       - 6379
     secrets:
       - redis_password
+
+  rabbitmq:
+    <<: *default
+    image: rabbitmq:3-management
+    expose:
+      - 5672
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   salt-box-core: &core
     <<: *default
     image: '${IMAGE_REGISTRY}/salt-box-core:${CORE_IMAGE_TAG}'
     environment:
       BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
-      CELERY_BEAT_SCHEDULE_FILENAME: '/var/salt-box-core/beat_schedule'
       MONGO_DB: '${MONGO_DB}'
       MONGO_USER: '${MONGO_USER}'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
-      REDIS_CELERY_DB: 0
-      REDIS_CELERY_HOST: redis-celery
-      REDIS_CELERY_PASSWORD_SECRET: '/run/secrets/redis_celery_password'
-      REDIS_CELERY_PORT: 6379
-      REDIS_CELERY_USERNAME: '${REDIS_CELERY_USERNAME}'
+      REDIS_TASKIQ_DB: 0
+      REDIS_TASKIQ_HOST: redis-taskiq
+      REDIS_TASKIQ_PASSWORD_SECRET: '/run/secrets/redis_taskiq_password'
+      REDIS_TASKIQ_PORT: 6379
+      REDIS_TASKIQ_USERNAME: '${REDIS_TASKIQ_USERNAME}'
       REDIS_URL: 'rediss://redis-salt:6379/0'
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
@@ -245,6 +256,7 @@ services:
       KEYCLOAK_FRONT_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
+      # OPA_URL: 'http://opal_client:8181'
       OPA_URL: 'http://opa:8181'
     volumes:
       - type: volume
@@ -253,7 +265,7 @@ services:
         read_only: true
       - 'salt_box_core_var:/var/salt-box-core/'
     secrets:
-      - redis_celery_password
+      - redis_taskiq_password
       - redis_salt_password
       - mongo_admin_password
     expose:
@@ -265,13 +277,16 @@ services:
       redis-salt:
         condition: service_healthy
         restart: false
+      rabbitmq:
+        condition: service_healthy
+        restart: false
 
   salt-box-core-faststream-redis:
     <<: *core
     entrypoint: 'entrypoint.sh salt-box-faststream-redis'
     expose: []
     depends_on:
-      redis-celery:
+      redis-salt:
         condition: service_started
         restart: false
 
@@ -280,29 +295,32 @@ services:
     entrypoint: 'entrypoint.sh salt-box-tasks-watcher'
     expose: []
     depends_on:
-      redis-celery:
+      redis-salt:
         condition: service_started
         restart: false
 
-  salt-box-core-celery-beat:
+  salt-box-core-taskiq-worker:
     <<: *core
-    entrypoint: '/usr/local/bin/celery-beat.sh'
-    expose: []
+    entrypoint: '/usr/local/bin/taskiq-worker.sh'
+    ports: []
     depends_on:
-      redis-celery:
+      redis-taskiq:
         condition: service_started
         restart: false
+      rabbitmq:
+        condition: service_healthy
+        restart: false
 
-  salt-box-core-celery-worker-tasks:
+  salt-box-core-taskiq-scheduler:
     <<: *core
-    entrypoint: '/usr/local/bin/celery-worker.sh'
-    command:
-      - 'tasks'
-      - '--concurrency 4'
-    expose: []
+    entrypoint: '/usr/local/bin/taskiq-scheduler.sh'
+    ports: []
     depends_on:
-      redis-celery:
+      redis-taskiq:
         condition: service_started
+        restart: false
+      rabbitmq:
+        condition: service_healthy
         restart: false
 
   salt-box-frontend:
@@ -335,7 +353,7 @@ services:
       - '--watch'
       - '--log-format=json-pretty'
       - '--log-level=${OPA_LOG_LEVEL:-info}'
-      - '--set=decision_logs.console=true'
+      - '--set=decision_logs.console=false'
       - '/policies/'
     ports:
       - '8181:8181'
@@ -357,8 +375,8 @@ volumes:
   keycloak-db_data: {}
   mongo_config: {}
   mongo_data: {}
-  redis_celery_certs: {}
-  redis_celery_data: {}
+  redis_taskiq_certs: {}
+  redis_taskiq_data: {}
   redis_salt_certs: {}
   redis_salt_data: {}
   salt_box_core_var: {}
@@ -387,9 +405,9 @@ secrets:
     file: secrets/redis_salt_private_key_password
   master_secret:
     file: secrets/master_secret
-  redis_celery_password:
-    file: secrets/redis_celery_password
+  redis_taskiq_password:
+    file: secrets/redis_taskiq_password
   redis_password:
-    file: secrets/redis_celery_password
+    file: secrets/redis_taskiq_password
   redis_private_key_password:
     file: secrets/redis_salt_private_key_password

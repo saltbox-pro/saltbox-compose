@@ -13,7 +13,7 @@ SECRETS = {
     'keycloak_client_salt_box_core_password': 16,
     'keycloak_database_password': 16,
     'mongo_admin_password': 16,
-    'redis_celery_password': 16,
+    'redis_taskiq_password': 16,
     'redis_salt_ca_private_key_password': 16,
     'redis_salt_password': 16,
     'redis_salt_private_key_password': 16,

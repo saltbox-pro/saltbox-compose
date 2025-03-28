@@ -11,6 +11,7 @@ services:
   keycloak-init:
     environment:
       KEYCLOAK_CLIENT_DIRECT_ACCESS: 'true'
+
   salt-box-core: &core
     build:
       context: $CORE_BUILD_DIR
@@ -21,15 +22,39 @@ services:
     image: 'salt-box-core:dev'
     volumes:
       - '${CORE_BUILD_DIR}:/mnt/salt_box_core'
+
   salt-box-core-faststream-redis:
     <<: *core
+
   salt-box-core-tasks-watcher:
     <<: *core
-  salt-box-core-celery-beat:
+
+  salt-box-core-taskiq-worker:
     <<: *core
-  salt-box-core-celery-worker-tasks:
+
+  salt-box-core-taskiq-scheduler:
     <<: *core
+
   redis-salt:
     <<: *redis
-  redis-celery:
+
+  redis-taskiq:
     <<: *redis
+    ports:
+      - 6380:6379
+
+  rabbitmq:
+    ports:
+      - 5672:5672
+      - 15672:15672
+    # environment:
+    #   - RABBITMQ_DEFAULT_USER=guest
+    #   - RABBITMQ_DEFAULT_PASS=guest
+    # volumes:
+    #   - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    #   - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+
+  opa:
+    image: openpolicyagent/opa:latest-istio-static
+    volumes:
+      - './opa/policies:/policies'
