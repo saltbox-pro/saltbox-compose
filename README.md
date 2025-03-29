@@ -18,11 +18,11 @@ Another way is to go step-by step.
 
 While project is private, login required to obtain the images.
 
-  1. Create a personal token: on [GitLab instance](https://dev.altlab.su) your
+  1. Create a personal token: on [GitLab instance](https://dev.saltbox.pro) your
      profile -> Edit profile -> Access tokens on the side menu. Add
      `read_registry` scope. Copy the
      token.
-  1. Run `docker login registry.altlab.su`, use your username for login and the
+  1. Run `docker login registry.saltbox.pro`, use your username for login and the
      token value for password.
      **ATTENTION!** Token will be kept as plain text if you have no configured
      credential helper.
