@@ -51,6 +51,16 @@ fi
 
 cat example.env > "$env_file"
 
+# shellcheck source=/dev/null
+registry=$(
+  source "$env_file"
+  echo "$IMAGE_REGISTRY" | cut --delimiter '/' --fields 1
+)
+
+if [ -z "$registry" ]; then
+  err "Failed to get registry from $env_file"
+fi
+
 if [ -f "$override_env" ]; then
   cat "$override_env" >> "$env_file"
 else
@@ -60,7 +70,7 @@ fi
 chown "$(stat -c %u:%g .)" "$env_file"
 
 set -x
-docker login registry.altlab.su
+docker login "$registry"
 docker compose pull --ignore-buildable
 docker compose build
 docker compose up "${up_args[@]}"
