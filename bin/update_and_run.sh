@@ -10,6 +10,7 @@ Usage: sudo ./bin/update_and_run.sh [-d|--detach] [-h|--help]
 
   -h|--help\tPrint this message
   -d|--detach\tDetach Docker Compose after start
+  -f|--force\tRewrite with no confirmation
 "
 
 warn() {
@@ -21,22 +22,24 @@ err() {
   exit 1
 }
 
-if [ "$(id -u)" -ne 0 ]; then
-  err "Root access required, try sudo $0"
-fi
-
 up_args=()
+force_flag=0
 
 for i in "$@"; do
   # shellcheck disable=SC2059
   case $i in
     -d|--detach) up_args+=("--detach") ;;
     -h|--help) printf "$usage_str" && exit 0 ;;
+    -f|--force) force_flag=1 ;;
     *) err "Unknown option $i" ;;
   esac
 done
 
-if [ -f "$env_file" ]; then
+if [ "$(id -u)" -ne 0 ]; then
+  err "Root access required, try sudo $0"
+fi
+
+if [ -f "$env_file" ] && [ $force_flag = 0 ]; then
   read -p "File '$env_file' already exists, overwrite? (y/n): " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]; then
