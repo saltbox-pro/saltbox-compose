@@ -47,7 +47,6 @@ services:
       context: '${SALT_BUILD_DIR}'
       target: salt-master
     image: 'salt-master:dev'
-    restart: 'on-failure:3'
     entrypoint: "salt-key --yes --delete 'moc-minion-*'"
     profiles:
       - salt-master
@@ -59,6 +58,9 @@ services:
       context: '${SALT_BUILD_DIR}'
       target: salt-minion
     image: 'salt-minion:dev'
+    environment:
+      SALT_MINION_LOG_LEVEL: '${SALT_MOC_MINION_LOG_LEVEL:-warning}'
+      SALT_MINION_RETRY_DNS: 10
     develop:
       watch:
         - path: 'salt/minion/minion.yaml'
@@ -66,7 +68,7 @@ services:
           target: '/etc/salt/minion.d/minion.conf'
     deploy:
       mode: replicated
-      replicas: '${SALT_MINION_REPLICAS:-1}'
+      replicas: '${SALT_MINION_REPLICAS:-${SALT_MOC_MINION_REPLICAS:-1}}'  # TODO Deprecate SALT_MINION_REPLICAS
     profiles:
       - salt-master
     depends_on:
@@ -74,6 +76,3 @@ services:
         condition: service_completed_successfully
         required: false
         restart: true
-      salt-master:
-        condition: service_started
-        restart: false
