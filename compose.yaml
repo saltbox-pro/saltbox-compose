@@ -145,7 +145,7 @@ services:
     #    condition: service_healthy
     #    restart: false
 
-  # TODO
+  # TODO Deprecated
   downloader:
     <<: *default
     profiles:

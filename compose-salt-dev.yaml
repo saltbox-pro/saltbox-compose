@@ -12,14 +12,14 @@ services:
   salt-master:
     build:
       context: '${SALT_BUILD_DIR}'
-      target: salt-master
+      target: salt-master-dev
     image: 'salt-master:dev'
     develop:
       watch:
-        - path: '${SALT_BUILD_DIR}/docker/templates/'
+        - path: '${SALT_BUILD_DIR}/master/templates/'
           action: 'sync+restart'
           target: '/root/templates/'
-        - path: '${SALT_BUILD_DIR}/docker/entrypoint.sh'
+        - path: '${SALT_BUILD_DIR}/master/entrypoint.sh'
           action: 'sync+restart'
           target: '/usr/local/bin/entrypoint.sh'
         - path: '${SALT_BUILD_DIR}/engines/'
@@ -28,14 +28,10 @@ services:
         - path: '${SALT_BUILD_DIR}/runners/'
           action: 'sync+restart'
           target: '/srv/salt_extmod/runners/'
-        # Rebuilding kills replicated salt-minion containers for some reason.
-        # Its may be raised again with `sudo docker compose up salt-minion -d`
         - path: '${SALT_BUILD_DIR}/salt_box_bridge_service/'
-          action: 'rebuild'
-        - path: '${SALT_BUILD_DIR}/pyproject.toml'
-          action: 'rebuild'
-        - path: '${SALT_BUILD_DIR}/requirements.txt'
-          action: 'rebuild'
+          action: 'sync+restart'
+          target: '/root/salt_box_bridge_service/'
+
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
@@ -45,27 +41,22 @@ services:
     <<: *default
     build:
       context: '${SALT_BUILD_DIR}'
-      target: salt-master
+      target: salt-master-dev
     image: 'salt-master:dev'
     entrypoint: "salt-key --yes --delete 'moc-minion-*'"
     profiles:
       - salt-master
     volumes:
       - 'salt_master_pki:/etc/salt/pki/'
-  salt-minion:
+  salt-moc-minion:
     <<: *default
     build:
       context: '${SALT_BUILD_DIR}'
-      target: salt-minion
+      target: salt-moc-minion
     image: 'salt-minion:dev'
     environment:
       SALT_MINION_LOG_LEVEL: '${SALT_MOC_MINION_LOG_LEVEL:-warning}'
-      SALT_MINION_RETRY_DNS: 10
-    develop:
-      watch:
-        - path: 'salt/minion/minion.yaml'
-          action: 'sync+restart'
-          target: '/etc/salt/minion.d/minion.conf'
+      SALT_MINION_RETRY_DNS: '${SALT_MOC_MINION_RETRY_DNS:-10}'
     deploy:
       mode: replicated
       replicas: '${SALT_MINION_REPLICAS:-${SALT_MOC_MINION_REPLICAS:-1}}'  # TODO Deprecate SALT_MINION_REPLICAS
@@ -74,5 +65,9 @@ services:
     depends_on:
       clean-keys-cmd:
         condition: service_completed_successfully
+        required: false
+        restart: true
+      salt-master:
+        condition: service_started
         required: false
         restart: true
