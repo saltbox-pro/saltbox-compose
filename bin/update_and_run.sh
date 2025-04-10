@@ -23,14 +23,14 @@ err() {
   exit 1
 }
 
-up_args=()
+up_args=('--remove-orphans')
 force_flag=0
 pull_flag=1
 
 for i in "$@"; do
   # shellcheck disable=SC2059
   case $i in
-    -d|--detach) up_args+=("--detach") ;;
+    -d|--detach) up_args+=('--detach') ;;
     -f|--force) force_flag=1 ;;
     -h|--help) printf "$usage_str" && exit 0 ;;
     -n|--no-pull) pull_flag=0 ;;
@@ -72,10 +72,9 @@ fi
 
 chown "$(stat -c %u:%g .)" "$env_file"
 
-set -x
-docker login "$registry"
 if [ $pull_flag = 1 ]; then
-  docker compose pull --ignore-buildable
+  (set -x; docker login "$registry")
+  (set -x; docker compose pull --ignore-buildable)
 fi
-docker compose build
-docker compose up "${up_args[@]}"
+(set -x; docker compose build)
+(set -x; docker compose up "${up_args[@]}")
