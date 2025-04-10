@@ -8,9 +8,10 @@ Update images and run a Salt.Box Docker Compose based instance.
 
 Usage: sudo ./bin/update_and_run.sh [-d|--detach] [-h|--help]
 
-  -h|--help\tPrint this message
   -d|--detach\tDetach Docker Compose after start
   -f|--force\tRewrite with no confirmation
+  -h|--help\tPrint this message
+  -n|--no-pull\tDo not pull newer images from registry
 "
 
 warn() {
@@ -24,13 +25,15 @@ err() {
 
 up_args=()
 force_flag=0
+pull_flag=1
 
 for i in "$@"; do
   # shellcheck disable=SC2059
   case $i in
     -d|--detach) up_args+=("--detach") ;;
-    -h|--help) printf "$usage_str" && exit 0 ;;
     -f|--force) force_flag=1 ;;
+    -h|--help) printf "$usage_str" && exit 0 ;;
+    -n|--no-pull) pull_flag=0 ;;
     *) err "Unknown option $i" ;;
   esac
 done
@@ -71,6 +74,8 @@ chown "$(stat -c %u:%g .)" "$env_file"
 
 set -x
 docker login "$registry"
-docker compose pull --ignore-buildable
+if [ $pull_flag = 1 ]; then
+  docker compose pull --ignore-buildable
+fi
 docker compose build
 docker compose up "${up_args[@]}"
