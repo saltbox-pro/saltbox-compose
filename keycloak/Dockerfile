@@ -1,5 +1,5 @@
 ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
-ARG KEYCLOAK_BASE_IMG="registry.saltbox.pro/salt.box/salt-box-compose/keycloak-base:master"
+ARG KEYCLOAK_BASE_IMG="registry.saltbox.pro/saltbox/saltbox-compose/keycloak-base:master"
 
 FROM "$KEYCLOAK_BASE_IMG" AS builder
 LABEL version="2.0"

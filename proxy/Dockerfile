@@ -1,4 +1,4 @@
-ARG IMAGE=registry.saltbox.pro/salt.box/salt-box-compose/nginx:master
+ARG IMAGE=registry.saltbox.pro/saltbox/saltbox-compose/nginx:master
 FROM $IMAGE
 LABEL version='1.0'
 

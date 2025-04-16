@@ -1,6 +1,6 @@
 ---
 
-## salt.box compose Keycloak override file for dev-mode.
+## Salt.Box Compose Keycloak override file for dev-mode.
 ##
 ## autotests one-shot service requires direct access to Keycloak API.
 ##

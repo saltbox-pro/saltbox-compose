@@ -1,6 +1,6 @@
 ---
 
-## salt.box compose SaltStack override file for dev-mode.
+## Salt.Box Compose SaltStack override file for dev-mode.
 #
 # Local generic does not override original
 x-default-service: &default

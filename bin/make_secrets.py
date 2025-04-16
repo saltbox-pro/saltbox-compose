@@ -72,7 +72,7 @@ def prune(secrets_dir: Path) -> None:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog='make_secrets',
-        description='Generate passwords for salt.box installation',)
+        description='Generate passwords for Salt.Box installation',)
     parser.add_argument(
         '-w',
         '--overwrite',

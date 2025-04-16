@@ -6,7 +6,7 @@ services:
       context: keycloak
       target: keycloak
       args:
-        BASE_KEYCLOAK_IMG: "${IMAGE_REGISTRY}/salt.box/salt-box-compose/keycloak-base:master"
+        BASE_KEYCLOAK_IMG: "${IMAGE_REGISTRY}/saltbox/saltbox-compose/keycloak-base:master"
         KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
     develop:
       watch:
@@ -19,7 +19,7 @@ services:
       context: keycloak
       target: keycloak-init
       args:
-        BASE_KEYCLOAK_IMG: "${IMAGE_REGISTRY}/salt.box/salt-box-compose/keycloak-base:master"
+        BASE_KEYCLOAK_IMG: "${IMAGE_REGISTRY}/saltbox/saltbox-compose/keycloak-base:master"
         KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
     develop:
       watch:

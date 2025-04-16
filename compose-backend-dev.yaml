@@ -1,11 +1,11 @@
 ---
 
-## salt.box compose backend override file for dev-mode.
+## Salt.Box Compose backend override file for dev-mode.
 
 x-redis-based: &redis
   build:
     context: redis/
-  image: 'redis-salt-box:dev'
+  image: 'redis-saltbox:dev'
 
 services:
   keycloak-init:
@@ -19,7 +19,7 @@ services:
     environment:
       - DEBUG=True
     tty: true  # colorize logs
-    image: 'salt-box-core:dev'
+    image: 'saltbox-core:dev'
     volumes:
       - '${CORE_BUILD_DIR}:/mnt/salt_box_core'
 

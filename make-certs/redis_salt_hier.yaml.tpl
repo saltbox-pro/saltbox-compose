@@ -1,16 +1,16 @@
 ---
 
 names:
-  salt.box:
+  saltbox:
     country_name: RU
     state_or_province_name: Central Federal District
     locality_name: Moscow
-    organization_name: salt.box
+    organization_name: Salt.Box
     common_name: redis-salt
 
 certs:
   /mnt/redis_certs/ca.crt:
-    subject: salt.box
+    subject: saltbox
     not_valid_after_days: null
     key_password: '${CA_KEY_PASSWORD}'
     basic_constraints:
@@ -18,7 +18,7 @@ certs:
       path_length: 0  # No further CA certificates
     issue:
       /mnt/redis_certs/redis.crt:
-        subject: salt.box
+        subject: saltbox
         not_valid_after_days: null
         key_password: '${REDIS_KEY_PASSWORD}'
         basic_constraints:

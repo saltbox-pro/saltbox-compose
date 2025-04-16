@@ -1,6 +1,6 @@
 # Nginx image
 
-ALT Linux based Nginx image supposed to be used as a part of salt.box system
+ALT Linux based Nginx image supposed to be used as a part of Salt.Box system
 and inherits some conceptions of the official Nginx Docker image.
 
 - Respective __configs__ can be placed into `/etc/nginx/sites-enabled.d/` and

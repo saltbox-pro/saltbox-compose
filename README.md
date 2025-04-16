@@ -1,6 +1,6 @@
 > **ATTENTION!** Project is on the early stage and is not ready for usage.
 
-# salt.box compose
+# Salt.Box Compose
 
 ## Helper script
 
@@ -60,8 +60,8 @@ docker compose up --build --pull=always`.
 For production use following commands are recommended:
 
 ```bash
-sudo sh -c "echo 'vm.overcommit_memory=1' > /etc/sysctl.d/salt-box.conf"
-sudo sysctl -p /etc/sysctl.d/salt-box.conf
+sudo sh -c "echo 'vm.overcommit_memory=1' > /etc/sysctl.d/saltbox.conf"
+sudo sysctl -p /etc/sysctl.d/saltbox.conf
 ```
 
 `vm.overcommit_memory=1` is a Redis requirement.

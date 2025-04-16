@@ -1,12 +1,12 @@
 ---
 
-## salt.box compose frontend override file for dev-mode.
+## Salt.Box Compose frontend override file for dev-mode.
 
 services:
   salt-box-frontend:
     build:
       context: $FRONTEND_BUILD_DIR
-    image: 'salt-box-frontend:dev'
+    image: 'saltbox-frontend:dev'
     develop:
       watch:
         - action: rebuild
