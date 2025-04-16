@@ -8,14 +8,14 @@ services:
     build:
       context: proxy/
       args:
-        IMAGE: '${IMAGE_REGISTRY}/salt-box-compose/nginx:master'
+        IMAGE: '${IMAGE_REGISTRY}/saltbox-compose/nginx:master'
     develop:
       watch:
         - action: rebuild
           path: proxy/
     environment:
       API_BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${BACKEND_PATH}'
-      BACKEND_HOSTNAME: salt-box-core
+      BACKEND_HOSTNAME: saltbox-core
       BACKEND_HTTP_PORT: '${BACKEND_HTTP_PORT}'
       BACKEND_PATH: '${BACKEND_PATH}'
       KEYCLOAK_BASE_URL: '${KEYCLOAK_BASE_URL}'
@@ -30,10 +30,10 @@ services:
     secrets:
       - keycloak_client_salt_box_core_password
     depends_on:
-      salt-box-core:
+      saltbox-core:
         condition: service_started
         restart: false
-      salt-box-frontend:
+      saltbox-frontend:
         condition: service_started
         restart: false
       keycloak:
@@ -70,7 +70,7 @@ services:
 
   keycloak:
     <<: *default
-    image: '${IMAGE_REGISTRY}/salt-box-compose/keycloak:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/keycloak:master'
     command:
       - 'start'
       - '--optimized'
@@ -89,7 +89,7 @@ services:
 
   keycloak-init:
     <<: *default
-    image: '${IMAGE_REGISTRY}/salt-box-compose/keycloak-init:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/keycloak-init:master'
     environment:
       KEYCLOAK_ADMIN_EMAIL: '${KEYCLOAK_ADMIN_EMAIL}'
       KEYCLOAK_ADMIN_FIRSTNAME: '${KEYCLOAK_ADMIN_FIRSTNAME}'
@@ -117,7 +117,7 @@ services:
     <<: *default
     profiles:
       - salt-master
-    image: '${IMAGE_REGISTRY}/salt-box-bridge/salt-master:master'
+    image: '${IMAGE_REGISTRY}/saltbox-bridge/salt-master:master'
     init: true
     environment:
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
@@ -153,7 +153,7 @@ services:
       - DISABLED
     build:
       context: downloader
-    image: 'salt-box-downloader:latest'
+    image: 'saltbox-downloader:latest'
     environment:
       SALT_REPO_ENABLED: 'true'
       SALT_REPO_URL: 'https://dev.saltbox.pro/a.baikov/test-public-sls-repo.git'
@@ -176,7 +176,7 @@ services:
 
   redis-salt:
     <<: *default
-    image: '${IMAGE_REGISTRY}/salt-box-compose/redis:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/redis:master'
     environment:
       REDIS_ENCRYPTION: 'on'
       TLS_AUTH_CLIENT: optional
@@ -213,7 +213,7 @@ services:
 
   redis-taskiq:
     <<: *default
-    image: '${IMAGE_REGISTRY}/salt-box-compose/redis:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/redis:master'
     environment:
       REDIS_ENCRYPTION: 'off'
       REDIS_USERNAME: ${REDIS_TASKIQ_USERNAME}
@@ -239,9 +239,9 @@ services:
       retries: 5
       start_period: 10s
 
-  salt-box-core: &core
+  saltbox-core: &core
     <<: *default
-    image: '${IMAGE_REGISTRY}/salt-box-core:${CORE_IMAGE_TAG}'
+    image: '${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}'
     environment:
       BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
       MONGO_DB: '${MONGO_DB}'
@@ -266,7 +266,7 @@ services:
         source: redis_salt_certs
         target: '/etc/redis/certs/'
         read_only: true
-      - 'salt_box_core_var:/var/salt-box-core/'
+      - 'salt_box_core_var:/var/saltbox-core/'
     secrets:
       - redis_taskiq_password
       - redis_salt_password
@@ -284,25 +284,25 @@ services:
         condition: service_healthy
         restart: false
 
-  salt-box-core-faststream-redis:
+  saltbox-core-faststream-redis:
     <<: *core
-    entrypoint: 'entrypoint.sh salt-box-faststream-redis'
+    entrypoint: 'entrypoint.sh saltbox-faststream-redis'
     expose: []
     depends_on:
       redis-salt:
         condition: service_started
         restart: false
 
-  salt-box-core-tasks-watcher:
+  saltbox-core-tasks-watcher:
     <<: *core
-    entrypoint: 'entrypoint.sh salt-box-tasks-watcher'
+    entrypoint: 'entrypoint.sh saltbox-tasks-watcher'
     expose: []
     depends_on:
       redis-salt:
         condition: service_started
         restart: false
 
-  salt-box-core-taskiq-worker:
+  saltbox-core-taskiq-worker:
     <<: *core
     entrypoint: '/usr/local/bin/taskiq-worker.sh'
     ports: []
@@ -314,7 +314,7 @@ services:
         condition: service_healthy
         restart: false
 
-  salt-box-core-taskiq-scheduler:
+  saltbox-core-taskiq-scheduler:
     <<: *core
     entrypoint: '/usr/local/bin/taskiq-scheduler.sh'
     ports: []
@@ -326,9 +326,9 @@ services:
         condition: service_healthy
         restart: false
 
-  salt-box-frontend:
+  saltbox-frontend:
     <<: *default
-    image: '${IMAGE_REGISTRY}/salt-box-frontend:${FRONTEND_IMAGE_TAG}'
+    image: '${IMAGE_REGISTRY}/saltbox-frontend:${FRONTEND_IMAGE_TAG}'
     expose:
       - ${FRONTEND_HTTP_PORT}
 
@@ -348,7 +348,7 @@ services:
       - mongo_admin_password
 
   opa:
-    image: '${IMAGE_REGISTRY}/salt-box-compose/opa:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/opa:master'
     command:
       - 'run'
       - '--server'
@@ -363,7 +363,9 @@ services:
 
   sshfs:
     <<: *default
-    image: '${IMAGE_REGISTRY}/salt-box-compose/sshfs:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/sshfs:master'
+    environment:
+      SSHFS_USER: '${SSHFS_USER}'
     secrets:
       - sshfs_user_password
     # TODO Make direct access optional

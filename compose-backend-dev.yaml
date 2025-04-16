@@ -12,7 +12,7 @@ services:
     environment:
       KEYCLOAK_CLIENT_DIRECT_ACCESS: 'true'
 
-  salt-box-core: &core
+  saltbox-core: &core
     build:
       context: $CORE_BUILD_DIR
       target: dev
@@ -23,16 +23,16 @@ services:
     volumes:
       - '${CORE_BUILD_DIR}:/mnt/salt_box_core'
 
-  salt-box-core-faststream-redis:
+  saltbox-core-faststream-redis:
     <<: *core
 
-  salt-box-core-tasks-watcher:
+  saltbox-core-tasks-watcher:
     <<: *core
 
-  salt-box-core-taskiq-worker:
+  saltbox-core-taskiq-worker:
     <<: *core
 
-  salt-box-core-taskiq-scheduler:
+  saltbox-core-taskiq-scheduler:
     <<: *core
 
   redis-salt:
@@ -47,12 +47,6 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
-    # environment:
-    #   - RABBITMQ_DEFAULT_USER=guest
-    #   - RABBITMQ_DEFAULT_PASS=guest
-    # volumes:
-    #   - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-    #   - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
 
   opa:
     image: openpolicyagent/opa:latest-istio-static

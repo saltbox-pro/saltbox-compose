@@ -14,7 +14,7 @@ apt-get autoremove --yes --purge
 EOF
 
 
-ENV USERNAME=salt-box
+ENV USERNAME=saltbox
 ENV STORAGE_PATH=/srv/sshfs/
 RUN useradd \
   --shell /usr/sbin/nologin \
