@@ -145,21 +145,6 @@ services:
     #    condition: service_healthy
     #    restart: false
 
-  # TODO Deprecated
-  downloader:
-    <<: *default
-    profiles:
-      #- salt-master
-      - DISABLED
-    build:
-      context: downloader
-    image: 'saltbox-downloader:latest'
-    environment:
-      SALT_REPO_ENABLED: 'true'
-      SALT_REPO_URL: 'https://dev.saltbox.pro/a.baikov/test-public-sls-repo.git'
-    volumes:
-      - '${SALT_MASTER_STORAGE_PATH}:/srv/salt/'
-
   make-redis-salt-certs:
     <<: *default
     build:
