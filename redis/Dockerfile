@@ -1,7 +1,7 @@
 FROM redis:7-alpine
 LABEL version='0.3'
 
-COPY entrypoint.sh /usr/local/bin/
+COPY --chmod=755 entrypoint.sh /usr/local/bin/
 COPY redis.conf /etc/redis/
 ENV REDIS_USERNAME=redis
 ENV REDIS_PASSWORD_SECRET_FILE=/run/secrets/redis_password
