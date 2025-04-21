@@ -55,8 +55,8 @@ services:
       target: salt-moc-minion
     image: 'salt-minion:dev'
     environment:
-      SALT_MINION_LOG_LEVEL: '${SALT_MOC_MINION_LOG_LEVEL:-warning}'
-      SALT_MINION_RETRY_DNS: '${SALT_MOC_MINION_RETRY_DNS:-10}'
+      SALT_MOC_MINION_LOG_LEVEL: '${SALT_MOC_MINION_LOG_LEVEL:-warning}'
+      SALT_MOC_MINION_RETRY_DNS: '${SALT_MOC_MINION_RETRY_DNS:-10}'
     deploy:
       mode: replicated
       replicas: '${SALT_MINION_REPLICAS:-${SALT_MOC_MINION_REPLICAS:-1}}'  # TODO Deprecate SALT_MINION_REPLICAS

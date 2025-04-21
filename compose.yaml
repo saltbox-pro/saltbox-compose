@@ -124,6 +124,7 @@ services:
       REDIS_PASSWORD_FILE: '/run/secrets/redis_salt_password'
       MASTER_SECRET_FILE: '/run/secrets/master_secret'
       SALT_MASTER_LOG_LEVEL: '${SALT_MASTER_LOG_LEVEL}'
+      SALT_MINION_LOG_LEVEL: '${SALT_MINION_LOG_LEVEL}'
     secrets:
       - redis_salt_password
       - master_secret
