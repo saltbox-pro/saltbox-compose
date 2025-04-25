@@ -1,31 +1,13 @@
-> **ATTENTION!** Project is on the early stage and is not ready for usage.
-
 # Salt.Box Compose
 
-## Helper script
+## About Salt.Box
 
-```bash
-sudo ./bin/update_and_run.sh
-```
+Salt.Box is a configuration management system wich extends
+[SaltStack](https://saltproject.io/) with web UI.
 
-Helper script merges `example.env` and `override.env` (if exists) into `.env`
-config, tries to login to registy, updates images, and runs the Salt.Box
-instance.
-
-Another way is to go step-by step.
+Look for user documentation on [saltbox.pro](https://saltbox.pro).
 
 ## Prepare
-
-While project is private, login required to obtain the images.
-
-  1. Create a personal token: on [GitLab instance](https://dev.saltbox.pro) your
-     profile -> Edit profile -> Access tokens on the side menu. Add
-     `read_registry` scope. Copy the
-     token.
-  1. Run `docker login registry.saltbox.pro`, use your username for login and the
-     token value for password.
-     **ATTENTION!** Token will be kept as plain text if you have no configured
-     credential helper.
 
 Initially secrets must be created in the `./secrets/` subdirectory. It may be
 done with helper script:
@@ -36,8 +18,28 @@ done with helper script:
 
 Make copy of [`example.env`](example.env) file named `.env`. Tune it before run.
 
-## Run
+To make the UI available on hostname or address other than `localhost` override
+variables those defaults are `localhost`.
 
+## Helper script to start
+
+Easy way to run the system is execute:
+```bash
+sudo ./bin/update_and_run.sh
+```
+
+Helper script:
+- Merges `example.env` and `override.env` (if exists) into `.env` config.
+- Updates images.
+- Runs the Salt.Box instance.
+
+Use `override.env` to redefine `example.env` default values.
+
+Use `-h` or `--help` flag to look script options.
+
+Another way is to go step-by-step.
+
+## Run step-by-step
 
 ```bash
 sudo docker compose up --build
