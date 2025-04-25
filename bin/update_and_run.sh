@@ -11,6 +11,7 @@ Usage: sudo ./bin/update_and_run.sh [-d|--detach] [-h|--help]
   -d|--detach\tDetach Docker Compose after start
   -f|--force\tRewrite with no confirmation
   -h|--help\tPrint this message
+  -l|--login\tTry to login to registry
   -n|--no-pull\tDo not pull newer images from registry
 "
 
@@ -26,6 +27,7 @@ err() {
 up_args=('--remove-orphans')
 force_flag=0
 pull_flag=1
+login_flag=0
 
 for i in "$@"; do
   # shellcheck disable=SC2059
@@ -33,6 +35,7 @@ for i in "$@"; do
     -d|--detach) up_args+=('--detach') ;;
     -f|--force) force_flag=1 ;;
     -h|--help) printf "$usage_str" && exit 0 ;;
+    -l|--login) login_flag=1 ;;
     -n|--no-pull) pull_flag=0 ;;
     *) err "Unknown option $i" ;;
   esac
@@ -54,16 +57,6 @@ fi
 
 cat example.env > "$env_file"
 
-# shellcheck source=/dev/null
-registry=$(
-  source "$env_file"
-  echo "$IMAGE_REGISTRY" | cut --delimiter '/' --fields 1
-)
-
-if [ -z "$registry" ]; then
-  err "Failed to get registry from $env_file"
-fi
-
 if [ -f "$override_env" ]; then
   cat "$override_env" >> "$env_file"
 else
@@ -72,8 +65,20 @@ fi
 
 chown "$(stat -c %u:%g .)" "$env_file"
 
-if [ $pull_flag = 1 ]; then
+if [ $login_flag = 1 ]; then
+  # shellcheck source=/dev/null
+  registry=$(
+    source "$env_file"
+    echo "$IMAGE_REGISTRY" | cut --delimiter '/' --fields 1
+  )
+
+  if [ -z "$registry" ]; then
+    err "Failed to get registry from $env_file"
+  fi
   (set -x; docker login "$registry")
+fi
+
+if [ $pull_flag = 1 ]; then
   (set -x; docker compose pull --ignore-buildable)
 fi
 (set -x; docker compose build)
