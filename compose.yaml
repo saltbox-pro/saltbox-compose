@@ -23,7 +23,7 @@ services:
     build:
       context: proxy/
       args:
-        IMAGE: '${IMAGE_REGISTRY}/saltbox-compose/nginx:master'
+        IMAGE: '${IMAGE_REGISTRY}/saltbox-compose/nginx:${NGINX_IMAGE_TAG}'
     develop:
       watch:
         - action: rebuild
@@ -85,7 +85,7 @@ services:
 
   keycloak:
     <<: *default
-    image: '${IMAGE_REGISTRY}/saltbox-compose/keycloak:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/keycloak:${KEYCLOAK_IMAGE_TAG}'
     command:
       - 'start'
       - '--optimized'
@@ -104,7 +104,7 @@ services:
 
   keycloak-init:
     <<: *default
-    image: '${IMAGE_REGISTRY}/saltbox-compose/keycloak-init:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/keycloak-init:${KEYCLOAK_IMAGE_TAG}'
     environment:
       KEYCLOAK_ADMIN_EMAIL: '${KEYCLOAK_ADMIN_EMAIL}'
       KEYCLOAK_ADMIN_FIRSTNAME: '${KEYCLOAK_ADMIN_FIRSTNAME}'
@@ -132,7 +132,7 @@ services:
     <<: *default
     profiles:
       - salt-master
-    image: '${IMAGE_REGISTRY}/saltbox-bridge/salt-master:master'
+    image: '${IMAGE_REGISTRY}/saltbox-bridge/salt-master:${SALT_MASTER_IMAGE_TAG}'
     init: true
     environment:
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
@@ -166,7 +166,7 @@ services:
     build:
       context: make-certs
       args:
-        IMAGE: '${IMAGE_REGISTRY}/make-certs:master'
+        IMAGE: '${IMAGE_REGISTRY}/make-certs:v0.2.1'
     command:
       - '/root/hier.yaml'
     volumes:
@@ -177,7 +177,7 @@ services:
 
   redis-salt:
     <<: *default
-    image: '${IMAGE_REGISTRY}/saltbox-compose/redis:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/redis:${REDIS_IMAGE_TAG}'
     environment:
       REDIS_ENCRYPTION: 'on'
       TLS_AUTH_CLIENT: optional
@@ -214,7 +214,7 @@ services:
 
   redis-taskiq:
     <<: *default
-    image: '${IMAGE_REGISTRY}/saltbox-compose/redis:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/redis:${REDIS_IMAGE_TAG}'
     environment:
       REDIS_ENCRYPTION: 'off'
       REDIS_USERNAME: ${REDIS_TASKIQ_USERNAME}
@@ -349,7 +349,7 @@ services:
       - mongo_admin_password
 
   opa:
-    image: '${IMAGE_REGISTRY}/saltbox-compose/opa:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/opa:${OPA_IMAGE_TAG}'
     command:
       - 'run'
       - '--server'
@@ -364,7 +364,7 @@ services:
 
   sshfs:
     <<: *default
-    image: '${IMAGE_REGISTRY}/saltbox-compose/sshfs:master'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/sshfs:${SSHFS_IMAGE_TAG}'
     environment:
       SSHFS_USER: '${SSHFS_USER}'
     secrets:
