@@ -8,3 +8,4 @@ _*
 /.idea
 .ruff.toml
 .mypy.ini
+.flake8

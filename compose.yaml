@@ -367,12 +367,14 @@ services:
     image: '${IMAGE_REGISTRY}/saltbox-compose/sshfs:${SSHFS_IMAGE_TAG}'
     environment:
       SSHFS_USER: '${SSHFS_USER}'
+      USERS_FILE: '/mnt/sshfs_users.json'
     secrets:
-      - sshfs_user_password
-    # TODO Make direct access optional
+      - sshfs_user_saltbox_password
+      - sshfs_user_git_password
     ports:
       - '${SSHFS_EXPOSE_SOCKET:-1022}:1022'
     volumes:
+      - './sshfs_users.json:/mnt/sshfs_users.json'
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
 
 configs: {}
@@ -401,8 +403,10 @@ secrets:
     file: secrets/salt_box_user_password
   salt_box_user_password:
     file: secrets/salt_box_user_password
-  sshfs_user_password:
-    file: secrets/sshfs_user_password
+  sshfs_user_saltbox_password:
+    file: secrets/sshfs_user_saltbox_password
+  sshfs_user_git_password:
+    file: secrets/sshfs_user_git_password
   redis_salt_password:
     file: secrets/redis_salt_password
   redis_salt_ca_private_key_password:

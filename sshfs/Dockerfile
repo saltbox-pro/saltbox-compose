@@ -1,6 +1,6 @@
 ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
 FROM "$BASE_IMG"
-LABEL version="0.1"
+LABEL version="2.0"
 
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -9,23 +9,14 @@ RUN \
 set -e
 mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
-apt-get install --yes openssh-server passwd systemd- udev- dbus-
+apt-get install --yes git openssh-server passwd python3 systemd- udev- dbus-
 apt-get autoremove --yes --purge
 EOF
 
-
-ENV USERNAME=saltbox
-ENV STORAGE_PATH=/srv/sshfs/
-RUN useradd \
-  --shell /usr/sbin/nologin \
-  --groups users \
-  --home-dir "$STORAGE_PATH" --create-home \
-  "$USERNAME"
-VOLUME "$STORAGE_PATH"
-
 ENV PORT=1022
+ENV USERS_FILE=/mnt/users.json
 EXPOSE $PORT
 
 COPY sshd_config /etc/openssh/
-COPY sshd_startup.sh /usr/local/bin/
-ENTRYPOINT ["/usr/local/bin/sshd_startup.sh"]
+COPY --chmod=755 sshd_entrypoint.py /usr/local/bin/
+ENTRYPOINT ["/usr/local/bin/sshd_entrypoint.py"]

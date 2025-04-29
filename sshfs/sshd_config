@@ -2,7 +2,7 @@ LogLevel VERBOSE
 PermitRootLogin no
 MaxAuthTries 6
 MaxSessions 10
-PubkeyAuthentication no
+PubkeyAuthentication yes
 PasswordAuthentication yes
 PermitEmptyPasswords no
 UsePAM yes
