@@ -65,6 +65,8 @@ fi
 
 chown "$(stat -c %u:%g .)" "$env_file"
 
+(set -x; ./bin/make_secrets.py)
+
 if [ $login_flag = 1 ]; then
   # shellcheck source=/dev/null
   registry=$(

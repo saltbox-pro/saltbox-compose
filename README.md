@@ -30,6 +30,7 @@ sudo ./bin/update_and_run.sh
 
 Helper script:
 - Merges `example.env` and `override.env` (if exists) into `.env` config.
+- Makes secrets.
 - Updates images.
 - Runs the Salt.Box instance.
 
