@@ -1,0 +1,16 @@
+[
+  {
+    "name": "saltbox",
+    "uid": 1000,
+    "gid": 1000,
+    "home_dir": "/srv/sshfs/",
+    "password_file": "/run/secrets/sshfs_user_saltbox_password"
+  },
+  {
+    "name": "git",
+    "uid": 1001,
+    "gid": 1001,
+    "home_dir": "/srv/git/",
+    "password_file": "/run/secrets/sshfs_user_git_password"
+  }
+]
