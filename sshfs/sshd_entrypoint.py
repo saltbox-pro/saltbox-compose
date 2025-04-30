@@ -36,7 +36,7 @@ UID_MAX = 60000
 GID_MIN = 1000
 GID_MAX = 60000
 
-SSHD_EXEC='/usr/sbin/sshd'
+SSHD_EXEC = '/usr/sbin/sshd'
 
 
 def warn(text: str) -> None:
@@ -50,6 +50,8 @@ class User:
         if not UID_MIN <= self.uid <= UID_MAX:
             raise RuntimeError(f'uid={self.uid} but expected to be in [{UID_MIN}, {UID_MAX}]')
         self.gid = data['gid']
+        if not GID_MIN <= self.gid <= GID_MAX:
+            raise RuntimeError(f'gid={self.gid} but expected to be in [{GID_MIN}, {GID_MAX}]')
         self.home_dir = data['home_dir']
         self.password = self._get_password(data)
         self.shell = data.get('shell') or '/bin/sh'
