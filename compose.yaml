@@ -244,6 +244,7 @@ services:
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}'
     environment:
+      LOCAL_REPOS_PATH: '/mnt/repos/'
       BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
       MONGO_DB: '${MONGO_DB}'
       MONGO_USER: '${MONGO_USER}'
@@ -268,6 +269,7 @@ services:
         target: '/etc/redis/certs/'
         read_only: true
       - 'salt_box_core_var:/var/saltbox-core/'
+      - 'salt_repos:/mnt/repos/'
     secrets:
       - redis_taskiq_password
       - redis_salt_password
@@ -375,6 +377,7 @@ services:
       - '${SSHFS_EXPOSE_SOCKET:-1022}:1022'
     volumes:
       - './sshfs_users.json:/mnt/sshfs_users.json'
+      - 'salt_repos:/srv/git/'
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
 
 configs: {}
@@ -389,6 +392,7 @@ volumes:
   redis_salt_data: {}
   salt_box_core_var: {}
   salt_master_pki: {}
+  salt_repos: {}
 
 secrets:
   keycloak_admin_password:
