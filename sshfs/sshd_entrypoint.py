@@ -37,6 +37,7 @@ GID_MIN = 1000
 GID_MAX = 60000
 
 SSHD_EXEC = '/usr/sbin/sshd'
+DEFAULT_SHELL = '/usr/sbin/nologin'
 
 
 def warn(text: str) -> None:
@@ -54,7 +55,7 @@ class User:
             raise RuntimeError(f'gid={self.gid} but expected to be in [{GID_MIN}, {GID_MAX}]')
         self.home_dir = data['home_dir']
         self.password = self._get_password(data)
-        self.shell = data.get('shell') or '/bin/sh'
+        self.shell = data.get('shell') or DEFAULT_SHELL
 
     @staticmethod
     def _get_password(data: dict[str, Any]) -> Any:

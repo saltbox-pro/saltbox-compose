@@ -11,6 +11,7 @@
     "uid": 1001,
     "gid": 1001,
     "home_dir": "/srv/git/",
-    "password_file": "/run/secrets/sshfs_user_git_password"
+    "password_file": "/run/secrets/sshfs_user_git_password",
+    "shell": "/usr/bin/git-shell"
   }
 ]
