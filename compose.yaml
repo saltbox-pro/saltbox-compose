@@ -376,9 +376,10 @@ services:
     ports:
       - '${SSHFS_EXPOSE_SOCKET:-1022}:1022'
     volumes:
-      - './sshfs_users.json:/mnt/sshfs_users.json'
-      - 'salt_repos:/srv/git/'
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
+      - 'salt_repos:/srv/git/'
+      - './sshfs_conf/users.json:/mnt/sshfs_users.json:ro'
+      - './sshfs_conf/gitconfig:/srv/git/.gitconfig:ro'
 
 configs: {}
 
