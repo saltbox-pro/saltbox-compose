@@ -6,13 +6,14 @@ env_file='.env'
 usage_str="
 Update images and run a Salt.Box Docker Compose based instance.
 
-Usage: sudo ./bin/update_and_run.sh [-d|--detach] [-h|--help]
+Usage: sudo ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
 
   -d|--detach\tDetach Docker Compose after start
   -f|--force\tRewrite with no confirmation
   -h|--help\tPrint this message
   -l|--login\tTry to login to registry
   -n|--no-pull\tDo not pull newer images from registry
+  -w|--watch\tEnable Docker Compose watch for developement
 "
 
 warn() {
@@ -37,7 +38,9 @@ for i in "$@"; do
     -h|--help) printf "$usage_str" && exit 0 ;;
     -l|--login) login_flag=1 ;;
     -n|--no-pull) pull_flag=0 ;;
-    *) err "Unknown option $i" ;;
+    -w|--watch) up_args+=('--watch') ;;
+    -*) err "Unknown option $i" ;;
+    *) up_args+=("$i") ;;
   esac
 done
 
