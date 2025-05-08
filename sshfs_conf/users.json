@@ -4,7 +4,8 @@
     "uid": 1000,
     "gid": 1000,
     "home_dir": "/srv/sshfs/",
-    "password_file": "/run/secrets/sshfs_user_saltbox_password"
+    "password_file": "/run/secrets/sshfs_user_saltbox_password",
+    "shell": "/usr/bin/sh"
   },
   {
     "name": "git",
