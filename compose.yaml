@@ -149,6 +149,7 @@ services:
       - './salt/master_gitfs.conf:/etc/salt/master.d/master_gitfs.conf'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt/'
       - 'salt_master_pki:/etc/salt/pki/'
+      - 'salt_master_saltbox_var:/var/lib/saltbox/'
       - type: volume
         source: redis_salt_certs
         target: '/etc/redis/certs/'
@@ -393,6 +394,7 @@ volumes:
   redis_salt_data: {}
   salt_box_core_var: {}
   salt_master_pki: {}
+  salt_master_saltbox_var: {}
   salt_repos: {}
 
 secrets:
