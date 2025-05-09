@@ -148,7 +148,6 @@ services:
     ports:
       - '4505-4506:4505-4506'
     volumes:
-      - './salt/master_gitfs.conf:/etc/salt/master.d/master_gitfs.conf'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt/'
       - 'salt_master_pki:/etc/salt/pki/'
       - 'salt_master_saltbox_var:/var/lib/saltbox-bridge/'
