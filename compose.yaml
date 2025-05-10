@@ -275,6 +275,7 @@ services:
         read_only: true
       - 'saltbox_core_var:/var/lib/saltbox-core/'
       - 'salt_repos:/mnt/repos/'
+      - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
     secrets:
       - redis_taskiq_password
       - redis_salt_password
