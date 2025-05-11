@@ -149,7 +149,7 @@ services:
       - './salt/master_gitfs.conf:/etc/salt/master.d/master_gitfs.conf'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt/'
       - 'salt_master_pki:/etc/salt/pki/'
-      - 'salt_master_saltbox_var:/var/lib/saltbox/'
+      - 'salt_master_saltbox_var:/var/lib/saltbox-bridge/'
       - type: volume
         source: redis_salt_certs
         target: '/etc/redis/certs/'
@@ -269,7 +269,7 @@ services:
         source: redis_salt_certs
         target: '/etc/redis/certs/'
         read_only: true
-      - 'salt_box_core_var:/var/saltbox-core/'
+      - 'saltbox_core_var:/var/lib/saltbox-core/'
       - 'salt_repos:/mnt/repos/'
     secrets:
       - redis_taskiq_password
@@ -388,14 +388,14 @@ volumes:
   keycloak-db_data: {}
   mongo_config: {}
   mongo_data: {}
-  redis_taskiq_certs: {}
-  redis_taskiq_data: {}
   redis_salt_certs: {}
   redis_salt_data: {}
-  salt_box_core_var: {}
+  redis_taskiq_certs: {}
+  redis_taskiq_data: {}
   salt_master_pki: {}
   salt_master_saltbox_var: {}
   salt_repos: {}
+  saltbox_core_var: {}
 
 secrets:
   keycloak_admin_password:
