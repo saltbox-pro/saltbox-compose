@@ -263,6 +263,7 @@ services:
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
       BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME}'
       BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD}'
+      SHOW_DOCS: '${SHOW_DOCS:-false}'
       # OPA_URL: 'http://opal_client:8181'
       OPA_URL: 'http://opa:8181'
     volumes:
