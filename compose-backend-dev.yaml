@@ -18,6 +18,7 @@ services:
       target: dev
     environment:
       - DEBUG=True
+      - SHOW_DOCS=True
     tty: true  # colorize logs
     image: 'saltbox-core:dev'
     volumes:
