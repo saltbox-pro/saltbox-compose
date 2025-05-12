@@ -246,7 +246,7 @@ services:
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}'
     environment:
-      LOCAL_REPOS_PATH: '/mnt/repos/'
+      LOCAL_REPOS_DIR: '/mnt/repos/'
       BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
       MONGO_DB: '${MONGO_DB}'
       MONGO_USER: '${MONGO_USER}'
