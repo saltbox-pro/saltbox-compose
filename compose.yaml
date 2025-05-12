@@ -89,6 +89,8 @@ services:
     command:
       - 'start'
       - '--optimized'
+      - '--hostname=${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
+      - '--hostname-backchannel-dynamic=true'
     environment:
       KC_DB_URL: 'jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DATABASE}'
       KC_DB_USERNAME: ${KEYCLOAK_DATABASE_USER}
@@ -259,10 +261,11 @@ services:
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
       KEYCLOAK_FRONT_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
-      BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME}'
-      BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD}'
+      BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME:-}'
+      BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD:-}'
       SHOW_DOCS: '${SHOW_DOCS:-false}'
       # OPA_URL: 'http://opal_client:8181'
       OPA_URL: 'http://opa:8181'
