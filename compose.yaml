@@ -139,12 +139,10 @@ services:
     environment:
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       REDIS_PASSWORD_FILE: '/run/secrets/redis_salt_password'
-      MASTER_SECRET_FILE: '/run/secrets/master_secret'
       SALT_MASTER_LOG_LEVEL: '${SALT_MASTER_LOG_LEVEL}'
       SALT_MINION_LOG_LEVEL: '${SALT_MINION_LOG_LEVEL}'
     secrets:
       - redis_salt_password
-      - master_secret
     ports:
       - '4505-4506:4505-4506'
     volumes:
@@ -426,8 +424,6 @@ secrets:
     file: secrets/redis_salt_ca_private_key_password
   redis_salt_private_key_password:
     file: secrets/redis_salt_private_key_password
-  master_secret:
-    file: secrets/master_secret
   redis_taskiq_password:
     file: secrets/redis_taskiq_password
   redis_password:
