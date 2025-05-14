@@ -8,6 +8,7 @@ import stat
 import subprocess
 import sys
 
+from pathlib import Path
 from typing import Any
 
 """
@@ -38,6 +39,17 @@ GID_MAX = 60000
 
 SSHD_EXEC = '/usr/sbin/sshd'
 DEFAULT_SHELL = '/usr/sbin/nologin'
+
+AUTHORIZED_KEYS_COMMAND_PATH = Path('/usr/local/bin/authorized-keys-cmd')
+AUTHORIZED_KEYS_COMMAND_MODE = 0o700
+AUTHORIZED_KEYS_COMMAND_TEMPLATE = '''#! /bin/sh
+set -e
+
+user=$1
+
+1>&1 echo "curl \"{url_template}\""
+curl "{url_template}"
+'''
 
 
 def warn(text: str) -> None:
@@ -122,7 +134,14 @@ def run_sshd(port: Any) -> None:
     os.execv(SSHD_EXEC, [SSHD_EXEC, '-D', '-e', '-p', str(port)])
 
 
+def make_authorized_keys_command(url_template: str) -> None:
+    with AUTHORIZED_KEYS_COMMAND_PATH.open('w') as file:
+        file.write(AUTHORIZED_KEYS_COMMAND_TEMPLATE.format(url_template=url_template))
+    AUTHORIZED_KEYS_COMMAND_PATH.chmod(AUTHORIZED_KEYS_COMMAND_MODE)
+
+
 if __name__ == '__main__':
     del_users()
     create_users(os.environ['USERS_FILE'])
+    make_authorized_keys_command(os.environ['AUTHORIZED_KEYS_URL'])
     run_sshd(os.environ['PORT'])

@@ -1,10 +1,15 @@
-LogLevel VERBOSE
+AuthorizedKeysFile /dev/null
+AuthorizedKeysCommand /usr/local/bin/authorized-keys-cmd
+AuthorizedKeysCommandUser root
+
 PermitRootLogin no
-MaxAuthTries 6
-MaxSessions 10
 PubkeyAuthentication yes
 PasswordAuthentication yes
 PermitEmptyPasswords no
+
+LogLevel VERBOSE
+MaxAuthTries 6
+MaxSessions 10
 UsePAM yes
 AllowAgentForwarding no
 AllowTcpForwarding no
@@ -19,4 +24,5 @@ PermitTunnel no
 ChrootDirectory none
 Banner none
 Subsystem sftp internal-sftp
+
 AllowGroups wheel users

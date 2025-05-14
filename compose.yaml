@@ -266,6 +266,8 @@ services:
       SHOW_DOCS: '${SHOW_DOCS:-false}'
       # OPA_URL: 'http://opal_client:8181'
       OPA_URL: 'http://opa:8181'
+      SSHFS_USER: 'saltbox'  # As in users.json of sshfs
+      GITFS_USER: 'git'  # As in users.json of sshfs
     volumes:
       - type: volume
         source: redis_salt_certs
@@ -375,6 +377,7 @@ services:
     environment:
       SSHFS_USER: '${SSHFS_USER}'
       USERS_FILE: '/mnt/sshfs_users.json'
+      AUTHORIZED_KEYS_URL: 'http://saltbox-core:${BACKEND_HTTP_PORT}/system/$${user}/authorized_keys'
     secrets:
       - sshfs_user_saltbox_password
       - sshfs_user_git_password
