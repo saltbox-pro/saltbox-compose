@@ -264,7 +264,7 @@ services:
       BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME:-}'
       BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD:-}'
       SHOW_DOCS: '${SHOW_DOCS:-false}'
-      # OPA_URL: 'http://opal_client:8181'
+      SALT_FUNC_REPO_URL: '${SALT_FUNC_REPO_URL}'
       OPA_URL: 'http://opa:8181'
       SSHFS_USER: 'saltbox'  # As in users.json of sshfs
       GITFS_USER: 'git'  # As in users.json of sshfs
