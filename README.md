@@ -7,6 +7,12 @@ Salt.Box is a configuration management system wich extends
 
 Look for user documentation on [saltbox.pro](https://saltbox.pro).
 
+## Requirements
+
+- Docker Engine >= 25.0 _(due to healthcheck feature)_
+- Docker Compose >= 2.22.0
+- Python >= 3.9 _(for `./bin/make_secrets.py`)_
+
 ## Prepare
 
 Initially secrets must be created in the `./secrets/` subdirectory. It may be

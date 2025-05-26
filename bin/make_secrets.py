@@ -84,6 +84,7 @@ if __name__ == '__main__':
         action='store_true',)
     args = parser.parse_args()
     secrets_dir = Path(__file__).parent.parent / 'secrets'
+    assert secrets_dir.is_absolute(), 'Expected to have absolute path to secrets dir'
     if args.prune:
         prune(secrets_dir)
     main(secrets_dir=secrets_dir, overwrite=args.overwrite)
