@@ -75,6 +75,56 @@ sudo sysctl -p /etc/sysctl.d/saltbox.conf
 
 `vm.overcommit_memory=1` is a Redis requirement.
 
+## Working behind a reverse proxy
+
+Currently to make web interface work properly for remote hosts HTTP connection
+must have SSL termination. Usual way to achieve this is to use Nginx web
+server as a HTTP reverse proxy and terminate SSL on it.
+
+First, be sure to set `WEB_SERVER_OUTER_SOCKET` to match `server_name` and port
+of the reverse proxy.
+
+Nginx may be installed on the same host with Salt.Box, or on another one. In
+the last case be sure the Salt.Box is available for the Nginx host e.g. with
+command `curl http://<SALTBOX_HOST>:<SALTBOX_WEB_SERVER_PORT>/auth/keycloak/realms/salt.box/.well-known/openid-configuration`. It should return long JSON response.
+
+An example Nginx config following. Remember to edit `< ... >` placeholders and
+check config with `sudo nginx -t`.
+
+```nginx
+server {
+  server_name <NAME>;
+  client_max_body_size 256m;
+
+  access_log /var/log/nginx/saltbox_access.log;
+  error_log /var/log/nginx/saltbox_error.log;
+
+  location / {
+    add_header X-Frame-Options 'SAMEORIGIN';
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection ‘upgrade’;
+
+    proxy_pass http://<SALTBOX_HOST>:<SALTBOX_WEB_SERVER_PORT>;
+  }
+
+  listen 443 ssl http2;
+  ssl_certificate <PATH_TO_CERT>;
+  ssl_certificate_key <PATH_TO_CERT_KEY>;
+  < OTHER SSL SETTTINGS DEPENDS ON CERT>
+}
+
+server {
+  server_name <NAME>;
+  listen 80;
+  return 301 https://$host$request_uri;
+}
+```
+
 ## Autotests
 
 To run test suites enable `compose-autotests.yaml` in the local`.env` file.
