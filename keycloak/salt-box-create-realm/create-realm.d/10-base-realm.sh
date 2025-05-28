@@ -20,7 +20,7 @@ KEYCLOAK_CLIENT_ID=$(kcadm.sh create clients \
   --target-realm "${KEYCLOAK_REALM}" \
   --file ./client.json \
   --set "clientId=${KEYCLOAK_CLIENT}" \
-  --set "secret=${_salt_box_core_password}" -i)
+  --set "secret=${_saltbox_core_password}" -i)
 echo "Client with id '${KEYCLOAK_CLIENT_ID}' created"
 
 kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \

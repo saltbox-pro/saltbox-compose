@@ -33,7 +33,7 @@ if [ -z "$KEYCLOAK_REALM" ]; then
   exit 1
 fi
 
-_salt_box_core_password=$(cat /run/secrets/keycloak_client_salt_box_core_password)
-_sb_user_password=$(cat /run/secrets/salt_box_user_password)
-_sb_admin_password=$(cat /run/secrets/salt_box_admin_password)
+_saltbox_core_password=$(cat /run/secrets/keycloak_client_saltbox_core_password)
+_sb_user_password=$(cat /run/secrets/saltbox_user_password)
+_sb_admin_password=$(cat /run/secrets/saltbox_admin_password)
 _collections_admin_role="collections_admin"

@@ -43,7 +43,7 @@ services:
     ports:
       - '${WEB_SERVER_PORT}:80'
     secrets:
-      - keycloak_client_salt_box_core_password
+      - keycloak_client_saltbox_core_password
     depends_on:
       saltbox-core:
         condition: service_started
@@ -108,23 +108,24 @@ services:
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-compose/keycloak-init:${KEYCLOAK_IMAGE_TAG}'
     environment:
-      KEYCLOAK_ADMIN_EMAIL: '${KEYCLOAK_ADMIN_EMAIL}'
-      KEYCLOAK_ADMIN_FIRSTNAME: '${KEYCLOAK_ADMIN_FIRSTNAME}'
-      KEYCLOAK_ADMIN_LASTNAME: '${KEYCLOAK_ADMIN_LASTNAME}'
-      KEYCLOAK_ADMIN_NAME: '${KEYCLOAK_ADMIN_NAME}'
+      KEYCLOAK_ADMIN_EMAIL: '${SALTBOX_ADMIN_EMAIL:-${KEYCLOAK_ADMIN_EMAIL:-}}' # TODO: deprecated KEYCLOAK_ADMIN_*
+
+      KEYCLOAK_ADMIN_FIRSTNAME: '${SALTBOX_ADMIN_FIRSTNAME:-${KEYCLOAK_ADMIN_FIRSTNAME:-}}' # TODO: deprecated KEYCLOAK_ADMIN_*
+      KEYCLOAK_ADMIN_LASTNAME: '${SALTBOX_ADMIN_LASTNAME:-${KEYCLOAK_ADMIN_LASTNAME:-}}' # TODO: deprecated KEYCLOAK_ADMIN_*
+      KEYCLOAK_ADMIN_NAME: '${SALTBOX_ADMIN_USERNAME:-${KEYCLOAK_ADMIN_NAME:-}}' # TODO: deprecated KEYCLOAK_ADMIN_*
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
       KEYCLOAK_CLIENT_DIRECT_ACCESS: '${KEYCLOAK_CLIENT_DIRECT_ACCESS:-false}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
-      KEYCLOAK_USER_EMAIL: '${KEYCLOAK_USER_EMAIL}'
-      KEYCLOAK_USER_FIRSTNAME: '${KEYCLOAK_USER_FIRSTNAME}'
-      KEYCLOAK_USER_LASTNAME: '${KEYCLOAK_USER_LASTNAME}'
-      KEYCLOAK_USER_NAME: '${KEYCLOAK_USER_NAME}'
+      KEYCLOAK_USER_EMAIL: '${SALTBOX_USER_EMAIL:-${KEYCLOAK_USER_EMAIL:-}}' # TODO: deprecated KEYCLOAK_USER_*
+      KEYCLOAK_USER_FIRSTNAME: '${SALTBOX_USER_FIRSTNAME:-${KEYCLOAK_USER_FIRSTNAME:-}}' # TODO: deprecated KEYCLOAK_USER_*
+      KEYCLOAK_USER_LASTNAME: '${SALTBOX_USER_LASTNAME:-${KEYCLOAK_USER_LASTNAME:-}}' # TODO: deprecated KEYCLOAK_USER_*
+      KEYCLOAK_USER_NAME: '${SALTBOX_USER_USERNAME:-${KEYCLOAK_USER_NAME:-}}' # TODO: deprecated KEYCLOAK_USER_*
     secrets:
       - keycloak_admin_password
-      - keycloak_client_salt_box_core_password
-      - salt_box_admin_password
-      - salt_box_user_password
+      - keycloak_client_saltbox_core_password
+      - saltbox_admin_password
+      - saltbox_user_password
     depends_on:
       keycloak:
         condition: service_healthy
@@ -218,7 +219,7 @@ services:
     environment:
       REDIS_ENCRYPTION: 'off'
       REDIS_USERNAME: ${REDIS_TASKIQ_USERNAME}
-      REDIS_PASSWORD_SECRET_FILE: '/run/secrets/redis_password'
+      REDIS_PASSWORD_SECRET_FILE: '/run/secrets/redis_taskiq_password'
     command:
       - --save 60 1
     volumes:
@@ -226,7 +227,7 @@ services:
     expose:
       - 6379
     secrets:
-      - redis_password
+      - redis_taskiq_password
 
   rabbitmq:
     <<: *default
@@ -280,7 +281,7 @@ services:
       - redis_taskiq_password
       - redis_salt_password
       - mongo_admin_password
-      - keycloak_client_salt_box_core_password
+      - keycloak_client_saltbox_core_password
     expose:
       - ${BACKEND_HTTP_PORT}
     depends_on:
@@ -407,29 +408,25 @@ volumes:
 secrets:
   keycloak_admin_password:
     file: secrets/keycloak_admin_password
-  keycloak_client_salt_box_core_password:  # Not private: exposed in /env.json
-    file: secrets/keycloak_client_salt_box_core_password
+  keycloak_client_saltbox_core_password:  # Not private: exposed in /env.json
+    file: secrets/keycloak_client_saltbox_core_password
   keycloak_database_password:
     file: secrets/keycloak_database_password
   mongo_admin_password:
     file: secrets/mongo_admin_password
-  salt_box_admin_password:
-    file: secrets/salt_box_user_password
-  salt_box_user_password:
-    file: secrets/salt_box_user_password
-  sshfs_user_saltbox_password:
-    file: secrets/sshfs_user_saltbox_password
-  sshfs_user_git_password:
-    file: secrets/sshfs_user_git_password
-  redis_salt_password:
-    file: secrets/redis_salt_password
   redis_salt_ca_private_key_password:
     file: secrets/redis_salt_ca_private_key_password
+  redis_salt_password:
+    file: secrets/redis_salt_password
   redis_salt_private_key_password:
     file: secrets/redis_salt_private_key_password
   redis_taskiq_password:
     file: secrets/redis_taskiq_password
-  redis_password:
-    file: secrets/redis_taskiq_password
-  redis_private_key_password:
-    file: secrets/redis_salt_private_key_password
+  saltbox_admin_password:
+    file: secrets/saltbox_admin_password
+  saltbox_user_password:
+    file: secrets/saltbox_user_password
+  sshfs_user_git_password:
+    file: secrets/sshfs_user_git_password
+  sshfs_user_saltbox_password:
+    file: secrets/sshfs_user_saltbox_password

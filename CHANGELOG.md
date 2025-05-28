@@ -9,11 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+__Some changes are breaking__. Use `sudo docker down --volumes` before update
+if possible and purge browser redirects.
+
 ### Added
 
 - `SALT_FUNC_REPO_URL` with default repository url to environment configuration
 
 ### Changed
+
+- Rename `KEYCLOAK_{USER,ADMIN}_*` variables to `SALTBOX_{USER,ADMIN}_*`
+  to be more clear.
+- Each secret now is bound to an unique secret file.
+- Change some values to be more consistent to product name.
 
 ### Removed
 

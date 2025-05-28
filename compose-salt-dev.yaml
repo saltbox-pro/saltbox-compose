@@ -62,7 +62,7 @@ services:
       SALT_MOC_MINION_RETRY_DNS: '${SALT_MOC_MINION_RETRY_DNS:-10}'
     deploy:
       mode: replicated
-      replicas: '${SALT_MINION_REPLICAS:-${SALT_MOC_MINION_REPLICAS:-1}}'  # TODO Deprecate SALT_MINION_REPLICAS
+      replicas: '${SALT_MOC_MINION_REPLICAS}'
     profiles:
       - salt-master
     depends_on:
