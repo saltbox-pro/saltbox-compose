@@ -3,6 +3,8 @@ ARG KEYCLOAK_BASE_IMG="registry.saltbox.pro/saltbox/saltbox-compose/keycloak-bas
 
 FROM "$KEYCLOAK_BASE_IMG" AS builder
 LABEL version="2.0"
+# Increase to trigger build. Drop to 0 on version change.
+LABEL release="0"
 
 ARG KC_HTTP_RELATIVE_PATH=/auth/keycloak
 ENV KC_DB=postgres
