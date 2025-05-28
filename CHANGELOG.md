@@ -15,6 +15,8 @@ if possible and purge browser redirects.
 ### Added
 
 - `SALT_FUNC_REPO_URL` with default repository url to environment configuration
+- `bin/update_and_run.sh`: `--only-env`, `--only-update` flags for more
+  selective execution.
 
 ### Changed
 
@@ -22,6 +24,10 @@ if possible and purge browser redirects.
   to be more clear.
 - Each secret now is bound to an unique secret file.
 - Change some values to be more consistent to product name.
+
+### Fixed
+
+- `bin/update_and_run.sh`: overwriting `.env` even on negative answer
 
 ### Removed
 
