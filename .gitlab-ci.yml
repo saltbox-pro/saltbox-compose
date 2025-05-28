@@ -75,7 +75,7 @@ Trigger Keycloak build:
     include: 'keycloak/.gitlab-ci.yml'
   rules:
     - changes:
-        - 'keycloak/*'
+        - 'keycloak/**/*'
 
 
 Build OPA image for tag:
