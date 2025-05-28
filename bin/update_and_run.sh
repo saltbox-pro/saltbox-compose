@@ -13,8 +13,11 @@ Usage: sudo ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
   -h|--help\tPrint this message
   -l|--login\tTry to login to registry
   -n|--no-pull\tDo not pull newer images from registry
-  -only-env\tOnly merge example.env and override.env and exit
+  --only-env\tOnly merge example.env and override.env and exit
+  --only-update\tOnly merge .env file and update images
   -w|--watch\tEnable Docker Compose watch for developement
+
+Last --only-* flag overrides preceding.
 "
 
 warn() {
@@ -30,7 +33,7 @@ up_args=('--remove-orphans')
 force_flag=0
 pull_flag=1
 login_flag=0
-only_env_flag=0
+last_stage='up'
 
 for i in "$@"; do
   # shellcheck disable=SC2059
@@ -40,7 +43,8 @@ for i in "$@"; do
     -h|--help) printf "$usage_str" && exit 0 ;;
     -l|--login) login_flag=1 ;;
     -n|--no-pull) pull_flag=0 ;;
-    --only-env) only_env_flag=1;;
+    --only-env) last_stage='dotenv';;
+    --only-update) last_stage='build' ;;
     -w|--watch) up_args+=('--watch') ;;
     -*) err "Unknown option $i" ;;
     *) up_args+=("$i") ;;
@@ -74,9 +78,7 @@ if [ ! -f "$env_file" ]; then
   echo "New $env_file has been created"
 fi
 
-if [ $only_env_flag = 1 ]; then
-  exit 0
-fi
+if [ $last_stage = 'dotenv' ]; then exit 0; fi
 
 (set -x; ./bin/make_secrets.py)
 
@@ -96,5 +98,9 @@ fi
 if [ $pull_flag = 1 ]; then
   (set -x; docker compose pull --ignore-buildable)
 fi
+
 (set -x; docker compose build)
+
+if [ $last_stage = 'build' ]; then exit 0; fi
+
 (set -x; docker compose up "${up_args[@]}")
