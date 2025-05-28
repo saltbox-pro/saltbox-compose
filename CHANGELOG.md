@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-__Some changes are breaking__. Use `sudo docker down --volumes` before update
+__Some changes are breaking__. Cleanup Keycloak database before update
 if possible and purge browser redirects.
 
 ### Added

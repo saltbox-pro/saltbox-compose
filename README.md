@@ -200,7 +200,7 @@ minions.
 
 ## Cleanup
 
-### Cleanup data
+### Cleanup all data
 
 After changes created containers and volumes may become incompatible with
 current code without special migrations.
@@ -214,6 +214,17 @@ sudo docker compose -f compose.yaml -f compose-dev-override.yaml down --volumes
 
 **ATTENTION!** The `--volumes` flag will purge attached volumes and will lead
 to data lost. Be sure to not lost production data.
+
+### Cleanup Keycloak data only
+
+Run followin commands:
+
+```bash
+sudo docker compose down
+sudo docker compose down keycloak-db --volume
+```
+
+On the next start the realm will be recreated.
 
 ### Cleanup stale Docker stuff
 
@@ -236,5 +247,5 @@ data type, because there are many values for the object.
 
 ### Keycloak
 
-Keycloak for `admin` user (password in file
-`./secrets/keycloak_admin_password`): http://localhost/auth/keycloak/
+Keycloak administrative interface: http://localhost/auth/keycloak/.
+User `admin`, password from `./secrets/keycloak_admin_password`.
