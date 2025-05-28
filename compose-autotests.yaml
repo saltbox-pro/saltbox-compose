@@ -34,7 +34,7 @@ services:
       REDIS_DB: 0
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       REDIS_PASSWORD_FILE: '/run/secrets/redis_salt_password'
-      USER_NAME: '${KEYCLOAK_ADMIN_NAME}'
+      USER_NAME: '${SALTBOX_ADMIN_USERNAME:-${KEYCLOAK_ADMIN_NAME:-}}' # TODO: deprecated KEYCLOAK_ADMIN_*
       USER_PASSWORD_FILE: '/run/secrets/saltbox_admin_password'
       CLIENT_SECRET_FILE: '/run/secrets/keycloak_client_saltbox_core_password'
       GET_TOKEN_ENDPOINT: 'http://proxy/${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token'
