@@ -167,7 +167,7 @@ services:
     build:
       context: make-certs
       args:
-        IMAGE: '${IMAGE_REGISTRY}/make-certs:v0.2.1'
+        IMAGE: '${IMAGE_REGISTRY}/make-certs/make-certs-alt:2fef8fbd3a6debc726be547f4e8052eb8d9a8684'
     command:
       - '/root/hier.yaml'
     volumes:
