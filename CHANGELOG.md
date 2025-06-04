@@ -24,7 +24,9 @@ if possible and purge browser redirects.
   to be more clear.
 - Each secret now is bound to an unique secret file.
 - Change some values to be more consistent to product name.
-- ALT based `make-redis-salt-certs`
+- ALT based `make-certs` image.
+- Make `make-certs` not depends on image from other repo.
+- Make `make-certs` image generic.
 
 ### Fixed
 

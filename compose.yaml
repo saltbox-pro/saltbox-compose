@@ -164,14 +164,12 @@ services:
 
   make-redis-salt-certs:
     <<: *default
-    build:
-      context: make-certs
-      args:
-        IMAGE: '${IMAGE_REGISTRY}/make-certs/make-certs-alt:2fef8fbd3a6debc726be547f4e8052eb8d9a8684'
-    command:
-      - '/root/hier.yaml'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/make-certs:${MAKE_CERTS_IMAGE_TAG}'
+    entrypoint: 'sh make-redis-salt-certs.sh'
     volumes:
       - 'redis_salt_certs:/mnt/redis_certs/'
+      - './make-certs/redis_salt_hier.yaml.tpl:/root/redis_salt_hier.yaml.tpl:ro'
+      - './make-certs/make-redis-salt-certs.sh:/root/make-redis-salt-certs.sh:ro'
     secrets:
       - redis_salt_ca_private_key_password
       - redis_salt_private_key_password
