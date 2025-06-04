@@ -154,13 +154,6 @@ services:
         source: redis_salt_certs
         target: '/etc/redis/certs/'
         read_only: true
-    #depends_on:
-    ## FIXME Well yes, but actually no
-    ## Bridge engine raises exception, but should just inform and exit or retry
-    ## to connect by itself.
-    #  redis-salt:
-    #    condition: service_healthy
-    #    restart: false
 
   make-redis-salt-certs:
     <<: *default

@@ -30,7 +30,7 @@ if possible and purge browser redirects.
 
 ### Fixed
 
-- `bin/update_and_run.sh`: overwriting `.env` even on negative answer
+- `bin/update_and_run.sh`: overwriting `.env` even on negative answer.
 
 ### Removed
 

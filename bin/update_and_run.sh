@@ -55,13 +55,17 @@ if [ "$(id -u)" -ne 0 ]; then
   err "Root access required, try sudo $0"
 fi
 
-if [ -f "$env_file" ] && [ $force_flag = 0 ]; then
-  read -p "File '$env_file' already exists, overwrite? (y/n): " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    rm "$env_file"
+if [ -f "$env_file" ]; then
+  if [ $force_flag = 0 ]; then
+    read -p "File '$env_file' already exists, overwrite? (y/n): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      rm "$env_file"
+    else
+      warn "Using existing '$env_file'"
+    fi
   else
-    warn "Using existing '$env_file'"
+    rm "$env_file"
   fi
 fi
 
