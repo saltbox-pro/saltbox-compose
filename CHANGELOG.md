@@ -17,6 +17,7 @@ if possible and purge browser redirects.
 - `SALT_FUNC_REPO_URL` with default repository url to environment configuration
 - `bin/update_and_run.sh`: `--only-env`, `--only-update` flags for more
   selective execution.
+- `BACKEND_LOG_LEVEL` variable.
 
 ### Changed
 

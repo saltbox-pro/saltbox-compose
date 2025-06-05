@@ -17,7 +17,6 @@ services:
       context: $CORE_BUILD_DIR
       target: dev
     environment:
-      - DEBUG=True
       - SHOW_DOCS=True
     tty: true  # colorize logs
     image: 'saltbox-core:dev'
