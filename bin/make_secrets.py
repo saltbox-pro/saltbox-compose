@@ -19,7 +19,7 @@ SECRETS = {
     'redis_taskiq_password': 16,
     'saltbox_admin_password': 12,
     'saltbox_user_password': 12,
-    'sshfs_user_git_password': 12,
+    'sshfs_user_master_password': 12,
     'sshfs_user_saltbox_password': 12,
 }
 

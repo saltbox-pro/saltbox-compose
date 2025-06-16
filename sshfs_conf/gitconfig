@@ -1,4 +1,0 @@
-# Git config for sshfs git user
-
-[safe]
-  directory = *

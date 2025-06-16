@@ -373,15 +373,13 @@ services:
       AUTHORIZED_KEYS_URL: 'http://saltbox-core:${BACKEND_HTTP_PORT}/system/$${user}/authorized_keys'
     secrets:
       - sshfs_user_saltbox_password
-      - sshfs_user_git_password
+      - sshfs_user_master_password
     ports:
       - '${SSHFS_EXPOSE_SOCKET:-1022}:1022'
     volumes:
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
-      # TODO Delete git-related staff
-      - 'salt_repos:/srv/git/salt'  # TODO
+      - 'salt_repos:/srv/master/salt/'
       - './sshfs_conf/users.json:/mnt/sshfs_users.json:ro'
-      - './sshfs_conf/gitconfig:/srv/git/.gitconfig:ro'
 
 configs: {}
 
@@ -419,7 +417,7 @@ secrets:
     file: secrets/saltbox_admin_password
   saltbox_user_password:
     file: secrets/saltbox_user_password
-  sshfs_user_git_password:
-    file: secrets/sshfs_user_git_password
+  sshfs_user_master_password:
+    file: secrets/sshfs_user_master_password
   sshfs_user_saltbox_password:
     file: secrets/sshfs_user_saltbox_password

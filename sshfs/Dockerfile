@@ -9,7 +9,7 @@ RUN \
 set -e
 mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
-apt-get install --yes curl git openssh-server passwd python3 systemd- udev- dbus-
+apt-get install --yes curl openssh-server passwd python3 rsync systemd- udev- dbus-
 apt-get autoremove --yes --purge
 EOF
 
