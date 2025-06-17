@@ -36,12 +36,14 @@ services:
           target: '/root/saltbox_bridge/'
         - path: '${BRIDGE_MESSAGES_DIR}'
           action: 'restart'
-          target: '/root/salbox_bridge_messages/'
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
     volumes:
-      - '${BRIDGE_MESSAGES_DIR}:/root/saltbox-bridge-messages'
+      - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages:ro'
+    tmpfs:
+      - '/mnt/saltbox-bridge-messages/build/'
+      - '/mnt/saltbox-bridge-messages/saltbox_bridge_messages.egg-info/'
 
   # Additional services
   clean-keys-cmd:
