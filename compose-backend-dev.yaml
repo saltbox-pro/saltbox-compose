@@ -21,7 +21,8 @@ services:
     tty: true  # colorize logs
     image: 'saltbox-core:dev'
     volumes:
-      - '${CORE_BUILD_DIR}:/mnt/salt_box_core'
+      - '${CORE_BUILD_DIR}:/mnt/saltbox-core'
+      - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages'
 
   saltbox-core-faststream-redis:
     <<: *core

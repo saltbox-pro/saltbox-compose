@@ -34,10 +34,14 @@ services:
         - path: '${SALT_BUILD_DIR}/saltbox_bridge/'
           action: 'sync+restart'
           target: '/root/saltbox_bridge/'
-
+        - path: '${BRIDGE_MESSAGES_DIR}'
+          action: 'restart'
+          target: '/root/salbox_bridge_messages/'
     ports:
       - '4505-4506:4505-4506'
       - '8001:8000'
+    volumes:
+      - '${BRIDGE_MESSAGES_DIR}:/root/saltbox-bridge-messages'
 
   # Additional services
   clean-keys-cmd:

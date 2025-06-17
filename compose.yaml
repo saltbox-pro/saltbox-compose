@@ -154,6 +154,10 @@ services:
         source: redis_salt_certs
         target: '/etc/redis/certs/'
         read_only: true
+    depends_on:
+      redis-salt:
+        condition: service_healthy
+        restart: false
 
   make-redis-salt-certs:
     <<: *default
@@ -235,6 +239,7 @@ services:
   saltbox-core: &core
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}'
+    command: 'uvicorn'
     environment:
       LOG_LEVEL: '${BACKEND_LOG_LEVEL}'
       SALT_MODULES_SERVE_DIR: '/mnt/salt/'
@@ -289,7 +294,7 @@ services:
 
   saltbox-core-faststream-redis:
     <<: *core
-    entrypoint: 'entrypoint.sh saltbox-faststream-redis'
+    command: 'shell saltbox-faststream-redis'
     expose: []
     depends_on:
       redis-salt:
@@ -298,7 +303,7 @@ services:
 
   saltbox-core-tasks-watcher:
     <<: *core
-    entrypoint: 'entrypoint.sh saltbox-tasks-watcher'
+    command: 'shell saltbox-tasks-watcher'
     expose: []
     depends_on:
       redis-salt:
@@ -307,7 +312,7 @@ services:
 
   saltbox-core-taskiq-worker:
     <<: *core
-    entrypoint: '/usr/local/bin/taskiq-worker.sh'
+    command: 'taskiq-worker'
     ports: []
     depends_on:
       redis-taskiq:
@@ -319,7 +324,7 @@ services:
 
   saltbox-core-taskiq-scheduler:
     <<: *core
-    entrypoint: '/usr/local/bin/taskiq-scheduler.sh'
+    command: 'taskiq-scheduler'
     ports: []
     depends_on:
       redis-taskiq:
