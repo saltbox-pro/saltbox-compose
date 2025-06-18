@@ -41,9 +41,10 @@ services:
       - '8001:8000'
     volumes:
       - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages:ro'
-    tmpfs:
-      - '/mnt/saltbox-bridge-messages/build/'
-      - '/mnt/saltbox-bridge-messages/saltbox_bridge_messages.egg-info/'
+      - type: tmpfs
+        target: '/mnt/saltbox-bridge-messages/build/'
+      - type: tmpfs
+        target: '/mnt/saltbox-bridge-messages/saltbox_bridge_messages.egg-info/'
 
   # Additional services
   clean-keys-cmd:
