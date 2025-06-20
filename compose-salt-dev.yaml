@@ -40,10 +40,10 @@ services:
       - '4505-4506:4505-4506'
       - '8001:8000'
     volumes:
-      - type: bind
-        source: '${BRIDGE_MESSAGES_DIR}'
-        target: '/mnt/saltbox-bridge-messages/'
-        read_only: true
+      - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages:ro'
+    tmpfs:
+      - '/mnt/saltbox-bridge-messages/build/'
+      - '/mnt/saltbox-bridge-messages/saltbox_bridge_messages.egg-info/'
 
   # Additional services
   clean-keys-cmd:

@@ -22,7 +22,10 @@ services:
     image: 'saltbox-core:dev'
     volumes:
       - '${CORE_BUILD_DIR}:/mnt/saltbox-core'
-      - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages'
+      - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages:ro'
+    tmpfs:
+      - '/mnt/saltbox-bridge-messages/build/'
+      - '/mnt/saltbox-bridge-messages/saltbox_bridge_messages.egg-info/'
 
   saltbox-core-faststream-redis:
     <<: *core
