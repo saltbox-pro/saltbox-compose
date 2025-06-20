@@ -107,4 +107,5 @@ fi
 
 if [ $last_stage = 'build' ]; then exit 0; fi
 
+(set -x; docker compose down)
 (set -x; docker compose up "${up_args[@]}")
