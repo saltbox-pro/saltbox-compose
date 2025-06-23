@@ -2,13 +2,9 @@
 
 ## Salt.Box Compose SaltStack override file for dev-mode.
 #
-# Local generic does not override original
-x-default-service: &default
-  restart: 'on-failure'
-  stop_grace_period: ${STOP_GRACE_PERIOD}
 
+# Override
 services:
-  # Override
   salt-master:
     build:
       context: '${SALT_BUILD_DIR}'
@@ -44,39 +40,3 @@ services:
     tmpfs:
       - '/mnt/saltbox-bridge-messages/build/'
       - '/mnt/saltbox-bridge-messages/saltbox_bridge_messages.egg-info/'
-
-  # Additional services
-  clean-keys-cmd:
-    <<: *default
-    build:
-      context: '${SALT_BUILD_DIR}'
-      target: salt-master-dev
-    image: 'salt-master:dev'
-    entrypoint: "salt-key --yes --delete 'moc-minion-*'"
-    profiles:
-      - salt-master
-    volumes:
-      - 'salt_master_pki:/etc/salt/pki/'
-  salt-moc-minion:
-    <<: *default
-    build:
-      context: '${SALT_BUILD_DIR}'
-      target: salt-moc-minion
-    image: 'salt-minion:dev'
-    environment:
-      SALT_MOC_MINION_LOG_LEVEL: '${SALT_MOC_MINION_LOG_LEVEL:-warning}'
-      SALT_MOC_MINION_RETRY_DNS: '${SALT_MOC_MINION_RETRY_DNS:-10}'
-    deploy:
-      mode: replicated
-      replicas: '${SALT_MOC_MINION_REPLICAS}'
-    profiles:
-      - salt-master
-    depends_on:
-      clean-keys-cmd:
-        condition: service_completed_successfully
-        required: false
-        restart: true
-      salt-master:
-        condition: service_started
-        required: false
-        restart: true

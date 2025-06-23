@@ -1,0 +1,48 @@
+---
+
+## Salt.Box Compose SaltStack override file to run mock minions for dev-mode.
+
+# Local generic does not override original
+x-default-service: &default
+  restart: 'on-failure'
+  stop_grace_period: ${STOP_GRACE_PERIOD}
+
+
+# Additional services
+services:
+  clean-keys-cmd:
+    <<: *default
+    build:
+      context: '${SALT_BUILD_DIR}'
+      target: salt-master-dev
+    image: 'salt-master:dev'
+    entrypoint: "salt-key --yes --delete 'mock-minion-*'"
+    profiles:
+      - salt-master
+    volumes:
+      - 'salt_master_pki:/etc/salt/pki/'
+  salt-mock-minion:
+    <<: *default
+    build:
+      context: '${SALT_BUILD_DIR}'
+      target: salt-mock-minion
+    image: 'salt-minion:dev'
+    environment:
+      SALT_MOCK_MINION_LOG_LEVEL: '${SALT_MOCK_MINION_LOG_LEVEL:-${SALT_MOC_MINION_LOG_LEVEL:-warning}}'  # TODO deprecated SALT_MOC_*
+
+      SALT_MOCK_MINION_RETRY_DNS: '${SALT_MOCK_MINION_RETRY_DNS:-${SALT_MOC_MINION_RETRY_DNS:-10}}'  # TODO deprecated SALT_MOC_*
+
+    deploy:
+      mode: replicated
+      replicas: '${SALT_MOCK_MINION_REPLICAS:-${SALT_MOC_MINION_REPLICAS:-}}'  # TODO deprecated SALT_MOC_*
+    profiles:
+      - salt-master
+    depends_on:
+      clean-keys-cmd:
+        condition: service_completed_successfully
+        required: false
+        restart: true
+      salt-master:
+        condition: service_started
+        required: false
+        restart: true
