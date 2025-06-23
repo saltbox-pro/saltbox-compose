@@ -10,7 +10,7 @@ Look for user documentation on [saltbox.pro](https://saltbox.pro).
 ## Requirements
 
 - Docker Engine >= 25.0 _(due to healthcheck feature)_
-- Docker Compose >= 2.22.0
+- Docker Compose >= 2.20.2
 - Python >= 3.9 _(for `./bin/make_secrets.py`)_
 
 ## Prepare
@@ -238,6 +238,13 @@ sudo docker system prune --force
 Usually it is safe and deletes only stale data.
 
 ## Development agreements
+
+### Docker Compose
+
+- `healthcheck.{interval,timeout,start_period,start_interval}` keywords
+introduced in Docker Compose 2.20.2, it is a __current version limiter__.
+- `develop` specification introduced in Docker Compose 2.22.0, it should be
+avoided in the main [`compose.yaml`](compose.yaml) file.
 
 ### Redis: channels
 

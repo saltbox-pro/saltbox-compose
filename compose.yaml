@@ -24,10 +24,6 @@ services:
       context: proxy/
       args:
         IMAGE: '${IMAGE_REGISTRY}/saltbox-compose/nginx:${NGINX_IMAGE_TAG}'
-    develop:
-      watch:
-        - action: rebuild
-          path: proxy/
     environment:
       API_BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${BACKEND_PATH}'
       BACKEND_HOSTNAME: saltbox-core
