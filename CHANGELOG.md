@@ -18,6 +18,7 @@ if possible and purge browser redirects.
 - `bin/update_and_run.sh`: `--only-env`, `--only-update` flags for more
   selective execution.
 - `BACKEND_LOG_LEVEL` variable.
+- `SALTBOX_BRIDGE_LOG_LEVEL` variable.
 
 ### Changed
 

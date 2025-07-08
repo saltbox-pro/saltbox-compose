@@ -138,6 +138,7 @@ services:
       REDIS_PASSWORD_FILE: '/run/secrets/redis_salt_password'
       SALT_MASTER_LOG_LEVEL: '${SALT_MASTER_LOG_LEVEL}'
       SALT_MINION_LOG_LEVEL: '${SALT_MINION_LOG_LEVEL}'
+      SALTBOX_BRIDGE_LOG_LEVEL: '${SALTBOX_BRIDGE_LOG_LEVEL:-info}'
     secrets:
       - redis_salt_password
     ports:
