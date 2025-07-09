@@ -27,7 +27,17 @@ allow if {
     collection.owner == input.user.sub
 }
 
+# Get default collection
+allow if {
+    input.request.method == "GET"
+    count(input.request.path) == 2
+    input.request.path == ["collections", "default"]
+    some collection in data.collections
+    collection.owner == input.user.sub
+}
+
 # Read access conditions
+# The user can read a collection if has `read` permission on current `slug` in any role
 allow if {
     input.request.method == "GET"
     count(input.request.path) == 2
