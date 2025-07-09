@@ -12,20 +12,39 @@ services:
     environment:
       KEYCLOAK_CLIENT_DIRECT_ACCESS: 'true'
 
+  saltbox-gateway:
+    build:
+      context: $GATEWAY_BUILD_DIR
+      target: dev
+    environment:
+      - LOG_LEVEL=DEBUG
+    tty: true  # colorize logs
+    image: 'saltbox-gateway:dev'
+    volumes:
+      - '${GATEWAY_BUILD_DIR}:/mnt/saltbox-gateway'
+      - '${SDK_DIR}:/mnt/saltbox-sdk:ro'
+    tmpfs:
+      - '/mnt/saltbox-sdk/build/'
+      - '/mnt/saltbox-sdk/saltbox_sdk.egg-info/'
+
   saltbox-core: &core
     build:
       context: $CORE_BUILD_DIR
       target: dev
     environment:
-      - SHOW_DOCS=True
+      - LOG_LEVEL=DEBUG
+      - DISCOVERY_LOG_LEVEL=DEBUG
     tty: true  # colorize logs
     image: 'saltbox-core:dev'
     volumes:
       - '${CORE_BUILD_DIR}:/mnt/saltbox-core'
       - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages:ro'
+      - '${SDK_DIR}:/mnt/saltbox-sdk:ro'
     tmpfs:
       - '/mnt/saltbox-bridge-messages/build/'
       - '/mnt/saltbox-bridge-messages/saltbox_bridge_messages.egg-info/'
+      - '/mnt/saltbox-sdk/build/'
+      - '/mnt/saltbox-sdk/saltbox_sdk.egg-info/'
 
   saltbox-core-faststream-redis:
     <<: *core

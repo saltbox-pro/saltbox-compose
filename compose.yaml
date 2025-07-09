@@ -25,10 +25,12 @@ services:
       args:
         IMAGE: '${IMAGE_REGISTRY}/saltbox-compose/nginx:${NGINX_IMAGE_TAG}'
     environment:
-      API_BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${BACKEND_PATH}'
+      API_BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${GATEWAY_PATH}'
       BACKEND_HOSTNAME: saltbox-core
+      GATEWAY_HTTP_PORT: '${GATEWAY_HTTP_PORT}'
       BACKEND_HTTP_PORT: '${BACKEND_HTTP_PORT}'
       BACKEND_PATH: '${BACKEND_PATH}'
+      GATEWAY_PATH: '${GATEWAY_PATH}'
       KEYCLOAK_BASE_URL: '${KEYCLOAK_BASE_URL}'
       OPEN_ID_AUTHORITY: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
       OPEN_ID_CLIENT_ID: '${KEYCLOAK_CLIENT}'
@@ -233,12 +235,50 @@ services:
       retries: 5
       start_period: 10s
 
+  saltbox-gateway:
+    <<: *default
+    image: '${IMAGE_REGISTRY}/saltbox-gateway:${GATEWAY_IMAGE_TAG}'
+    command: 'uvicorn'
+    environment:
+      LOG_LEVEL: '${GATEWAY_LOG_LEVEL:-info}'
+      BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}'
+      REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
+      REDIS_URL: 'rediss://redis-salt:6379/0'
+      REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
+      TIMEOUT_GRACEFUL_SHUTDOWN: '${GATEWAY_SHUTDOWN_TIMEOUT_SEC}'
+      GATEWAY_HTTP_PORT: '${GATEWAY_HTTP_PORT}'
+      UVICORN_WORKERS: '${GATEWAY_WORKERS:-1}'
+      KEYCLOAK_FRONT_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
+      KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
+      BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME:-}'
+      BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD:-}'
+      OPA_URL: 'http://opa:8181'
+    volumes:
+      - type: volume
+        source: redis_salt_certs
+        target: '/etc/redis/certs/'
+        read_only: true
+    secrets:
+      - redis_salt_password
+      - keycloak_client_saltbox_core_password
+    expose:
+      - ${GATEWAY_HTTP_PORT}
+    depends_on:
+      redis-salt:
+        condition: service_healthy
+        restart: false
+      rabbitmq:
+        condition: service_healthy
+        restart: false
+
   saltbox-core: &core
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}'
     command: 'uvicorn'
     environment:
-      LOG_LEVEL: '${BACKEND_LOG_LEVEL}'
+      LOG_LEVEL: '${CORE_LOG_LEVEL:-info}'
       SALT_MODULES_SERVE_DIR: '/mnt/salt/'
       BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
       MONGO_DB: '${MONGO_DB}'
@@ -263,6 +303,18 @@ services:
       OPA_URL: 'http://opa:8181'
       SSHFS_USER: 'saltbox'  # As in users.json of sshfs
       GITFS_USER: 'git'  # As in users.json of sshfs
+      # Gateway environment variables
+      DISCOVERY_BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}'
+      DISCOVERY_DISCOVERY_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}/api/discovery'
+      DISCOVERY_SERVICE_NAME: '${CORE_SERVICE_NAME}'
+      DISCOVERY_SERVICE_TITLE: '${CORE_SERVICE_TITLE}'
+      DISCOVERY_SERVICE_DESCRIPTION: '${CORE_SERVICE_DESCRIPTION}'
+      DISCOVERY_SERVICE_VENDOR: '${CORE_SERVICE_VENDOR}'
+      DISCOVERY_SERVICE_TYPE: '${CORE_SERVICE_TYPE}'
+      DISCOVERY_INSTANCE_HOST: '${CORE_HOST}'
+      DISCOVERY_INSTANCE_PORT: '${CORE_PORT}'
+      DISCOVERY_FRONT_CONTAINER_NAME: '${CORE_FRONT_CONTAINER_NAME}'
+      DISCOVERY_FRONT_CONTAINER_PORT: '${CORE_FRONT_CONTAINER_PORT}'
     volumes:
       - type: volume
         source: redis_salt_certs
