@@ -39,7 +39,7 @@ services:
     volumes:
       - '${CORE_BUILD_DIR}:/mnt/saltbox-core'
       - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages:ro'
-      - '${SDK_DIR}:/mnt/saltbox-sdk:ro'
+      - '${SDK_DIR}:/mnt/saltbox-sdk'
     tmpfs:
       - '/mnt/saltbox-bridge-messages/build/'
       - '/mnt/saltbox-bridge-messages/saltbox_bridge_messages.egg-info/'
