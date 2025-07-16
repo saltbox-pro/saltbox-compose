@@ -19,6 +19,37 @@ Usage: sudo ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
 
 Last --only-* flag overrides preceding.
 "
+declare -r admin_password_file='secrets/saltbox_admin_password'
+declare -r success_pre_msg_tpl='
+ ####################################################
+######################################################
+##                                                  ##
+## Salt.Box Compose will be started now.            ##
+##                                                  ##
+## Basic administrator: %-27s ##
+## Password: %-38s ##
+##                                                  ##
+######################################################
+ ####################################################
+  #####
+  ###
+ #
+'
+declare -r success_post_msg_tpl='
+ #
+  ###
+  #####
+ ####################################################
+######################################################
+##                                                  ##
+## Salt.Box Compose has been started.               ##
+##                                                  ##
+## Basic administrator: %-27s ##
+## Password: %-38s ##
+##                                                  ##
+######################################################
+ ####################################################
+'
 
 warn() {
   1>&2 echo "$@"
@@ -30,6 +61,7 @@ err() {
 }
 
 up_args=('--remove-orphans')
+detach_flag=0
 force_flag=0
 pull_flag=1
 login_flag=0
@@ -38,7 +70,7 @@ last_stage='up'
 for i in "$@"; do
   # shellcheck disable=SC2059
   case $i in
-    -d|--detach) up_args+=('--detach') ;;
+    -d|--detach) detach_flag=1 ;;
     -f|--force) force_flag=1 ;;
     -h|--help) printf "$usage_str" && exit 0 ;;
     -l|--login) login_flag=1 ;;
@@ -50,6 +82,8 @@ for i in "$@"; do
     *) up_args+=("$i") ;;
   esac
 done
+
+if [ $detach_flag = 1 ]; then up_args+=('--detach'); fi
 
 if [ "$(id -u)" -ne 0 ]; then
   err "Root access required, try sudo $0"
@@ -108,4 +142,19 @@ fi
 if [ $last_stage = 'build' ]; then exit 0; fi
 
 (set -x; docker compose down)
+
+# shellcheck source=/dev/null
+admin_username=$(source "$env_file" && echo "$SALTBOX_ADMIN_USERNAME")
+admin_password="$(cat "$admin_password_file")"
+if [ $detach_flag = 0 ]; then
+  # shellcheck disable=SC2059
+  printf "$success_pre_msg_tpl" "${admin_username}" "$admin_password"
+  sleep 2
+fi
+
 (set -x; docker compose up "${up_args[@]}")
+
+if [ $detach_flag = 1 ]; then
+  # shellcheck disable=SC2059
+  printf "$success_post_msg_tpl" "${admin_username}" "$admin_password"
+fi
