@@ -6,13 +6,15 @@ env_file='.env'
 usage_str="
 Update images and run a Salt.Box Docker Compose based instance.
 
-Usage: sudo ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
+Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
 
   -d|--detach\tDetach Docker Compose after start
   -f|--force\tRewrite with no confirmation
   -h|--help\tPrint this message
   -l|--login\tTry to login to registry
-  -n|--no-pull\tDo not pull newer images from registry
+  -n|--no-pull\tAvoid to update current repository and images from Internet
+  --no-image-pull\tDo not pull newer images from registry
+  --no-git-pull\tDo not pull current repository even if possible
   --only-env\tOnly merge example.env and override.env and exit
   --only-update\tOnly merge .env file and update images
   -w|--watch\tEnable Docker Compose watch for developement
@@ -50,6 +52,7 @@ declare -r success_post_msg_tpl='
 ######################################################
  ####################################################
 '
+declare -r success_msg_sleep=1
 
 warn() {
   1>&2 echo "$@"
@@ -60,10 +63,47 @@ err() {
   exit 1
 }
 
+echo_run() {
+  echo ">>> $*"
+  "$@"
+}
+
+as_root() {
+  if [ "$(id -u)" -ne 0 ]; then
+    sudo "$@"
+  else
+    "$@"
+  fi
+}
+
+git_pull_required() {
+  local branch
+
+  if [ $git_pull_flag = 0 ]; then
+    echo 0
+    return
+  fi
+
+  if ! branch=$(git branch --show-current 2> /dev/null); then
+    warn Error on running git branch subcommand, skipping git pull
+    echo 0
+    return
+  fi
+
+  if [ -z "$branch" ]; then
+    warn No current Git branch, skipping git pull
+    echo 0
+    return
+  fi
+
+  echo 1
+}
+
 up_args=('--remove-orphans')
 detach_flag=0
 force_flag=0
-pull_flag=1
+image_pull_flag=1
+git_pull_flag=1
 login_flag=0
 last_stage='up'
 
@@ -74,7 +114,9 @@ for i in "$@"; do
     -f|--force) force_flag=1 ;;
     -h|--help) printf "$usage_str" && exit 0 ;;
     -l|--login) login_flag=1 ;;
-    -n|--no-pull) pull_flag=0 ;;
+    -n|--no-pull) git_pull_flag=0; image_pull_flag=0 ;;
+    --no-git-pull) git_pull_flag=0 ;;
+    --no-image-pull) image_pull_flag=0 ;;
     --only-env) last_stage='dotenv';;
     --only-update) last_stage='build' ;;
     -w|--watch) up_args+=('--watch') ;;
@@ -83,11 +125,14 @@ for i in "$@"; do
   esac
 done
 
+if [ "$(id -u)" -ne 0 ]; then
+  msg="Failed to execute by root. Run by root or configure sudo for the user."
+  sudo --validate || err "$msg"
+fi
+
 if [ $detach_flag = 1 ]; then up_args+=('--detach'); fi
 
-if [ "$(id -u)" -ne 0 ]; then
-  err "Root access required, try sudo $0"
-fi
+if [ "$(git_pull_required)" = 1 ]; then echo_run git pull; fi
 
 if [ -f "$env_file" ]; then
   if [ $force_flag = 0 ]; then
@@ -130,18 +175,19 @@ if [ $login_flag = 1 ]; then
   if [ -z "$registry" ]; then
     err "Failed to get registry from $env_file"
   fi
-  (set -x; docker login "$registry")
+  echo_run as_root docker login "$registry"
 fi
 
-if [ $pull_flag = 1 ]; then
-  (set -x; docker compose pull --ignore-buildable)
+if [ $image_pull_flag = 1 ]; then
+  echo_run as_root docker compose pull --ignore-buildable
 fi
 
-(set -x; docker compose build)
+echo_run as_root docker compose build
 
 if [ $last_stage = 'build' ]; then exit 0; fi
 
-(set -x; docker compose down)
+
+echo_run as_root docker compose down
 
 # shellcheck source=/dev/null
 admin_username=$(source "$env_file" && echo "$SALTBOX_ADMIN_USERNAME")
@@ -149,10 +195,10 @@ admin_password="$(cat "$admin_password_file")"
 if [ $detach_flag = 0 ]; then
   # shellcheck disable=SC2059
   printf "$success_pre_msg_tpl" "${admin_username}" "$admin_password"
-  sleep 2
+  sleep $success_msg_sleep
 fi
 
-(set -x; docker compose up "${up_args[@]}")
+echo_run as_root docker compose up "${up_args[@]}"
 
 if [ $detach_flag = 1 ]; then
   # shellcheck disable=SC2059
