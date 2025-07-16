@@ -1,9 +1,12 @@
 #! /bin/bash
 set -e
 
-override_env='override.env'
-env_file='.env'
-usage_str="
+declare -r override_env='override.env'
+declare -r env_file='.env'
+declare -r admin_password_file='secrets/saltbox_admin_password'
+declare -ir success_msg_sleep=1
+declare -ir image_pull_retries=3
+declare -r usage_str="
 Update images and run a Salt.Box Docker Compose based instance.
 
 Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
@@ -21,7 +24,6 @@ Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
 
 Last --only-* flag overrides preceding.
 "
-declare -r admin_password_file='secrets/saltbox_admin_password'
 declare -r success_pre_msg_tpl='
  ####################################################
 ######################################################
@@ -52,23 +54,22 @@ declare -r success_post_msg_tpl='
 ######################################################
  ####################################################
 '
-declare -r success_msg_sleep=1
 
-warn() {
+function warn() {
   1>&2 echo "$@"
 }
 
-err() {
+function err() {
   warn "$@"
   exit 1
 }
 
-echo_run() {
+function echo_run() {
   echo ">>> $*"
   "$@"
 }
 
-as_root() {
+function as_root() {
   if [ "$(id -u)" -ne 0 ]; then
     sudo "$@"
   else
@@ -76,7 +77,7 @@ as_root() {
   fi
 }
 
-git_pull_required() {
+function git_pull_required() {
   local branch
 
   if [ $git_pull_flag = 0 ]; then
@@ -97,6 +98,23 @@ git_pull_required() {
   fi
 
   echo 1
+}
+
+function retry() {
+  local -i retries=$1
+  shift
+
+  local -i counter=0
+
+  until "$@"; do
+    (( counter += 1 ))
+    if [ $counter -ge $retries ]; then
+      echo "Command failed after $retries attempts"
+      return 1
+    fi
+    echo "Attempt $counter/$retries"
+    sleep 1
+  done
 }
 
 up_args=('--remove-orphans')
@@ -163,7 +181,7 @@ fi
 
 if [ $last_stage = 'dotenv' ]; then exit 0; fi
 
-(set -x; ./bin/make_secrets.py)
+echo_run ./bin/make_secrets.py
 
 if [ $login_flag = 1 ]; then
   # shellcheck source=/dev/null
@@ -179,7 +197,7 @@ if [ $login_flag = 1 ]; then
 fi
 
 if [ $image_pull_flag = 1 ]; then
-  echo_run as_root docker compose pull --ignore-buildable
+  retry $image_pull_retries echo_run as_root docker compose pull --ignore-buildable
 fi
 
 echo_run as_root docker compose build
