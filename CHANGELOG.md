@@ -14,11 +14,14 @@ if possible and purge browser redirects.
 
 ### Added
 
-- `SALT_FUNC_REPO_URL` with default repository url to environment configuration
+- `SALT_FUNC_REPO_URL` with default repository URL to environment configuration
 - `bin/update_and_run.sh`: `--only-env`, `--only-update` flags for more
   selective execution.
 - `BACKEND_LOG_LEVEL` variable.
 - `SALTBOX_BRIDGE_LOG_LEVEL` variable.
+- `bin/update_and_run.sh`: success message with default admin credentials.
+- `bin/update_and_run.sh`: `git pull` for Compose if applicable.
+- `bin/update_and_run.sh`: retries for `docker compose pull`.
 
 ### Changed
 
@@ -29,6 +32,8 @@ if possible and purge browser redirects.
 - ALT based `make-certs` image.
 - Make `make-certs` not depends on image from other repo.
 - Make `make-certs` image generic.
+- `bin/update_and_run.sh`: run as root only Docker commands, run with `sudo` is
+  optional now.
 
 ### Fixed
 
