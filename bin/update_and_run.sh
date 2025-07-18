@@ -11,16 +11,17 @@ Update images and run a Salt.Box Docker Compose based instance.
 
 Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
 
-  -d|--detach\tDetach Docker Compose after start
-  -f|--force\tRewrite with no confirmation
-  -h|--help\tPrint this message
-  -l|--login\tTry to login to registry
-  -n|--no-pull\tAvoid to update current repository and images from Internet
+  -d|--detach\t\tDetach Docker Compose after start
+  -f|--force\t\tRewrite with no confirmation
+  -h|--help\t\tPrint this message
+  -l|--login\t\tTry to login to registry
+  -n|--no-pull\t\tAvoid to update current repository and images from Internet
+  --no-git-pull\t\tDo not pull current repository even if possible
   --no-image-pull\tDo not pull newer images from registry
-  --no-git-pull\tDo not pull current repository even if possible
-  --only-env\tOnly merge example.env and override.env and exit
-  --only-update\tOnly merge .env file and update images
-  -w|--watch\tEnable Docker Compose watch for developement
+  --no-root\t\tDo not use sudo, run by current user
+  --only-env\t\tOnly merge example.env and override.env and exit
+  --only-update\t\tOnly merge .env file and update images
+  -w|--watch\t\tEnable Docker Compose watch for developement
 
 Last --only-* flag overrides preceding.
 "
@@ -70,7 +71,7 @@ function echo_run() {
 }
 
 function as_root() {
-  if [ "$(id -u)" -ne 0 ]; then
+  if [ $no_root_flag = 0 ] && [ "$(id -u)" -ne 0 ]; then
     sudo "$@"
   else
     "$@"
@@ -123,6 +124,7 @@ force_flag=0
 image_pull_flag=1
 git_pull_flag=1
 login_flag=0
+no_root_flag=0
 last_stage='up'
 
 for i in "$@"; do
@@ -135,6 +137,7 @@ for i in "$@"; do
     -n|--no-pull) git_pull_flag=0; image_pull_flag=0 ;;
     --no-git-pull) git_pull_flag=0 ;;
     --no-image-pull) image_pull_flag=0 ;;
+    --no-root) no_root_flag=1 ;;
     --only-env) last_stage='dotenv';;
     --only-update) last_stage='build' ;;
     -w|--watch) up_args+=('--watch') ;;

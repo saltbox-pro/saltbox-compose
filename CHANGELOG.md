@@ -22,6 +22,7 @@ if possible and purge browser redirects.
 - `bin/update_and_run.sh`: success message with default admin credentials.
 - `bin/update_and_run.sh`: `git pull` for Compose if applicable.
 - `bin/update_and_run.sh`: retries for `docker compose pull`.
+- `bin/update_and_run.sh`: `--no-root` flag to run as a regular user.
 
 ### Changed
 
