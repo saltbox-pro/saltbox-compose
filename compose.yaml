@@ -46,7 +46,7 @@ services:
       saltbox-core:
         condition: service_started
         restart: false
-      saltbox-frontend:
+      saltbox-frontend-root-config:
         condition: service_started
         restart: false
       keycloak:
@@ -384,9 +384,29 @@ services:
         condition: service_healthy
         restart: false
 
-  saltbox-frontend:
+  # saltbox-frontend:
+  #   <<: *default
+  #   image: '${IMAGE_REGISTRY}/saltbox-frontend:${FRONTEND_IMAGE_TAG}'
+  #   expose:
+  #     - ${FRONTEND_HTTP_PORT}
+
+  saltbox-frontend-root-config:
     <<: *default
-    image: '${IMAGE_REGISTRY}/saltbox-frontend:${FRONTEND_IMAGE_TAG}'
+    image: '${IMAGE_REGISTRY}/saltbox-frontend-root-config:${FRONTEND_IMAGE_TAG}'
+    expose:
+      - ${FRONTEND_HTTP_PORT}
+
+  saltbox-frontend-base:
+    <<: *default
+    image: '${IMAGE_REGISTRY}/saltbox-frontend-base:${FRONTEND_IMAGE_TAG}'
+    expose:
+      - ${FRONTEND_HTTP_PORT}
+
+  saltbox-frontend-core:
+    <<: *default
+    image: '${IMAGE_REGISTRY}/saltbox-frontend-core:${FRONTEND_IMAGE_TAG}'
+    ports:
+      - 8003:80
     expose:
       - ${FRONTEND_HTTP_PORT}
 

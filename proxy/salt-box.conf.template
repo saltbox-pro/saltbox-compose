@@ -2,18 +2,25 @@ server {
     listen 80;
     server_name localhost;
 
+    # location / {
+    #     proxy_pass http://saltbox-frontend;
+    #     proxy_http_version 1.1;
+    #     proxy_set_header Host $host;
+    #     proxy_set_header X-Real-IP $remote_addr;
+    # }
+
     location / {
-        proxy_pass http://saltbox-frontend;
+        proxy_pass http://saltbox-frontend-root-config;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
     }
 
-    location /env.json {
-        alias /srv/html/env.json;
-        add_header Content-Type application/json;
-        add_header Access-Control-Allow-Origin *;
-    }
+    # location /env.json {
+    #     alias /srv/html/env.json;
+    #     add_header Content-Type application/json;
+    #     add_header Access-Control-Allow-Origin *;
+    # }
 
     location /api {
         proxy_pass 'http://saltbox-gateway:${GATEWAY_HTTP_PORT}/api';
@@ -33,6 +40,17 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
+    }
+
+    location /static/base {
+        proxy_pass http://saltbox-frontend-base;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection upgrade;
+        rewrite '^/static/base/(.*)$' '/$1' break;
     }
 
     location '${KEYCLOAK_BASE_URL}/' {
