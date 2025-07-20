@@ -21,6 +21,7 @@ SECRETS = {
     'saltbox_user_password': 12,
     'sshfs_user_master_password': 12,
     'sshfs_user_saltbox_password': 12,
+    'grafana_admin_password': 16,
 }
 
 SECRET_ALPHABET = string.ascii_letters + string.digits

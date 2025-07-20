@@ -1,0 +1,75 @@
+server:
+  http_listen_port: 9080
+
+clients:
+  - url: http://grafana-loki:3100/loki/api/v1/push
+
+positions:
+  filename: "/tmp/positions.yaml" # By default: /var/log/positions.yaml
+  sync_period: 30s
+
+scrape_configs:
+
+  - job_name: docker_logs
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 10s
+
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/saltbox-(.+)-1' # e.g, replacement of the name container form 'saltbox-mongo-1' to 'mongo'
+        replacement: '$1'
+        target_label: 'service'
+      
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/saltbox-saltbox-(.+)-1' # e.g, replacement of the name container form 'saltbox-saltbox-core-1' to 'core'
+        replacement: '$1'
+        target_label: 'service'
+    
+    pipeline_stages:
+
+      - match:
+          selector: '{service="rabbitmq"}'
+          stages:
+            - json:
+                expressions:
+                  log: log
+            - regex:
+                expression: '^(?P<timestamp>\S+ \S+)\s+\[(?P<level>\w+)\]\s+<(?P<pid>[^>]+)>\s+(?P<message>.*)$'
+            - timestamp:
+                source: timestamp
+                format: RFC1123 # RFC1123: Mon, 02 Jan 2006 15:04:05 MST
+            - labels:
+                level:
+                pid:
+            - output:
+                source: message
+      
+      # - match:
+      #     selector: '{service="mongo"}'
+      #     stages:
+      #       # - json:
+      #       #     expressions:
+      #       #       log: log
+      #       # - regex:
+      #       #     expression: '\{"log":"\{\\"t\\":\{\\"\$date\\"\:\\"(?P<date>[^"]+)\\"},\\"s\\":\\"(?P<severity>[^\"]+)\\",\s{2,}\\"c\\":\\"(?P<component>[^\"]+)\\",\s{2,}\\"id\\":(?P<id>\d+),\s{3,}\\"ctx\\":\\"(?P<context>[^\"]+)\\",\\"msg\\":\\"(?P<message>[^\"]+)\\",\\"attr\\":\{.*\}'
+      #       - timestamp:
+      #           source: date
+      #           format: RFC1123
+      #       - labels:
+      #           date:
+      #           severity:
+      #           component:
+      #           id:
+      #           context:
+      #           message:
+      #       - output:
+      #           source: log
+
+  - job_name: system_logs
+    static_configs:
+      - targets:
+        - 'localhost'
+        labels:
+          job: var_logs
+          __path__: /var/log/*.log

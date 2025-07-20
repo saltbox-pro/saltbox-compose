@@ -475,6 +475,43 @@ services:
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
       - 'salt_repos:/srv/master/salt/'
       - './sshfs_conf/users.json:/mnt/sshfs_users.json:ro'
+  
+  grafana:
+    image: grafana/grafana:12.0.2-security-01 #TODO: add to saltbox registry
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: false
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      TZ: '${GRAFANA_SYSTEM_TIMEZONE}'
+    secrets:
+      - grafana_admin_password
+    ports:
+      - '3000:3000'
+    volumes:
+      - './grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml'
+      - 'grafana_data:/var/lib/grafana'
+
+  grafana-loki:
+    image: grafana/loki:3.4.5 #TODO: add to saltbox registry
+    environment:
+      TZ: '${GRAFANA_SYSTEM_TIMEZONE}'
+    expose:
+      - '3100'
+    volumes:
+      - './grafana-loki.yaml:/etc/loki/config.yaml'
+      - 'grafana_loki_config:/etc/loki'
+
+  promtail:
+    image: grafana/promtail:3.4.5 #TODO: add to saltbox registry
+    command: 
+      - '-config.expand-env=true'
+      - '-config.file=/etc/promtail/config.yaml'
+    expose:
+      - '9080'
+    volumes:
+      - '/var/lib/docker/containers:/var/lib/docker/containers:ro'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - './promtail.yaml:/etc/promtail/config.yaml'
+      - 'promtail_data:/etc/promtail'
 
 configs: {}
 
@@ -490,6 +527,9 @@ volumes:
   salt_master_saltbox_var: {}
   salt_repos: {}
   saltbox_core_var: {}
+  grafana_data: {}
+  grafana_loki_config: {}
+  promtail_data: {}
 
 secrets:
   keycloak_admin_password:
@@ -516,3 +556,5 @@ secrets:
     file: secrets/sshfs_user_master_password
   sshfs_user_saltbox_password:
     file: secrets/sshfs_user_saltbox_password
+  grafana_admin_password:
+    file: secrets/grafana_admin_password
