@@ -198,6 +198,17 @@ sudo docker compose restart salt-master
 Note: `docker compose up --force-recreate salt-master` not regenerates
 minions.
 
+### Dev Git repositories updater
+
+Helper script pulls changes for Git repositories, attached as a build context
+or a volume in dev overrides:
+
+```bash
+./bin/git_pull_dev_repos.py
+```
+
+`PyYAML` module is required (usually named like `python-yaml` in distros).
+
 ## Cleanup
 
 ### Cleanup all data
