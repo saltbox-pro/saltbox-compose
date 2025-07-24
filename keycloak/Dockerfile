@@ -70,5 +70,6 @@ ENV KEYCLOAK_CLIENT_DIRECT_ACCESS='false'
 COPY --chmod=755 salt-box-create-realm /usr/local/lib/salt-box/
 COPY --chmod=755 bin/kcadm-init.sh bin/create-realm.sh /usr/local/bin/
 COPY client.json ./
+COPY grafana_client.json ./
 
 ENTRYPOINT ["/usr/local/bin/create-realm.sh"]

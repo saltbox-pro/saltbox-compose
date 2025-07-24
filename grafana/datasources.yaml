@@ -6,7 +6,15 @@ datasources:
     access: proxy # proxy or direct (Server or Browser in the UI)
     orgId: 1
     url: http://grafana-loki:3100
-    basicAuth: false
-    isDefault: true # it's the default data source
+    basicAuth: true
+    isDefault: false # it's the default data source
     version: 1
-    editable: false # allows users to edit data sources from the grafana UI 
+    editable: false # allows users to edit data sources from the grafana UI
+
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    basicAuth: false
+    editable: false

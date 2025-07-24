@@ -20,12 +20,12 @@ scrape_configs:
         regex: '/saltbox-(.+)-1' # e.g, replacement of the name container form 'saltbox-mongo-1' to 'mongo'
         replacement: '$1'
         target_label: 'service'
-      
+
       - source_labels: ['__meta_docker_container_name']
         regex: '/saltbox-saltbox-(.+)-1' # e.g, replacement of the name container form 'saltbox-saltbox-core-1' to 'core'
         replacement: '$1'
         target_label: 'service'
-    
+
     pipeline_stages:
 
       - match:
@@ -40,31 +40,48 @@ scrape_configs:
                 source: timestamp
                 format: RFC1123 # RFC1123: Mon, 02 Jan 2006 15:04:05 MST
             - labels:
-                level:
+                detected_level: level
                 pid:
             - output:
                 source: message
-      
-      # - match:
-      #     selector: '{service="mongo"}'
-      #     stages:
-      #       # - json:
-      #       #     expressions:
-      #       #       log: log
-      #       # - regex:
-      #       #     expression: '\{"log":"\{\\"t\\":\{\\"\$date\\"\:\\"(?P<date>[^"]+)\\"},\\"s\\":\\"(?P<severity>[^\"]+)\\",\s{2,}\\"c\\":\\"(?P<component>[^\"]+)\\",\s{2,}\\"id\\":(?P<id>\d+),\s{3,}\\"ctx\\":\\"(?P<context>[^\"]+)\\",\\"msg\\":\\"(?P<message>[^\"]+)\\",\\"attr\\":\{.*\}'
-      #       - timestamp:
-      #           source: date
-      #           format: RFC1123
-      #       - labels:
-      #           date:
-      #           severity:
-      #           component:
-      #           id:
-      #           context:
-      #           message:
-      #       - output:
-      #           source: log
+
+      - match:
+          selector: '{service="mongo"}'
+          stages:
+            - json:
+                expressions:
+                  log: log
+            - regex:
+                expression: '\{"t"\:\{"\$date"\:\"(?P<timestamp>[^"]+)\"\}\,"s"\:\"(?P<severity>[A-Z])\"\,\s*\"c\"\:\"(?P<category>[^\"]+)\",\s*\"id\"\:(?P<id>\d+),\s*\"ctx\"\:\"(?P<context>[^\"]+)\",\s*\"msg\"\:\"(?P<message>[^\"]+)\"\,\"attr\"\:\{(?P<attributes>.+)\}\}'
+            - timestamp:
+                source: timestamp
+                format: RFC1123
+            - labels:
+                message:
+                severity:
+                category:
+                id:
+                context:
+            - output:
+                source: log
+
+      - match:
+          selector: '{service="salt-master"}'
+          stages:
+            - json:
+                expressions:
+                  log: log
+            - regex:
+                expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+\x1b\[\d{1,2};\d{1,2}\;[[0-9]+m\[(?P<level>[A-Z]+)\s*\]\x1b\[0;0m\s+\x1b\[\d{1,2};\d{1,2}\;[[0-9]+m\[(?P<module>[^\]]+)\]\x1b\[0;[[0-9]+m\s+\x1b\[[0;[[0-9]+m(?P<message>.*?)\x1b\[0;[[0-9]+m\"(\s+\((?P<agent>[^\)]+)\))?$'
+            - timestamp:
+                source: timestamp
+                format: RFC1123
+            - labels:
+                detected_level: level
+                module:
+                agent:
+            - output:
+                source: message
 
   - job_name: system_logs
     static_configs:

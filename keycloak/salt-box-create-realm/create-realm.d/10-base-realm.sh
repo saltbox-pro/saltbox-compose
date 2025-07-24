@@ -10,62 +10,58 @@ set -e
 # shellcheck source=../create-realm-common.sh
 . '/usr/local/lib/salt-box/create-realm-common.sh'
 
-if kcadm.sh get realms/"${KEYCLOAK_REALM}" --fields id > /dev/null; then
-  echo "Realm '${KEYCLOAK_REALM}' already exists"
-  exit 0
+if ! kcadm.sh get realms/"${KEYCLOAK_REALM}" --fields id >/dev/null 2>&1; then
+  echo "Realm '${KEYCLOAK_REALM}' does not exist. Creating."
+  kcadm.sh create realms -s "realm=${KEYCLOAK_REALM}" -s enabled=true
+else
+  echo "Realm '${KEYCLOAK_REALM}' exists. Checking assigned entites."
 fi
 
-kcadm.sh create realms -s "realm=${KEYCLOAK_REALM}" -s enabled=true
-KEYCLOAK_CLIENT_ID=$(kcadm.sh create clients \
-  --target-realm "${KEYCLOAK_REALM}" \
-  --file ./client.json \
-  --set "clientId=${KEYCLOAK_CLIENT}" \
-  --set "secret=${_saltbox_core_password}" -i)
-echo "Client with id '${KEYCLOAK_CLIENT_ID}' created"
+saltbox_client_uuid=$(kc_create_client \
+  "${KEYCLOAK_CLIENT}" \
+  "${_saltbox_core_password}" \
+  "${_collections_admin_role}" \
+  "./client.json" \
+  "Collections admin role" \
+  | tee /dev/stderr | grep -oP "(?<=UUID ')[^']+")
 
-kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
-  -r "${KEYCLOAK_REALM}" \
-  -s name="${_admin_role}" \
-  -s "description=Saltbox admin role"
-echo "Saltbox admin role created"
+grafana_client_uuid=$(kc_create_client \
+  "${KEYCLOAK_CLIENT_GRAFANA}" \
+  "${_grafana_password}" \
+  "${_grafana_admin_role}" \
+  "./grafana_client.json" \
+  "Grafana admin role" \
+  | tee /dev/stderr | grep -oP "(?<=UUID ')[^']+")
 
-kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
-  -r "${KEYCLOAK_REALM}" \
-  -s name="${_collections_admin_role}" \
-  -s "description=Collections admin role"
-echo "Collections admin role created"
+kc_create_role \
+  "${saltbox_client_uuid}" \
+  "${_admin_role}" \
+  "Salt.Box admin role"
 
-kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
-  -r "${KEYCLOAK_REALM}" \
-  -s name="${_tasks_admin_role}" \
-  -s "description=Tasks admin role"
-echo "Tasks admin role created"
+kc_create_role \
+  "${saltbox_client_uuid}" \
+  "${_tasks_admin_role}" \
+  "Tasks admin role"
 
-kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
-  -r "${KEYCLOAK_REALM}" \
-  -s name="${_jobs_admin_role}" \
-  -s "description=Jobs admin role"
-echo "Jobs admin role created"
+kc_create_role \
+  "${saltbox_client_uuid}" \
+  "${_jobs_admin_role}" \
+  "Jobs admin role"
 
-kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
-  -r "${KEYCLOAK_REALM}" \
-  -s name="${_masters_admin_role}" \
-  -s "description=Masters admin role"
-echo "Masters admin role created"
+kc_create_role \
+  "${saltbox_client_uuid}" \
+  "${_test_common_role}" \
+  "Test common role"
 
-kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
-  -r "${KEYCLOAK_REALM}" \
-  -s name="${_scheduler_admin_role}" \
-  -s "description=Scheduler admin role"
-echo "Scheduler admin role created"
+kc_create_role \
+  "${saltbox_client_uuid}" \
+  "${_masters_admin_role}" \
+  "Masters admin role"
 
-kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
-  -r "${KEYCLOAK_REALM}" \
-  -s name="${_test_common_role}" \
-  -s "description=Test common role"
-echo "Test common role created"
-
-echo "Realm ${KEYCLOAK_REALM} has been created"
+kc_create_role \
+  "${saltbox_client_uuid}" \
+  "${_scheduler_admin_role}" \
+  "Scheduler admin role"
 
 if [ -z "$KEYCLOAK_USER_NAME" ]; then
   echo No user to create
@@ -76,11 +72,6 @@ else
     "${KEYCLOAK_USER_FIRSTNAME}" \
     "${KEYCLOAK_USER_LASTNAME}" \
     "${_sb_user_password}"
-
-  kcadm.sh add-roles -r "${KEYCLOAK_REALM}" \
-    --uusername "${KEYCLOAK_USER_NAME}" \
-    --cclientid "${KEYCLOAK_CLIENT}" \
-    --rolename "${_test_common_role}"
 fi
 
 if [ -z "$KEYCLOAK_ADMIN_NAME" ]; then
@@ -93,8 +84,52 @@ else
     "${KEYCLOAK_ADMIN_LASTNAME}" \
     "${_sb_admin_password}"
 
-  kcadm.sh add-roles -r "${KEYCLOAK_REALM}" \
-    --uusername "${KEYCLOAK_ADMIN_NAME}" \
-    --cclientid "${KEYCLOAK_CLIENT}" \
-    --rolename "${_admin_role}"
+  kc_assign_client_role_to_user \
+    "${KEYCLOAK_REALM}" \
+    "${KEYCLOAK_ADMIN_NAME}" \
+    "${KEYCLOAK_CLIENT}" \
+    "${_admin_role}"
+  
+  kc_assign_client_role_to_user \
+    "${KEYCLOAK_REALM}" \
+    "${KEYCLOAK_ADMIN_NAME}" \
+    "${KEYCLOAK_CLIENT}" \
+    "${_collections_admin_role}"
+  
+  kc_assign_client_role_to_user \
+    "${KEYCLOAK_REALM}" \
+    "${KEYCLOAK_ADMIN_NAME}" \
+    "${KEYCLOAK_CLIENT}" \
+    "${_tasks_admin_role}"
+  
+  kc_assign_client_role_to_user \
+    "${KEYCLOAK_REALM}" \
+    "${KEYCLOAK_ADMIN_NAME}" \
+    "${KEYCLOAK_CLIENT}" \
+    "${_jobs_admin_role}"
+  
+  kc_assign_client_role_to_user \
+    "${KEYCLOAK_REALM}" \
+    "${KEYCLOAK_ADMIN_NAME}" \
+    "${KEYCLOAK_CLIENT}" \
+    "${_test_common_role}"
+  
+  kc_assign_client_role_to_user \
+    "${KEYCLOAK_REALM}" \
+    "${KEYCLOAK_ADMIN_NAME}" \
+    "${KEYCLOAK_CLIENT}" \
+    "${_masters_admin_role}"
+
+  kc_assign_client_role_to_user \
+    "${KEYCLOAK_REALM}" \
+    "${KEYCLOAK_ADMIN_NAME}" \
+    "${KEYCLOAK_CLIENT_GRAFANA}" \
+    "${_grafana_admin_role}"
+fi
+
+if kc_all_expected_roles_assigned; then
+  echo -e "Realm '${KEYCLOAK_REALM}' exists and all expected roles are assigned\n"
+  exit 0
+else
+  echo -e "Realm '${KEYCLOAK_REALM}' exists but some expected roles are missing\n"
 fi
