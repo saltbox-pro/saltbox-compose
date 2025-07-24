@@ -1,20 +1,12 @@
 apiVersion: 1
 
 datasources:
-  - name: Loki # name of the data source
+  - name: Loki
     type: loki
-    access: proxy # proxy or direct (Server or Browser in the UI)
+    access: proxy
     orgId: 1
     url: http://grafana-loki:3100
     basicAuth: true
-    isDefault: false # it's the default data source
+    isDefault: false
     version: 1
-    editable: false # allows users to edit data sources from the grafana UI
-
-  # - name: Prometheus
-  #   type: prometheus
-  #   access: proxy
-  #   url: http://prometheus:9090
-  #   isDefault: true
-  #   basicAuth: false
-  #   editable: false
+    editable: false

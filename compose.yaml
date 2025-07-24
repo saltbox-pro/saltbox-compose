@@ -480,7 +480,7 @@ services:
 
   grafana:
     <<: *default
-    image: grafana/grafana:12.0.2-security-01 #TODO: add to saltbox registry
+    image: grafana/grafana:12.0.2-security-01
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: false
       GF_AUTH_BASIC_ENABLED: false
@@ -500,22 +500,19 @@ services:
       GF_AUTH_GENERIC_OAUTH_TOKEN_URL: '${WEB_SERVER_SCHEME}://keycloak:8080${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token'
       GF_AUTH_GENERIC_OAUTH_API_URL: '${WEB_SERVER_SCHEME}://keycloak:8080${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/userinfo'
       GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(resource_access.grafana.roles, 'grafana_admin') && 'Admin' || 'Viewer'"
-      # GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: '/etc/grafana/provisioning/dashboards/dashboard.json'
       GF_LOG_LEVEL: '${BACKEND_LOG_LEVEL}'
-      TZ: '${GRAFANA_SYSTEM_TIMEZONE}'
     secrets:
       - keycloak_client_grafana_password
     ports:
       - '3000:3000'
     volumes:
-      # - './grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml'
-      # - './grafana/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json'
+      - './grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml'
       - './grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml'
       - 'grafana_data:/var/lib/grafana'
 
   grafana-loki:
     <<: *default
-    image: grafana/loki:3.4.5 #TODO: add to saltbox registry
+    image: grafana/loki:3.4.5
     environment:
       TZ: '${GRAFANA_SYSTEM_TIMEZONE}'
     expose:
@@ -526,7 +523,7 @@ services:
 
   promtail:
     <<: *default
-    image: grafana/promtail:3.4.5 #TODO: add to saltbox registry
+    image: grafana/promtail:3.4.5
     command:
       - '-config.expand-env=true'
       - '-config.file=/etc/promtail/config.yaml'
@@ -537,15 +534,6 @@ services:
       - '/var/run/docker.sock:/var/run/docker.sock'
       - './promtail.yaml:/etc/promtail/config.yaml'
       - 'promtail_data:/etc/promtail'
-
-  # prometheus:
-  #     <<: *default
-  #     image: prom/prometheus:v3.5.0 #TODO: add to saltbox registry
-  #     ports:
-  #       - '9090:9090'
-  #     volumes:
-  #       - './prometheus.yml:/etc/prometheus/prometheus.yml'
-  #       - 'prometheus_data:/data/prometheus'
 
 configs: {}
 
