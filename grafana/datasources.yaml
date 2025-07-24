@@ -11,10 +11,10 @@ datasources:
     version: 1
     editable: false # allows users to edit data sources from the grafana UI
 
-  - name: Prometheus
-    type: prometheus
-    access: proxy
-    url: http://prometheus:9090
-    isDefault: true
-    basicAuth: false
-    editable: false
+  # - name: Prometheus
+  #   type: prometheus
+  #   access: proxy
+  #   url: http://prometheus:9090
+  #   isDefault: true
+  #   basicAuth: false
+  #   editable: false

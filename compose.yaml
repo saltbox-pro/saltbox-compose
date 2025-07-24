@@ -500,7 +500,7 @@ services:
       GF_AUTH_GENERIC_OAUTH_TOKEN_URL: '${WEB_SERVER_SCHEME}://keycloak:8080${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token'
       GF_AUTH_GENERIC_OAUTH_API_URL: '${WEB_SERVER_SCHEME}://keycloak:8080${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/userinfo'
       GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(resource_access.grafana.roles, 'grafana_admin') && 'Admin' || 'Viewer'"
-      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: '/etc/grafana/provisioning/dashboards/dashboard.json'
+      # GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: '/etc/grafana/provisioning/dashboards/dashboard.json'
       GF_LOG_LEVEL: '${BACKEND_LOG_LEVEL}'
       TZ: '${GRAFANA_SYSTEM_TIMEZONE}'
     secrets:
@@ -508,8 +508,8 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - './grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml'
-      - './grafana/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json'
+      # - './grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml'
+      # - './grafana/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json'
       - './grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml'
       - 'grafana_data:/var/lib/grafana'
 
@@ -538,14 +538,14 @@ services:
       - './promtail.yaml:/etc/promtail/config.yaml'
       - 'promtail_data:/etc/promtail'
 
-  prometheus:
-      <<: *default
-      image: prom/prometheus:v3.5.0 #TODO: add to saltbox registry
-      ports:
-        - '9090:9090'
-      volumes:
-        - './prometheus.yml:/etc/prometheus/prometheus.yml'
-        - 'prometheus_data:/data/prometheus'
+  # prometheus:
+  #     <<: *default
+  #     image: prom/prometheus:v3.5.0 #TODO: add to saltbox registry
+  #     ports:
+  #       - '9090:9090'
+  #     volumes:
+  #       - './prometheus.yml:/etc/prometheus/prometheus.yml'
+  #       - 'prometheus_data:/data/prometheus'
 
 configs: {}
 
