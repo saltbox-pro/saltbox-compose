@@ -241,7 +241,10 @@ services:
     command: 'uvicorn'
     environment:
       LOG_LEVEL: '${GATEWAY_LOG_LEVEL:-info}'
-      BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}'
+      # BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}'
+      SERVER_SCHEME: '${WEB_SERVER_SCHEME}'
+      SERVER_WS_SCHEME: '${WEB_SERVER_WS_SCHEME}'
+      SERVER_OUTER_SOCKET: '${WEB_SERVER_OUTER_SOCKET}'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
       REDIS_URL: 'rediss://redis-salt:6379/0'
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
@@ -304,8 +307,9 @@ services:
       SSHFS_USER: 'saltbox'  # As in users.json of sshfs
       GITFS_USER: 'git'  # As in users.json of sshfs
       # Gateway environment variables
-      DISCOVERY_BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}'
-      # DISCOVERY_DISCOVERY_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}/api/discovery'
+      DISCOVERY_SERVER_SCHEME: '${WEB_SERVER_SCHEME}'
+      DISCOVERY_SERVER_WS_SCHEME: '${WEB_SERVER_WS_SCHEME}'
+      DISCOVERY_SERVER_OUTER_SOCKET: '${WEB_SERVER_OUTER_SOCKET}'
       DISCOVERY_DISCOVERY_URL: 'http://saltbox-gateway:${GATEWAY_HTTP_PORT}/api/discovery'
       DISCOVERY_SERVICE_NAME: '${CORE_SERVICE_NAME}'
       DISCOVERY_SERVICE_TITLE: '${CORE_SERVICE_TITLE}'
