@@ -281,7 +281,7 @@ services:
     image: '${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}'
     command: 'uvicorn'
     environment:
-      LOG_LEVEL: '${CORE_LOG_LEVEL:-info}'
+      LOG_LEVEL: '${SALTBOX_CORE_LOG_LEVEL}'
       SALT_MODULES_SERVE_DIR: '/mnt/salt/'
       BASE_URL_ROOT_PATH: '${BACKEND_PATH}'
       MONGO_DB: '${MONGO_DB}'
