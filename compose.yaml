@@ -147,12 +147,10 @@ services:
       - '4505-4506:4505-4506'
     volumes:
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt/'
+      - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
+      - 'redis_salt_certs:/etc/redis/certs/:ro'
       - 'salt_master_pki:/etc/salt/pki/'
       - 'salt_master_saltbox_var:/var/lib/saltbox-bridge/'
-      - type: volume
-        source: redis_salt_certs
-        target: '/etc/redis/certs/'
-        read_only: true
     depends_on:
       redis-salt:
         condition: service_healthy
