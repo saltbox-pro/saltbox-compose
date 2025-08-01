@@ -29,11 +29,16 @@ function check_docker_access() {
 err_msg='
 Unknown command, valid commands are:
 
-  salt\tRuns `salt` on salt-master
+  salt\t\tRuns `salt` on salt-master
+  salt-run\tRuns `salt-run` on salt-master
+  salt-key\tRuns `salt-key` on salt-master
+
 '
 
 case $1 in
   salt) cmd+=(salt-master salt) ;;
+  salt-run) cmd+=(salt-master salt-run) ;;
+  salt-key) cmd+=(salt-master salt-key) ;;
   *) err "$err_msg" ;;
 esac
 
