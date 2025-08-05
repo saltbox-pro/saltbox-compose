@@ -1,4 +1,4 @@
-package core.collections
+package core.oldcollections
 
 default allow = false
 
