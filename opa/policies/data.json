@@ -1,0 +1,31 @@
+{
+    "permissions": [
+        {
+            "subject_type": "role",
+            "subject_id": "test_role",
+            "service": "core",
+            "resource": "collections",
+            "action": "read",
+            "conditions": {
+                "slug": { "$in": ["linux", "windows"] }
+            },
+            "updated_at": "2024-07-28T12:00:00Z",
+            "updated_by": "admin"
+        },
+        {
+            "subject_type": "role",
+            "subject_id": "test_role",
+            "service": "core",
+            "resource": "collections",
+            "action": "update",
+            "conditions": {
+                "$and": [
+                    { "slug": { "$in": ["linux", "windows", "alt"] } },
+                    { "parent_slug": "root" }
+                ]
+            },
+            "updated_at": "2024-07-28T12:00:00Z",
+            "updated_by": "admin"
+        }
+    ]
+}
