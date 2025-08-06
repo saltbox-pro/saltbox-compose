@@ -26,6 +26,18 @@
             },
             "updated_at": "2024-07-28T12:00:00Z",
             "updated_by": "admin"
+        },
+        {
+            "subject_type": "role",
+            "subject_id": "test_role",
+            "service": "core",
+            "resource": "collections",
+            "action": "create",
+            "conditions": {
+                "parent_slug": { "$in": ["alt"] }
+            },
+            "updated_at": "2024-07-28T12:00:00Z",
+            "updated_by": "admin"
         }
     ]
 }
