@@ -21,11 +21,12 @@ services:
     tty: true  # colorize logs
     image: 'saltbox-gateway:dev'
     volumes:
-      - '${GATEWAY_BUILD_DIR}:/mnt/saltbox-gateway'
+      - '${GATEWAY_BUILD_DIR}:/mnt/saltbox-gateway:ro'
       - '${SDK_DIR}:/mnt/saltbox-sdk:ro'
     tmpfs:
       - '/mnt/saltbox-sdk/build/'
       - '/mnt/saltbox-sdk/saltbox_sdk.egg-info/'
+      - '/mnt/saltbox-gateway/saltbox_gateway.egg-info/'
 
   saltbox-core: &core
     build:
