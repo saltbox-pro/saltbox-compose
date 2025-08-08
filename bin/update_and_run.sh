@@ -118,7 +118,16 @@ function retry() {
   done
 }
 
+function set_extra_env_files {
+  # shellcheck source=/dev/null
+  IFS=',' read -ra env_files <<< "$(source "$env_file" && echo "$_UPDATE_AND_RUN_EXTRA_ENV_FILES")"
+  for env_path in "${env_files[@]}"; do
+    compose_args+=("--env-file=$env_path")
+  done
+}
+
 up_args=('--remove-orphans')
+compose_args=('--env-file=.env')
 detach_flag=0
 force_flag=0
 image_pull_flag=1
@@ -203,12 +212,14 @@ if [ $image_pull_flag = 1 ]; then
   retry $image_pull_retries echo_run as_root docker compose pull --ignore-buildable
 fi
 
-echo_run as_root docker compose build
+set_extra_env_files
+
+echo_run as_root docker compose "${compose_args[@]}" build
 
 if [ $last_stage = 'build' ]; then exit 0; fi
 
 
-echo_run as_root docker compose down
+echo_run as_root docker compose "${compose_args[@]}" down
 
 # shellcheck source=/dev/null
 admin_username=$(source "$env_file" && echo "$SALTBOX_ADMIN_USERNAME")
@@ -219,7 +230,7 @@ if [ $detach_flag = 0 ]; then
   sleep $success_msg_sleep
 fi
 
-echo_run as_root docker compose up "${up_args[@]}"
+echo_run as_root docker compose "${compose_args[@]}" up "${up_args[@]}"
 
 if [ $detach_flag = 1 ]; then
   # shellcheck disable=SC2059
