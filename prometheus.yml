@@ -7,3 +7,8 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ["salt-master:8004"]
+
+  - job_name: "saltbox-core"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["saltbox-core:8000"]
