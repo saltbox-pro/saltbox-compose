@@ -1,22 +1,18 @@
-package core.collections.update
+package core.collections.delete
 
 import data.core.collections.base
 import data.utils.conditions
 
 default allow := false
 default is_owner := false
-default can_update_collection := false
+default can_delete_collection := false
 
-# Allow update for admin users
 allow if base.is_admin
-
-# Allow if owner
 allow if is_owner
-
-allow if can_update_collection
+allow if can_delete_collection
 
 is_owner if {
-    is_action_update
+    is_action_delete
     slug := input.resource.path[1]
     collection_response := http.send({
         "method": "GET",
@@ -27,8 +23,8 @@ is_owner if {
     collection_object.owner_id == input.subject.sub
 }
 
-can_update_collection if {
-    is_action_update
+can_delete_collection if {
+    is_action_delete
     slug := input.resource.path[1]
     collection_response := http.send({
         "method": "GET",
@@ -44,12 +40,12 @@ can_update_collection if {
     permission.subject_id == user_role
     permission.service == input.resource.service_name
     permission.resource == "collections"
-    permission.action == "update"
+    permission.action == "delete"
     conditions.conditions_match(permission.conditions, collection_object)
 }
 
-is_action_update if {
+is_action_delete if {
     base.is_current_resource
-    input.action.name == "update"
+    input.action.name == "delete"
     count(input.resource.path) == 2
 }

@@ -1,9 +1,10 @@
 package utils.conditions
 
-# Главная функция: возвращает true, если все условия выполняются
+# true, если условия не заданы
 conditions_match(conds, obj) := true if {
     not conds
 }
+
 
 conditions_match(conds, obj) := true if {
     conds

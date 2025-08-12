@@ -72,7 +72,7 @@ is_action_read if {
 
 is_owner if {
     is_action_read
-    input.resource.object.owner == input.subject.sub
+    input.resource.object.owner_id == input.subject.sub
     input.resource.path[1] == input.resource.object.slug
 }
 

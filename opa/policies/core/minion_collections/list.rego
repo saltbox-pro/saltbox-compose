@@ -10,8 +10,8 @@ default allow := false
 allow if base.is_admin
 
 # Compile правило для получения списка коллекций, на основе разрешений из data.permissions
-allow if {
-    is_action_list
+
+allowd_collections_read if {
     some collection in data.collections
     some user_role in input.subject.roles
     some permission in data.permissions
@@ -23,12 +23,16 @@ allow if {
     slugs := permission.conditions.slug["$in"]
     collection.slug in slugs
 }
+allow if {
+    is_action_list
+    allowd_collections_read
+}
 
 # Правило для получения списка коллекций, на основе овнерства пользователя
 allow if {
     is_action_list
     some collection in data.collections
-    collection.owner == input.subject.sub
+    collection.owner_id == input.subject.sub
 }
 
 # Variables
