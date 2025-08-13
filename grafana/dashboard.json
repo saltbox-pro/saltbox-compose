@@ -757,6 +757,18 @@
         }
       ],
       "title": "Total HTTP Requests",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "keepLabels": [
+              "job",
+              "instance"
+            ],
+            "valueLabel": "job"
+          }
+        }
+      ],
       "type": "stat"
     },
     {
@@ -798,7 +810,7 @@
           "showLegend": false
         },
         "maxVizHeight": 300,
-        "minVizHeight": 37,
+        "minVizHeight": 75,
         "minVizWidth": 8,
         "namePlacement": "auto",
         "orientation": "horizontal",
@@ -846,39 +858,28 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "palette-classic"
+            "mode": "thresholds"
           },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 0,
+            "axisPlacement": "right",
+            "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
               "viz": false
             },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -893,7 +894,7 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 1
               }
             ]
           }
@@ -902,32 +903,67 @@
       },
       "gridPos": {
         "h": 9,
-        "w": 6,
+        "w": 12,
         "x": 0,
         "y": 61
       },
       "id": 13,
       "options": {
+        "barRadius": 0,
+        "barWidth": 0.85,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
         "legend": {
           "calcs": [],
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
         "tooltip": {
           "hideZeros": false,
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xField": "Time",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 300
       },
       "pluginVersion": "12.0.2+security-01",
       "targets": [
         {
-          "refId": "A"
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "http_error_total",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
         }
       ],
-      "title": "Total exceptions",
-      "type": "timeseries"
+      "title": "Total HTTP Errors",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "keepLabels": [
+              "status_code",
+              "job",
+              "endpoint"
+            ],
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        }
+      ],
+      "type": "barchart"
     },
     {
       "datasource": {
@@ -992,8 +1028,8 @@
       },
       "gridPos": {
         "h": 9,
-        "w": 18,
-        "x": 6,
+        "w": 12,
+        "x": 12,
         "y": 61
       },
       "id": 12,
@@ -1020,7 +1056,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "code",
-          "expr": "sum by(endpoint) (http_request_endpoint_count{status_code=~\"2.*\"}) / sum by(endpoint) (http_request_endpoint_count{status_code=~\"2.*\"})",
+          "expr": "sum by(endpoint) (http_request_endpoint_count{status_code=~\"2.*\"}) / sum by(endpoint) (http_request_endpoint_count)",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
@@ -1103,7 +1139,7 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 6,
+        "w": 12,
         "x": 0,
         "y": 70
       },
@@ -1210,8 +1246,8 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 18,
-        "x": 6,
+        "w": 12,
+        "x": 12,
         "y": 70
       },
       "id": 14,
@@ -1234,7 +1270,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "sum by(endpoint) (http_request_endpoint_count{status_code=~\"2.*\"}) / sum by(endpoint) (http_request_endpoint_count{status_code=~\"2.*\"})",
+          "expr": "sum by(endpoint) (http_request_endpoint_count{status_code=~\"5.*\"}) / sum by(endpoint) (http_request_endpoint_count)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1340,7 +1376,7 @@
     "list": []
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-5m",
     "to": "now"
   },
   "timepicker": {},

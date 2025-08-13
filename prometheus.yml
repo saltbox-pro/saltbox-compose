@@ -12,3 +12,8 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ["saltbox-core:8000"]
+
+  - job_name: "saltbox-gateway"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["saltbox-gateway:8001"]
