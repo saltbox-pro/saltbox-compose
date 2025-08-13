@@ -1,21 +1,23 @@
-package core.collections.list
+package core.collections.default
 
 import data.core.collections.base
 import data.utils.conditions
 
 default allow := false
-default is_action_list := false
 default query := null
 
-# Allow all actions for collections_admin users
-# Except for default collection. For default collection separate rule is applied
-allow if base.is_admin
-
+# Compile Правило для получения default коллекции, на основе разрешений из data.permissions
+# Возвращает фильтр с первой разрешенной на чтение коллекцией из data.permissions для роли пользователя
 allow if {
-    is_action_list
+    is_action_read
+    is_default_path
     query
 }
 
+# Variables
+query := {"slug": "root"} if {
+    base.is_admin
+}
 query := {
     "$or": array.concat(
         [cond |
@@ -30,11 +32,17 @@ query := {
         ],
         [{"owner_id": input.subject.sub}]
     )
+} if {
+    not base.is_admin
 }
 
-# Variables
-is_action_list if {
+is_action_read if {
     base.is_current_resource
-    input.action.name == "list"
-    count(input.resource.path) == 1
+    input.action.name == "read"
+    count(input.resource.path) == 2
+}
+
+is_default_path if {
+    is_action_read
+    input.resource.path[1] == "default"
 }

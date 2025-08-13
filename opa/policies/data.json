@@ -1,76 +1,137 @@
 {
     "permissions": [
         {
-            "subject_type": "role",
-            "subject_id": "test_role",
+            "is_active": true,
             "service": "core",
             "resource": "collections",
             "action": "read",
-            "conditions": {
+            "object_conditions": {
                 "slug": { "$in": ["linux", "alt"] }
             },
-            "updated_at": "2024-07-28T12:00:00Z",
-            "updated_by": "admin"
+            "subject_type": "user",
+            "subject_conditions": {
+                "roles": { "$in": ["test_role"] }
+            },
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
         },
         {
-            "subject_type": "role",
-            "subject_id": "test_role",
+            "is_active": true,
+            "service": "core",
+            "resource": "collections",
+            "action": "read",
+            "object_conditions": {
+                "parent_slug": { "$in": ["alt"] }
+            },
+            "subject_type": "user",
+            "subject_conditions": {
+                "roles": { "$in": ["test_role1"] }
+            },
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
+        },
+        {
+            "is_active": true,
             "service": "core",
             "resource": "collections",
             "action": "update",
-            "conditions": {
+            "object_conditions": {
                 "slug": { "$in": ["alt", "linux"] }
             },
-            "updated_at": "2024-07-28T12:00:00Z",
-            "updated_by": "admin"
+            "subject_type": "user",
+            "subject_conditions": {
+                "roles": { "$in": ["test_role"] }
+            },
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
         },
         {
-            "subject_type": "role",
-            "subject_id": "test_role",
+            "is_active": true,
             "service": "core",
             "resource": "collections",
             "action": "create",
-            "conditions": {
+            "object_conditions": {
                 "parent_slug": { "$in": ["alt"] }
             },
-            "updated_at": "2024-07-28T12:00:00Z",
-            "updated_by": "admin"
+            "subject_type": "user",
+            "subject_conditions": {
+                "roles": { "$in": ["test_role"] }
+            },
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
         },
         {
-            "subject_type": "role",
-            "subject_id": "test_role",
+            "is_active": true,
             "service": "core",
             "resource": "collections",
             "action": "delete",
-            "conditions": {
+            "object_conditions": {
                 "slug": { "$in": ["linux"] }
             },
-            "updated_at": "2024-07-28T12:00:00Z",
-            "updated_by": "admin"
+            "subject_type": "user",
+            "subject_conditions": {
+                "roles": { "$in": ["test_role"] }
+            },
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
         },
         {
-            "subject_type": "role",
-            "subject_id": "test_role",
+            "is_active": true,
             "service": "core",
             "resource": "tasks",
             "action": "create",
-            "conditions": {
+            "object_conditions": {
                 "max_jobs_count_at_same_time": { "$lt": 10 }
             },
-            "updated_at": "2024-07-28T12:00:00Z",
-            "updated_by": "admin"
+            "subject_type": "user",
+            "subject_conditions": {
+                "roles": { "$in": ["test_role"] }
+            },
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
         },
         {
-            "subject_type": "role",
-            "subject_id": "test_role",
+            "is_active": true,
             "service": "core",
             "resource": "task_templates",
             "action": "read",
-            "conditions": {
+            "object_conditions": {
                 "id": { "$in": ["6853ff814dca5b8b5c43bf53", "task_template_2"] }
             },
-            "updated_at": "2024-07-28T12:00:00Z",
-            "updated_by": "admin"
+            "subject_type": "user",
+            "subject_conditions": {
+                "roles": { "$in": ["test_role"] }
+            },
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
+        },
+        {
+            "is_active": true,
+            "service": "core",
+            "resource": "jobs",
+            "action": "create",
+            "object_conditions": {
+                "fun": { "$in": ["test.ping"] }
+            },
+            "subject_type": "user",
+            "subject_conditions": {},
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
+        },
+        {
+            "is_active": true,
+            "service": "core",
+            "resource": "json_schemas",
+            "action": "read",
+            "object_conditions": {
+                "name": { "$in": ["test.ping"] }
+            },
+            "subject_type": "user",
+            "subject_conditions": {
+                "roles": { "$in": ["test_role"] }
+            },
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
         }
     ]
 }

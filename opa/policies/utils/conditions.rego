@@ -59,15 +59,39 @@ or_cond_matches(cond, obj) := true if {
 # Проверка одного условия по полю
 operator_match(cond, val) := true if {
     # $in
+    cond["$in"]
+    is_array(val)
+    # Если val — список, хотя бы один элемент val должен быть в cond["$in"]
+    some v in val
+    some item in cond["$in"]
+    v == item
+}
+
+operator_match(cond, val) := true if {
+    # $in
+    cond["$in"]
+    not is_array(val)
+    # Если val — не список, просто проверяем вхождение
     some item in cond["$in"]
     item == val
 }
 
 operator_match(cond, val) := true if {
     # $nin
-    every item in cond["$nin"] {
-        item != val
+    cond["$nin"]
+    is_array(val)
+    # Если val — список, ни один элемент val не должен входить в cond["$nin"]
+    every v in val {
+        not v in cond["$nin"]
     }
+}
+
+operator_match(cond, val) := true if {
+    # $nin
+    cond["$nin"]
+    not is_array(val)
+    # Если val — не список, просто проверяем отсутствие в cond["$nin"]
+    not val in cond["$nin"]
 }
 
 operator_match(cond, val) := true if {

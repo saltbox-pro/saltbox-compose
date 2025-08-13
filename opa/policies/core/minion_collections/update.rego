@@ -36,16 +36,14 @@ can_update_collection if {
     })
     collection_response.status_code == 200
     collection_object := collection_response.body
-    # Проверяем разрешения для каждой роли пользователя
     # Пользователь может читать коллекцию, если у него есть разрешение на чтение в data.permissions
-    some user_role in input.subject.roles
     some permission in data.permissions
-    permission.subject_type == "role"
-    permission.subject_id == user_role
+    permission.subject_type == "user"
     permission.service == input.resource.service_name
     permission.resource == "collections"
     permission.action == "update"
-    conditions.conditions_match(permission.conditions, collection_object)
+    conditions.conditions_match(permission.subject_conditions, input.subject)
+    conditions.conditions_match(permission.object_conditions, collection_object)
 }
 
 is_action_update if {
