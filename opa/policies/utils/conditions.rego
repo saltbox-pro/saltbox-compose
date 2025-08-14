@@ -1,5 +1,17 @@
 package utils.conditions
 
+
+check_user_permissions(permissions, service_name, resource, action, subject, object) := true if {
+    some permission in permissions
+    permission.is_active
+    permission.subject_type == "user"
+    permission.service == service_name
+    permission.resource == resource
+    permission.action == action
+    conditions_match(permission.subject_conditions, subject)
+    conditions_match(permission.object_conditions, object)
+}
+
 # true, если условия не заданы
 conditions_match(conds, obj) := true if {
     not conds

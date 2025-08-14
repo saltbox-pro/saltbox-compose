@@ -1,24 +1,36 @@
 package core.collections.create
 
-import data.core.collections.base
-import data.utils.conditions
+import data.utils
 
 default allow := false
+default is_action_create := false
+default can_create_collections := false
 
-# Allow create for admin users
-allow if base.is_admin
+# List of conditions for allowing collection creation
+allow if is_admin
+allow if is_collections_admin
+allow if can_create_collections
+
+# Variables
+is_admin := utils.base.is_admin
+is_collections_admin := utils.base.is_collections_admin
 
 # Правило для полной проверки разрешений на основе условий из data.permissions
 # (атрибутов объекта в body и атрибутов юзера)
-allow if {
-    base.is_current_resource
+can_create_collections if {
+    is_action_create
+    utils.conditions.check_user_permissions(
+        data.permissions,
+        input.resource.service_name,
+        input.resource.path[0],
+        input.action.name,
+        input.subject,
+        input.resource.body
+    )
+}
+
+is_action_create if {
+    utils.base.is_collections_resource
     input.action.name == "create"
-    some permission in data.permissions
-    permission.subject_type == "user"
-    permission.service == input.resource.service_name
-    permission.resource == input.resource.path[0]
-    permission.action == input.action.name
-    # Проверяем условия разрешения
-    conditions.conditions_match(permission.subject_conditions, input.subject)
-    conditions.conditions_match(permission.object_conditions, input.resource.body)
+    count(input.resource.path) == 1
 }

@@ -1,46 +1,56 @@
 package core.collections.read
 
-import data.core.collections.base
-import data.utils.conditions
+import data.utils
 
 default allow := false
 default can_read_collection := false
 default is_action_read := false
 default is_owner := false
 
-allow if base.is_admin
+# List of conditions for allowing collection reading
+allow if is_admin
+allow if is_collections_admin
 allow if can_read_collection
 allow if is_owner
 
-# Получение коллекции по slug
-# ============================================================
-# Правило для полной проверки разрешений на основе условий из data.permissions и атрибутов объекта
+# Variables
+is_admin := utils.base.is_admin
+is_collections_admin := utils.base.is_collections_admin
+
 can_read_collection if {
     is_action_read
-    some permission in data.permissions
-    permission.service == input.resource.service_name
-    permission.resource == input.resource.path[0]
-    permission.action == input.action.name
-    # Проверяем условия разрешения
-    conditions.conditions_match(permission.object_conditions, input.resource.object)
-    conditions.conditions_match(permission.subject_conditions, input.subject)
+    slug := input.resource.path[1]
+    collection_response := http.send({
+        "method": "GET",
+        "url": sprintf("http://saltbox-core:8000/collections/%s", [slug]),
+    })
+    collection_response.status_code == 200
+    collection_object := collection_response.body
+    # Пользователь может читать коллекцию, если у него есть разрешение на чтение в data.permissions
+    utils.conditions.check_user_permissions(
+        data.permissions,
+        input.resource.service_name,
+        input.resource.path[0],
+        input.action.name,
+        input.subject,
+        collection_object
+    )
 }
 
-# Variables
-
 is_action_read if {
-    base.is_current_resource
+    utils.base.is_collections_resource
     input.action.name == "read"
     count(input.resource.path) == 2
 }
 
 is_owner if {
     is_action_read
-    input.resource.object.owner_id == input.subject.sub
-    input.resource.path[1] == input.resource.object.slug
-}
-
-is_default_path if {
-    is_action_read
-    input.resource.path[1] == "default"
+    slug := input.resource.path[1]
+    collection_response := http.send({
+        "method": "GET",
+        "url": sprintf("http://saltbox-core:8000/collections/%s", [slug]),
+    })
+    collection_response.status_code == 200
+    collection_object := collection_response.body
+    collection_object.owner_id == input.subject.sub
 }

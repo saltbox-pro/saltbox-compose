@@ -1,15 +1,30 @@
 package core.collections.delete
 
-import data.core.collections.base
-import data.utils.conditions
+import data.utils
 
 default allow := false
 default is_owner := false
 default can_delete_collection := false
+default is_root_collection := false
 
-allow if base.is_admin
-allow if is_owner
+# List of conditions for allowing deletion
+allow if {
+    is_admin
+    not is_root_collection
+}
+allow if {
+    is_collections_admin
+    not is_root_collection
+}
+allow if {
+    is_owner
+    not is_root_collection
+}
 allow if can_delete_collection
+
+# Variables
+is_admin := utils.base.is_admin
+is_collections_admin := utils.base.is_collections_admin
 
 is_owner if {
     is_action_delete
@@ -25,6 +40,7 @@ is_owner if {
 
 can_delete_collection if {
     is_action_delete
+    not is_root_collection
     slug := input.resource.path[1]
     collection_response := http.send({
         "method": "GET",
@@ -33,17 +49,23 @@ can_delete_collection if {
     collection_response.status_code == 200
     collection_object := collection_response.body
     # Пользователь может читать коллекцию, если у него есть разрешение на чтение в data.permissions
-    some permission in data.permissions
-    permission.subject_type == "user"
-    permission.service == input.resource.service_name
-    permission.resource == "collections"
-    permission.action == "delete"
-    conditions.conditions_match(permission.subject_conditions, input.subject)
-    conditions.conditions_match(permission.object_conditions, collection_object)
+    utils.conditions.check_user_permissions(
+        data.permissions,
+        input.resource.service_name,
+        input.resource.path[0],
+        "read",
+        input.subject,
+        collection_object
+    )
 }
 
 is_action_delete if {
-    base.is_current_resource
+    utils.base.is_collections_resource
     input.action.name == "delete"
     count(input.resource.path) == 2
+}
+
+is_root_collection if {
+    utils.base.is_collections_resource
+    input.resource.path[1] == "root"
 }
