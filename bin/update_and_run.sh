@@ -208,11 +208,11 @@ if [ $login_flag = 1 ]; then
   echo_run as_root docker login "$registry"
 fi
 
-if [ $image_pull_flag = 1 ]; then
-  retry $image_pull_retries echo_run as_root docker compose pull --ignore-buildable
-fi
-
 set_extra_env_files
+
+if [ $image_pull_flag = 1 ]; then
+  retry $image_pull_retries echo_run as_root docker compose "${compose_args[@]}" pull --ignore-buildable
+fi
 
 echo_run as_root docker compose "${compose_args[@]}" build
 
