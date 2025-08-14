@@ -12,10 +12,14 @@ default query := null
 allow if base.is_admin
 
 allow if {
+    not base.is_admin
     is_action_list
     query
 }
 
+query := null if {
+    base.is_admin
+}
 query := {
     "$or": array.concat(
         [cond |
@@ -30,6 +34,8 @@ query := {
         ],
         [{"owner_id": input.subject.sub}]
     )
+} if {
+    not base.is_admin
 }
 
 # Variables
