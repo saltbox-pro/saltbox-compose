@@ -12,6 +12,7 @@ Update images and run a Salt.Box Docker Compose based instance.
 Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
 
   -d|--detach\t\tDetach Docker Compose after start
+  --drop-data\t\tDelete all volumes before start!
   -f|--force\t\tRewrite with no confirmation
   -h|--help\t\tPrint this message
   -l|--login\t\tTry to login to registry
@@ -127,11 +128,13 @@ function set_extra_env_files {
 }
 
 up_args=('--remove-orphans')
+down_args=()
 compose_args=('--env-file=.env')
 detach_flag=0
+drop_data_flag=0
 force_flag=0
-image_pull_flag=1
 git_pull_flag=1
+image_pull_flag=1
 login_flag=0
 no_root_flag=0
 last_stage='up'
@@ -140,6 +143,7 @@ for i in "$@"; do
   # shellcheck disable=SC2059
   case $i in
     -d|--detach) detach_flag=1 ;;
+    --drop-data) drop_data_flag=1 ;;
     -f|--force) force_flag=1 ;;
     -h|--help) printf "$usage_str" && exit 0 ;;
     -l|--login) login_flag=1 ;;
@@ -218,8 +222,22 @@ echo_run as_root docker compose "${compose_args[@]}" build
 
 if [ $last_stage = 'build' ]; then exit 0; fi
 
+if [ $drop_data_flag = 1 ]; then
+  if [ $force_flag = 1 ]; then
+    down_args+=('--volumes')
+  else
+    read -p "Delete volumes? IT MEANS SYSTEM DATA LOSS (y/n): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      down_args+=('--volumes')
+    else
+      warn "Skipping data deletion"
+    fi
+  fi
+fi
 
-echo_run as_root docker compose "${compose_args[@]}" down
+echo_run as_root docker compose "${compose_args[@]}" down "${down_args[@]}"
+
 
 # shellcheck source=/dev/null
 admin_username=$(source "$env_file" && echo "$SALTBOX_ADMIN_USERNAME")
