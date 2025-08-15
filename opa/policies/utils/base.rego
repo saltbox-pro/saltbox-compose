@@ -9,6 +9,9 @@ default is_collections_resource := false
 default is_tasks_admin := false
 default is_tasks_resource := false
 
+default is_jobs_admin := false
+default is_jobs_resource := false
+
 # Variables
 is_admin if {
 	some role in input.subject.roles
@@ -33,4 +36,14 @@ is_tasks_admin if {
 is_tasks_resource if {
     input.resource.service_name == "core"
     input.resource.path[0] == "tasks"
+}
+
+is_jobs_admin if {
+	some role in input.subject.roles
+	role == "jobs_admin"
+}
+
+is_jobs_resource if {
+    input.resource.service_name == "core"
+    input.resource.path[0] == "jobs"
 }

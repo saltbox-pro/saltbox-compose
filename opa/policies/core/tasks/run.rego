@@ -11,6 +11,7 @@ default is_owner := false
 allow if is_admin
 allow if is_tasks_admin
 allow if can_run_task
+allow if is_owner
 
 # Variables
 is_admin := utils.base.is_admin
@@ -39,6 +40,7 @@ is_action_run if {
     utils.base.is_tasks_resource
     input.action.name == "run"
     count(input.resource.path) == 3
+    input.resource.path[2] in ["run", "stop", "restart_failed", "restart_failed_on_minion"]
 }
 
 is_owner if {

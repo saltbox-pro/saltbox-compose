@@ -36,4 +36,8 @@ fi
 _saltbox_core_password=$(cat /run/secrets/keycloak_client_saltbox_core_password)
 _sb_user_password=$(cat /run/secrets/saltbox_user_password)
 _sb_admin_password=$(cat /run/secrets/saltbox_admin_password)
+_admin_role="saltbox_admin"
 _collections_admin_role="collections_admin"
+_tasks_admin_role="tasks_admin"
+_jobs_admin_role="jobs_admin"
+_test_common_role="test_common"

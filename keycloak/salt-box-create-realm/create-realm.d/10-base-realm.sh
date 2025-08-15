@@ -25,9 +25,33 @@ echo "Client with id '${KEYCLOAK_CLIENT_ID}' created"
 
 kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
   -r "${KEYCLOAK_REALM}" \
+  -s name="${_admin_role}" \
+  -s "description=Saltbox admin role"
+echo "Saltbox admin role created"
+
+kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
+  -r "${KEYCLOAK_REALM}" \
   -s name="${_collections_admin_role}" \
   -s "description=Collections admin role"
-echo "Admin role created"
+echo "Collections admin role created"
+
+kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
+  -r "${KEYCLOAK_REALM}" \
+  -s name="${_tasks_admin_role}" \
+  -s "description=Tasks admin role"
+echo "Tasks admin role created"
+
+kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
+  -r "${KEYCLOAK_REALM}" \
+  -s name="${_jobs_admin_role}" \
+  -s "description=Jobs admin role"
+echo "Jobs admin role created"
+
+kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
+  -r "${KEYCLOAK_REALM}" \
+  -s name="${_test_common_role}" \
+  -s "description=Test common role"
+echo "Test common role created"
 
 echo "Realm ${KEYCLOAK_REALM} has been created"
 
@@ -40,6 +64,11 @@ else
     "${KEYCLOAK_USER_FIRSTNAME}" \
     "${KEYCLOAK_USER_LASTNAME}" \
     "${_sb_user_password}"
+
+  kcadm.sh add-roles -r "${KEYCLOAK_REALM}" \
+    --uusername "${KEYCLOAK_USER_NAME}" \
+    --cclientid "${KEYCLOAK_CLIENT}" \
+    --rolename "${_test_common_role}"
 fi
 
 if [ -z "$KEYCLOAK_ADMIN_NAME" ]; then
@@ -55,5 +84,5 @@ else
   kcadm.sh add-roles -r "${KEYCLOAK_REALM}" \
     --uusername "${KEYCLOAK_ADMIN_NAME}" \
     --cclientid "${KEYCLOAK_CLIENT}" \
-    --rolename "${_collections_admin_role}"
+    --rolename "${_admin_role}"
 fi

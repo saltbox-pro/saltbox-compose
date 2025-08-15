@@ -3,6 +3,8 @@ package core.collections.list
 import data.utils
 
 default allow := false
+default is_admin := false
+default is_collections_admin := false
 default is_action_list := false
 default query := null
 

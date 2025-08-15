@@ -124,6 +124,21 @@
             "is_active": true,
             "service": "core",
             "resource": "jobs",
+            "action": "read",
+            "object_conditions": {
+                "fun": { "$in": ["test.ping"] }
+            },
+            "subject_type": "user",
+            "subject_conditions": {
+                "roles": { "$in": ["test_role"] }
+            },
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
+        },
+        {
+            "is_active": true,
+            "service": "core",
+            "resource": "jobs",
             "action": "create",
             "object_conditions": {
                 "fun": { "$in": ["test.ping"] }

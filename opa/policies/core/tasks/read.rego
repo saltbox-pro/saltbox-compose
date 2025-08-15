@@ -43,6 +43,13 @@ is_action_read if {
     count(input.resource.path) == 2
 }
 
+is_action_read if {
+    utils.base.is_tasks_resource
+    input.action.name == "read"
+    count(input.resource.path) == 3
+    input.resource.path[2] in ["jobs", "returns"]
+}
+
 is_owner if {
     is_action_read
     task_id := input.resource.path[1]
