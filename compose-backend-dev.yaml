@@ -50,6 +50,9 @@ services:
   saltbox-core-faststream-redis:
     <<: *core
 
+  saltbox-core-faststream-rabbit:
+    <<: *core
+
   saltbox-core-tasks-watcher:
     <<: *core
 

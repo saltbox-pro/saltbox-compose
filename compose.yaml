@@ -353,6 +353,15 @@ services:
         condition: service_started
         restart: false
 
+  saltbox-core-faststream-rabbit:
+    <<: *core
+    command: 'shell saltbox-faststream-rabbit'
+    expose: []
+    depends_on:
+      redis-salt:
+        condition: service_started
+        restart: false
+
   saltbox-core-tasks-watcher:
     <<: *core
     command: 'shell saltbox-tasks-watcher'
