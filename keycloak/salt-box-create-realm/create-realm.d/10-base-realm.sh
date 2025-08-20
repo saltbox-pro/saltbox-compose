@@ -119,6 +119,12 @@ else
     "${KEYCLOAK_ADMIN_NAME}" \
     "${KEYCLOAK_CLIENT}" \
     "${_masters_admin_role}"
+  
+  kc_assign_client_role_to_user \
+    "${KEYCLOAK_REALM}" \
+    "${KEYCLOAK_ADMIN_NAME}" \
+    "${KEYCLOAK_CLIENT}" \
+    "${_scheduler_admin_role}"
 
   kc_assign_client_role_to_user \
     "${KEYCLOAK_REALM}" \
