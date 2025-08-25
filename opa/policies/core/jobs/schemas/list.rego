@@ -1,14 +1,12 @@
-package core.jobs.list
+package core.jobs.schemas.list
 
 import data.utils
 
 default allow := false
 default is_admin := false
 default is_jobs_admin := false
-default is_action_list := false
-default query := null
 
-# List of conditions for allowing collection listing with query
+# List of conditions for allowing job schemas listing with query
 allow if is_admin
 allow if is_jobs_admin
 allow if {
@@ -22,8 +20,6 @@ allow if {
 is_admin := utils.base.is_admin
 is_jobs_admin := utils.base.is_jobs_admin
 
-# Query не работает, т.к. список job получаем из redis
-# Нужно транслировать mongo query и pattern matching
 query := null if {
     is_admin
 }
@@ -59,15 +55,8 @@ query := conds[0] if {
     count(conds) == 1
 }
 
-# Variables
 is_action_list if {
-    utils.base.is_jobs_resource
-    input.action.name == "list"
-    count(input.resource.path) == 2
-    input.resource.path[1] == "cursored_list"
-}
-is_action_list if {
-    utils.base.is_jobs_resource
+    utils.base.is_jobs_schemas_resource
     input.action.name == "list"
     count(input.resource.path) == 1
 }

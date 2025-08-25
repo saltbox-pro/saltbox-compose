@@ -1,44 +1,40 @@
-package core.jobs.list
+package core.tasks.templates.list
 
 import data.utils
 
 default allow := false
 default is_admin := false
-default is_jobs_admin := false
-default is_action_list := false
-default query := null
+default is_tasks_admin := false
 
-# List of conditions for allowing collection listing with query
+# List of conditions for allowing task templates listing with query
 allow if is_admin
-allow if is_jobs_admin
+allow if is_tasks_admin
 allow if {
     not is_admin
-    not is_jobs_admin
+    not is_tasks_admin
     is_action_list
     query
 }
 
 # Variables
 is_admin := utils.base.is_admin
-is_jobs_admin := utils.base.is_jobs_admin
+is_tasks_admin := utils.base.is_tasks_admin
 
-# Query не работает, т.к. список job получаем из redis
-# Нужно транслировать mongo query и pattern matching
 query := null if {
     is_admin
 }
 query := null if {
     not is_admin
-    is_jobs_admin
+    is_tasks_admin
 }
 query := {"$or": conds} if {
     not is_admin
-    not is_jobs_admin
+    not is_tasks_admin
     # get_list_of_conditions(permissions, service_name, resource, action, subject)
     conds := utils.conditions.get_list_of_conditions(
         data.permissions,
         input.resource.service_name,
-        input.resource.path[0],
+        "tasks/template",
         "read",
         input.subject
     )
@@ -47,27 +43,20 @@ query := {"$or": conds} if {
 
 query := conds[0] if {
     not is_admin
-    not is_jobs_admin
+    not is_tasks_admin
     # get_list_of_conditions(permissions, service_name, resource, action, subject)
     conds := utils.conditions.get_list_of_conditions(
         data.permissions,
         input.resource.service_name,
-        input.resource.path[0],
+        "tasks/template",
         "read",
         input.subject
     )
     count(conds) == 1
 }
 
-# Variables
 is_action_list if {
-    utils.base.is_jobs_resource
+    utils.base.is_tasks_templates_resource
     input.action.name == "list"
     count(input.resource.path) == 2
-    input.resource.path[1] == "cursored_list"
-}
-is_action_list if {
-    utils.base.is_jobs_resource
-    input.action.name == "list"
-    count(input.resource.path) == 1
 }

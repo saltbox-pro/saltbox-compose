@@ -10,7 +10,7 @@
             },
             "subject_type": "user",
             "subject_conditions": {
-                "roles": { "$in": ["test_role"] }
+                "roles": { "$in": ["test_common"] }
             },
             "created": "2024-07-28T12:00:00Z",
             "modified": "2024-07-28T12:00:00Z"
@@ -25,7 +25,7 @@
             },
             "subject_type": "user",
             "subject_conditions": {
-                "roles": { "$in": ["test_role1"] }
+                "roles": { "$in": ["test_common1"] }
             },
             "created": "2024-07-28T12:00:00Z",
             "modified": "2024-07-28T12:00:00Z"
@@ -40,7 +40,7 @@
             },
             "subject_type": "user",
             "subject_conditions": {
-                "roles": { "$in": ["test_role"] }
+                "roles": { "$in": ["test_common"] }
             },
             "created": "2024-07-28T12:00:00Z",
             "modified": "2024-07-28T12:00:00Z"
@@ -55,7 +55,7 @@
             },
             "subject_type": "user",
             "subject_conditions": {
-                "roles": { "$in": ["test_role"] }
+                "roles": { "$in": ["test_common"] }
             },
             "created": "2024-07-28T12:00:00Z",
             "modified": "2024-07-28T12:00:00Z"
@@ -70,7 +70,7 @@
             },
             "subject_type": "user",
             "subject_conditions": {
-                "roles": { "$in": ["test_role"] }
+                "roles": { "$in": ["test_common"] }
             },
             "created": "2024-07-28T12:00:00Z",
             "modified": "2024-07-28T12:00:00Z"
@@ -85,7 +85,7 @@
             },
             "subject_type": "user",
             "subject_conditions": {
-                "roles": { "$in": ["test_role"] }
+                "roles": { "$in": ["test_common"] }
             },
             "created": "2024-07-28T12:00:00Z",
             "modified": "2024-07-28T12:00:00Z"
@@ -100,7 +100,7 @@
             },
             "subject_type": "user",
             "subject_conditions": {
-                "roles": { "$in": ["test_role"] }
+                "roles": { "$in": ["test_common"] }
             },
             "created": "2024-07-28T12:00:00Z",
             "modified": "2024-07-28T12:00:00Z"
@@ -115,7 +115,7 @@
             },
             "subject_type": "user",
             "subject_conditions": {
-                "roles": { "$in": ["test_role"] }
+                "roles": { "$in": ["test_common"] }
             },
             "created": "2024-07-28T12:00:00Z",
             "modified": "2024-07-28T12:00:00Z"
@@ -130,7 +130,7 @@
             },
             "subject_type": "user",
             "subject_conditions": {
-                "roles": { "$in": ["test_role"] }
+                "roles": { "$in": ["test_common"] }
             },
             "created": "2024-07-28T12:00:00Z",
             "modified": "2024-07-28T12:00:00Z"
@@ -151,14 +151,14 @@
         {
             "is_active": true,
             "service": "core",
-            "resource": "json_schemas",
+            "resource": "json-schemas",
             "action": "read",
             "object_conditions": {
                 "name": { "$in": ["test.ping"] }
             },
             "subject_type": "user",
             "subject_conditions": {
-                "roles": { "$in": ["test_role"] }
+                "roles": { "$in": ["test_common"] }
             },
             "created": "2024-07-28T12:00:00Z",
             "modified": "2024-07-28T12:00:00Z"
