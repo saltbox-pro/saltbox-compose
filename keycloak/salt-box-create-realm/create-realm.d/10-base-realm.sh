@@ -49,6 +49,12 @@ echo "Jobs admin role created"
 
 kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
   -r "${KEYCLOAK_REALM}" \
+  -s name="${_masters_admin_role}" \
+  -s "description=Masters admin role"
+echo "Masters admin role created"
+
+kcadm.sh create "clients/${KEYCLOAK_CLIENT_ID}/roles" \
+  -r "${KEYCLOAK_REALM}" \
   -s name="${_test_common_role}" \
   -s "description=Test common role"
 echo "Test common role created"
