@@ -19,7 +19,12 @@ is_admin if {
 }
 
 # ==========================================
-# Collections
+# Collections and Minions
+# POST /minions list
+# POST /minions/export export
+# GET /minions/gather gather
+# GET /minions/{mid} read
+# DELETE /minions/{mid} delete
 # ==========================================
 is_collections_admin if {
     some role in input.subject.roles
@@ -29,6 +34,11 @@ is_collections_admin if {
 is_collections_resource if {
     input.resource.service_name == "core"
     input.resource.path[0] == "collections"
+}
+
+is_minions_resource if {
+    input.resource.service_name == "core"
+    input.resource.path[0] == "minions"
 }
 
 # ==========================================
@@ -121,16 +131,19 @@ is_git_repos_resource if {
 }
 
 # ==========================================
-# Minions
-# POST /minions list
-# POST /minions/export export
-# GET /minions/gather
-# GET /minions/{mid} read
-# DELETE /minions/{mid} delete
-# ==========================================
-
-# ==========================================
 # Filters
 # GET /filters/schema
 # POST /filters/unique-grain-values
 # ==========================================
+is_filters_schema_route if {
+    input.resource.service_name == "core"
+    input.resource.path[0] == "filters"
+    input.resource.path[1] == "schema"
+}
+
+is_unique_grain_values_route if {
+    input.resource.service_name == "core"
+    count(input.resource.path) == 2
+    input.resource.path[0] == "filters"
+    input.resource.path[1] == "unique-grain-values"
+}
