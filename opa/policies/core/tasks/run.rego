@@ -3,6 +3,8 @@ package core.tasks.run
 import data.utils
 
 default allow := false
+default is_admin := false
+default is_tasks_admin := false
 default can_run_task := false
 default is_action_run := false
 default is_owner := false
@@ -17,20 +19,25 @@ allow if is_owner
 is_admin := utils.base.is_admin
 is_tasks_admin := utils.base.is_tasks_admin
 
-can_run_task if {
+task_from_api := task if {
     is_action_run
     task_id := input.resource.path[1]
-    task_response := http.send({
+    resp := http.send({
         "method": "GET",
         "url": sprintf("http://saltbox-core:8000/tasks/%s", [task_id]),
     })
-    task_response.status_code == 200
-    task_object := task_response.body
+    resp.status_code == 200
+    task := resp.body
+}
+
+can_run_task if {
+    task_object := task_from_api
+    # check_user_permissions(permissions, service_name, resource, action, subject, object) -> bool
     utils.conditions.check_user_permissions(
         data.permissions,
         input.resource.service_name,
-        input.resource.path[0],
-        input.action.name,
+        "tasks",
+        "run",
         input.subject,
         task_object
     )
@@ -44,13 +51,6 @@ is_action_run if {
 }
 
 is_owner if {
-    is_action_run
-    task_id := input.resource.path[1]
-    task_response := http.send({
-        "method": "GET",
-        "url": sprintf("http://saltbox-core:8000/tasks/%s", [task_id]),
-    })
-    task_response.status_code == 200
-    task_object := task_response.body
+    task_object := task_from_api
     task_object.user.sub == input.subject.sub
 }

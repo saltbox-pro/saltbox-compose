@@ -17,16 +17,20 @@ allow if is_owner
 is_admin := utils.base.is_admin
 is_collections_admin := utils.base.is_collections_admin
 
-can_read_collection if {
+collection := col if {
     is_action_read
     slug := input.resource.path[1]
-    collection_response := http.send({
+    resp := http.send({
         "method": "GET",
         "url": sprintf("http://saltbox-core:8000/collections/%s", [slug]),
     })
-    collection_response.status_code == 200
-    collection_object := collection_response.body
-    # Пользователь может читать коллекцию, если у него есть разрешение на чтение в data.permissions
+    resp.status_code == 200
+    col := resp.body
+}
+
+can_read_collection if {
+    collection_object := collection
+    # check_user_permissions(permissions, service_name, resource, action, subject, object) -> bool
     utils.conditions.check_user_permissions(
         data.permissions,
         input.resource.service_name,
@@ -44,13 +48,6 @@ is_action_read if {
 }
 
 is_owner if {
-    is_action_read
-    slug := input.resource.path[1]
-    collection_response := http.send({
-        "method": "GET",
-        "url": sprintf("http://saltbox-core:8000/collections/%s", [slug]),
-    })
-    collection_response.status_code == 200
-    collection_object := collection_response.body
+    collection_object := collection
     collection_object.owner_id == input.subject.sub
 }
