@@ -69,7 +69,18 @@ is_jobs_schemas_resource if {
 }
 
 # ==========================================
-# Masters
+# Masters and Pillars
+# GET /masters list
+# GET /masters/{master_id} read
+# POST /masters/{mid}/accept accept
+# POST /masters/{mid}/reject reject
+# GET /pillars list
+# POST /pillars create
+# PUT /pillars update
+# DELETE /pillars delete
+# POST /pillars/parse_csv export
+# POST /pillars/validate validate
+# POST /pillars/import import
 # ==========================================
 is_masters_admin if {
 	some role in input.subject.roles
@@ -80,3 +91,46 @@ is_masters_resource if {
     input.resource.service_name == "core"
     input.resource.path[0] == "masters"
 }
+
+# ==========================================
+# Settings
+# GET /settings/sls-repos list
+# POST /settings/sls-repos create
+# POST /settings/sls-repos/sync_all sync_all
+# GET /settings/sls-repos/sync-status/{task_id} sync_status
+# GET /settings/sls-repos/{sid} read
+# PUT /settings/sls-repos/{sid} update
+# DELETE /settings/sls-repos/{sid} delete
+# POST /settings/sls-repos/{sid}/sync sync
+# POST /settings/sls-repos/{sid}/activate activate
+# POST /settings/sls-repos/{sid}/deactivate deactivate
+# ==========================================
+is_settings_admin if {
+	some role in input.subject.roles
+	role == "settings_admin"
+}
+
+is_settings_resource if {
+    input.resource.service_name == "core"
+    input.resource.path[0] == "settings"
+}
+
+is_git_repos_resource if {
+    is_settings_resource
+    input.resource.path[1] == "sls-repos"
+}
+
+# ==========================================
+# Minions
+# POST /minions list
+# POST /minions/export export
+# GET /minions/gather
+# GET /minions/{mid} read
+# DELETE /minions/{mid} delete
+# ==========================================
+
+# ==========================================
+# Filters
+# GET /filters/schema
+# POST /filters/unique-grain-values
+# ==========================================
