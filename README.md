@@ -13,6 +13,20 @@ Look for user documentation on [saltbox.pro](https://saltbox.pro).
 - Docker Compose >= 2.20.2
 - Python >= 3.9 _(for `./bin/make_secrets.py`)_
 
+## Helper scripts
+
+Useful scripts are collected in [`./bin/`](./bin/) directory. They supposed to
+be ran from the root of repo by relative path like `./bin/sb-compose.sh`.
+
+- `export_images.sh` — dump current images to disk to use on an offline host.
+- `git_pull_dev_repos.py` — only for developers — update sources Git repositories.
+- `make_secrets.py` — create required by system passwords.
+- `sb-compose.sh` — thin wrapper over the `docker compose` command is the
+preferred way to manipulate the system.
+- `sb-exec.sh` — shortcuts for some common commands.
+- `update_and_run.sh` — the main startup script.
+
+
 ## Prepare
 
 Initially secrets must be created in the `./secrets/` subdirectory. It may be

@@ -3,6 +3,9 @@ set -e
 
 declare -r override_env='override.env'
 declare -r env_file='.env'
+bin_dir="$(dirname "$(realpath --relative-to "$(pwd)" "$0")")"
+declare -r bin_dir
+declare -r compose_cmd="${bin_dir}/sb-compose.sh"
 declare -r admin_password_file='secrets/saltbox_admin_password'
 declare -ir success_msg_sleep=1
 declare -ir image_pull_retries=3
@@ -119,17 +122,8 @@ function retry() {
   done
 }
 
-function set_extra_env_files {
-  # shellcheck source=/dev/null
-  IFS=',' read -ra env_files <<< "$(source "$env_file" && echo "$_UPDATE_AND_RUN_EXTRA_ENV_FILES")"
-  for env_path in "${env_files[@]}"; do
-    compose_args+=("--env-file=$env_path")
-  done
-}
-
 up_args=('--remove-orphans')
 down_args=()
-compose_args=('--env-file=.env')
 detach_flag=0
 drop_data_flag=0
 force_flag=0
@@ -212,13 +206,12 @@ if [ $login_flag = 1 ]; then
   echo_run as_root docker login "$registry"
 fi
 
-set_extra_env_files
 
 if [ $image_pull_flag = 1 ]; then
-  retry $image_pull_retries echo_run as_root docker compose "${compose_args[@]}" pull --ignore-buildable
+  retry $image_pull_retries echo_run as_root "$compose_cmd" pull --ignore-buildable
 fi
 
-echo_run as_root docker compose "${compose_args[@]}" build
+echo_run as_root "$compose_cmd" build
 
 if [ $last_stage = 'build' ]; then exit 0; fi
 
@@ -236,7 +229,7 @@ if [ $drop_data_flag = 1 ]; then
   fi
 fi
 
-echo_run as_root docker compose "${compose_args[@]}" down "${down_args[@]}"
+echo_run as_root "$compose_cmd" down "${down_args[@]}"
 
 
 # shellcheck source=/dev/null
@@ -248,7 +241,7 @@ if [ $detach_flag = 0 ]; then
   sleep $success_msg_sleep
 fi
 
-echo_run as_root docker compose "${compose_args[@]}" up "${up_args[@]}"
+echo_run as_root "$compose_cmd" up "${up_args[@]}"
 
 if [ $detach_flag = 1 ]; then
   # shellcheck disable=SC2059
