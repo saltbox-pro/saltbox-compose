@@ -8,7 +8,11 @@ default is_jobs_admin := false
 
 # List of conditions for allowing job schemas listing with query
 allow if is_admin
-allow if is_jobs_admin
+allow if {
+    is_jobs_admin
+    is_action_list
+    query
+}
 allow if {
     not is_admin
     not is_jobs_admin
@@ -23,13 +27,13 @@ is_jobs_admin := utils.base.is_jobs_admin
 query := null if {
     is_admin
 }
-query := null if {
-    not is_admin
-    is_jobs_admin
-}
+# query := null if {
+#     not is_admin
+#     is_jobs_admin
+# }
 query := {"$or": conds} if {
     not is_admin
-    not is_jobs_admin
+    # not is_jobs_admin
     # get_list_of_conditions(permissions, service_name, resource, action, subject)
     conds := utils.conditions.get_list_of_conditions(
         data.permissions,
@@ -43,7 +47,7 @@ query := {"$or": conds} if {
 
 query := conds[0] if {
     not is_admin
-    not is_jobs_admin
+    # not is_jobs_admin
     # get_list_of_conditions(permissions, service_name, resource, action, subject)
     conds := utils.conditions.get_list_of_conditions(
         data.permissions,

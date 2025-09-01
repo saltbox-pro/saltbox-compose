@@ -12,7 +12,6 @@ allow if is_tasks_admin
 allow if {
     not is_admin
     not is_tasks_admin
-    is_action_list
     query
 }
 
@@ -28,6 +27,7 @@ query := null if {
     is_tasks_admin
 }
 query := {"$or": conds} if {
+    is_action_list
     not is_admin
     not is_tasks_admin
     # get_list_of_conditions(permissions, service_name, resource, action, subject)
@@ -42,6 +42,7 @@ query := {"$or": conds} if {
 }
 
 query := conds[0] if {
+    is_action_list
     not is_admin
     not is_tasks_admin
     # get_list_of_conditions(permissions, service_name, resource, action, subject)

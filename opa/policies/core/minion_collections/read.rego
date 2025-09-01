@@ -6,6 +6,7 @@ default allow := false
 default can_read_collection := false
 default is_action_read := false
 default is_owner := false
+default can_create_tasks := false
 
 # List of conditions for allowing collection reading
 allow if is_admin
