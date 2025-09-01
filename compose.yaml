@@ -398,12 +398,6 @@ services:
         condition: service_healthy
         restart: false
 
-  # saltbox-frontend:
-  #   <<: *default
-  #   image: '${IMAGE_REGISTRY}/saltbox-frontend:${FRONTEND_IMAGE_TAG}'
-  #   expose:
-  #     - ${FRONTEND_HTTP_PORT}
-
   saltbox-frontend-root-config:
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-frontend-root-config:${FRONTEND_IMAGE_TAG}'
@@ -413,6 +407,12 @@ services:
   saltbox-frontend-base:
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-frontend-base:${FRONTEND_IMAGE_TAG}'
+    expose:
+      - ${FRONTEND_HTTP_PORT}
+
+  saltbox-frontend-gateway:
+    <<: *default
+    image: '${IMAGE_REGISTRY}/saltbox-frontend-gateway:${FRONTEND_IMAGE_TAG}'
     expose:
       - ${FRONTEND_HTTP_PORT}
 
