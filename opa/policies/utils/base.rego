@@ -12,12 +12,24 @@ default is_tasks_resource := false
 default is_jobs_admin := false
 default is_jobs_resource := false
 
+default is_masters_admin := false
+default is_masters_resource := false
+
+default is_settings_admin := false
+default is_settings_resource := false
+default is_git_repos_resource := false
+
+default is_scheduler_admin := false
+default is_scheduler_resource := false
+
 # Variables
 is_admin if {
 	some role in input.subject.roles
 	role == "saltbox_admin"
 }
 
+# ==========================================
+# Core
 # ==========================================
 # Collections and Minions
 # POST /minions list
@@ -146,4 +158,12 @@ is_unique_grain_values_route if {
     count(input.resource.path) == 2
     input.resource.path[0] == "filters"
     input.resource.path[1] == "unique-grain-values"
+}
+
+# ==========================================
+# Scheduler
+# ==========================================
+is_scheduler_admin if {
+    some role in input.subject.roles
+    role == "scheduler_admin"
 }
