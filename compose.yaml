@@ -364,6 +364,9 @@ services:
       redis-salt:
         condition: service_started
         restart: false
+      rabbitmq:
+        condition: service_healthy
+        restart: false
 
   saltbox-core-tasks-watcher:
     <<: *core
@@ -372,6 +375,9 @@ services:
     depends_on:
       redis-salt:
         condition: service_started
+        restart: false
+      rabbitmq:
+        condition: service_healthy
         restart: false
 
   saltbox-core-taskiq-worker:
