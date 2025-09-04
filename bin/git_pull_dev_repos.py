@@ -16,27 +16,13 @@ import yaml  # type: ignore[import-untyped]
 
 # Int for limit, None for no limit
 PARALLEL_PULLS: int | None = None
-ENV_FILE = '.env'
 LINE = '_' * 40
-EXTRA_ENV_FILES_VAR='_UPDATE_AND_RUN_EXTRA_ENV_FILES'
-
-
-def get_update_and_run_env_args() -> list[str]:
-    result = ['--env-file=.env']
-    var_cmd = f"source './{ENV_FILE}' && echo $_UPDATE_AND_RUN_EXTRA_ENV_FILES"
-    cmd_res = subprocess.run(var_cmd, shell=True, capture_output=True, text=True, check=True)
-    env_files_var = cmd_res.stdout.strip()
-    if not env_files_var:
-        return result
-    for val in env_files_var.split(','):
-        result.append(f'--env-file={val}')
-    return result
-
 
 
 def get_conf() -> dict:
-    env_args = get_update_and_run_env_args()
-    cmd = ['docker', 'compose',] + env_args + ['config']
+    bin_dir = Path(__file__).resolve().parent
+    bin_path = bin_dir / 'sb-compose.sh'
+    cmd = [str(bin_path), 'config']
     try:
         result = subprocess.run(cmd, capture_output=True, check=True)
     except subprocess.CalledProcessError as err:
