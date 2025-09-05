@@ -7,7 +7,11 @@ trap '[ $? -eq 0 ] && exit 0 || echo "ERROR on $0 line ${LINENO}"' EXIT
 _saltbox_core_password=$(cat /run/secrets/keycloak_client_saltbox_core_password)
 _sb_user_password=$(cat /run/secrets/saltbox_user_password)
 _sb_admin_password=$(cat /run/secrets/saltbox_admin_password)
-_grafana_password=$(cat /run/secrets/keycloak_client_grafana_password)
+
+_path_to_grafana_secret="/run/secrets/keycloak_client_grafana_password"
+if [ -f "${_path_to_grafana_secret}" ]; then
+    _grafana_password=$(cat "${_path_to_grafana_secret}")
+fi
 
 _admin_role="saltbox_admin"
 _collections_admin_role="collections_admin"
@@ -24,9 +28,9 @@ declare -A user_client_expected_roles=(
         ${_collections_admin_role} \
         ${_tasks_admin_role} \
         ${_jobs_admin_role} \
-        ${_test_common_role}"
-    ["${KEYCLOAK_ADMIN_NAME}:${KEYCLOAK_CLIENT_GRAFANA}"]="\
-        ${_grafana_admin_role}"
+        ${_test_common_role} \
+        ${_masters_admin_role} \
+        ${_scheduler_admin_role}"
     ["${KEYCLOAK_USER_NAME}:${KEYCLOAK_CLIENT}"]=""
 )
 

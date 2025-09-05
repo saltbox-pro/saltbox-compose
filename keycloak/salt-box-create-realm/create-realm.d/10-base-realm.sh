@@ -25,14 +25,6 @@ saltbox_client_uuid=$(kc_create_client \
   "Collections admin role" \
   | tee /dev/stderr | grep -oP "(?<=UUID ')[^']+")
 
-grafana_client_uuid=$(kc_create_client \
-  "${KEYCLOAK_CLIENT_GRAFANA}" \
-  "${_grafana_password}" \
-  "${_grafana_admin_role}" \
-  "./grafana_client.json" \
-  "Grafana admin role" \
-  | tee /dev/stderr | grep -oP "(?<=UUID ')[^']+")
-
 kc_create_role \
   "${saltbox_client_uuid}" \
   "${_admin_role}" \
@@ -126,11 +118,24 @@ else
     "${KEYCLOAK_CLIENT}" \
     "${_scheduler_admin_role}"
 
-  kc_assign_client_role_to_user \
-    "${KEYCLOAK_REALM}" \
-    "${KEYCLOAK_ADMIN_NAME}" \
-    "${KEYCLOAK_CLIENT_GRAFANA}" \
-    "${_grafana_admin_role}"
+  if [ -n "${_grafana_password}" ]; then
+
+      grafana_client_uuid=$(kc_create_client \
+        "${KEYCLOAK_CLIENT_GRAFANA}" \
+        "${_grafana_password}" \
+        "${_grafana_admin_role}" \
+        "./grafana_client.json" \
+        "Grafana admin role" \
+        | tee /dev/stderr | grep -oP "(?<=UUID ')[^']+")
+
+      kc_assign_client_role_to_user \
+          "${KEYCLOAK_REALM}" \
+          "${KEYCLOAK_ADMIN_NAME}" \
+          "${KEYCLOAK_CLIENT_GRAFANA}" \
+          "${_grafana_admin_role}"
+
+       user_client_expected_roles["${KEYCLOAK_ADMIN_NAME}:${KEYCLOAK_CLIENT_GRAFANA}"]="${_grafana_admin_role}"
+  fi
 fi
 
 if kc_all_expected_roles_assigned; then

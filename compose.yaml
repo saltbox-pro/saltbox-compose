@@ -111,7 +111,6 @@ services:
       KEYCLOAK_ADMIN_LASTNAME: '${SALTBOX_ADMIN_LASTNAME}'
       KEYCLOAK_ADMIN_NAME: '${SALTBOX_ADMIN_USERNAME}'
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
-      KEYCLOAK_CLIENT_GRAFANA: '${KEYCLOAK_CLIENT_GRAFANA}'
       KEYCLOAK_CLIENT_DIRECT_ACCESS: '${KEYCLOAK_CLIENT_DIRECT_ACCESS:-false}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
@@ -122,7 +121,6 @@ services:
     secrets:
       - keycloak_admin_password
       - keycloak_client_saltbox_core_password
-      - keycloak_client_grafana_password
       - saltbox_admin_password
       - saltbox_user_password
     depends_on:
@@ -477,102 +475,6 @@ services:
       - 'salt_repos:/srv/master/salt/'
       - './sshfs_conf/users.json:/mnt/sshfs_users.json:ro'
 
-  grafana:
-    <<: *default
-    image: grafana/grafana:12.0.2-security-01 #TODO: add to registry
-    environment:
-      GF_SERVER_PROTOCOL: 'http'
-      GF_SERVER_SERVE_FROM_SUB_PATH: true
-      GF_SERVER_DOMAIN: '${WEB_SERVER_OUTER_SOCKET}'
-      GF_SERVER_ROOT_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}/grafana/'
-      GF_AUTH_ANONYMOUS_ENABLED: false
-      GF_AUTH_BASIC_ENABLED: false
-      GF_AUTH_DISABLE_LOGIN_FORM:  true
-      GF_AUTH_GENERIC_OAUTH_ENABLED: true
-      GF_AUTH_GENERIC_OAUTH_AUTO_LOGIN: true
-      GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: true
-      GF_AUTH_GENERIC_OAUTH_ALLOW_ASSIGN_GRAFANA_ADMIN: true
-      GF_AUTH_GENERIC_OAUTH_USE_TOKEN_INFO_ENDPOINT: false
-      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: '${KEYCLOAK_CLIENT_GRAFANA}'
-      GF_AUTH_GENERIC_OAUTH_NAME_ATTRIBUTE_PATH: 'full_name'
-      GF_AUTH_GENERIC_OAUTH_LOGIN_ATTRIBUTE_PATH: 'username'
-      GF_AUTH_GENERIC_OAUTH_EMAIL_ATTRIBUTE_PATH: 'email'
-      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET__FILE: '/run/secrets/keycloak_client_grafana_password'
-      GF_AUTH_GENERIC_OAUTH_SCOPES: 'openid email profile offline_access roles'
-      GF_AUTH_GENERIC_OAUTH_AUTH_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth'
-      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token'
-      GF_AUTH_GENERIC_OAUTH_API_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/userinfo'
-      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(resource_access.grafana.roles, 'grafana_admin') && 'Admin' || 'Viewer'"
-      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: '/etc/grafana/provisioning/dashboards/dashboard.json'
-      GF_LOG_LEVEL: '${BACKEND_LOG_LEVEL}'
-    secrets:
-      - keycloak_client_grafana_password
-    ports:
-      - '3000:3000'
-    volumes:
-      - './grafana/dashboard.json:/etc/grafana/provisioning/dashboards/dashboard.json'
-      - './grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml'
-      - './grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml'
-      - 'grafana_data:/var/lib/grafana'
-    depends_on:
-      grafana-loki:
-        condition: service_healthy
-      promtail:
-        condition: service_healthy
-      prometheus:
-        condition: service_started
-
-
-  grafana-loki:
-    <<: *default
-    image: grafana/loki:3.4.5 #TODO: add to registry
-    environment:
-      TZ: '${GRAFANA_SYSTEM_TIMEZONE}'
-    expose:
-      - '3100'
-    volumes:
-      - './grafana-loki.yaml:/etc/loki/config.yaml'
-      - 'grafana_loki_config:/etc/loki'
-    healthcheck:
-      test: wget --quiet --tries=1 --output-document=- http://localhost:3100/ready | grep -q -w ready || exit 1
-      start_period: 10s
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  promtail:
-    <<: *default
-    image: grafana/promtail:3.4.5 #TODO: add to registry
-    command:
-      - '-config.expand-env=true'
-      - '-config.file=/etc/promtail/config.yaml'
-    expose:
-      - '9080'
-    volumes:
-      - '/var/lib/docker/containers:/var/lib/docker/containers:ro'
-      - '/var/run/docker.sock:/var/run/docker.sock'
-      - './promtail.yaml:/etc/promtail/config.yaml'
-      - 'promtail_data:/etc/promtail'
-    healthcheck:
-          test: ["CMD-SHELL", "bash -c 'printf \"GET / HTTP/1.1\n\n\" > /dev/tcp/127.0.0.1/9080; exit $?;'"]
-          start_period: 10s
-          interval: 10s
-          timeout: 5s
-          retries: 3
-
-  prometheus:
-      <<: *default
-      image: prom/prometheus:v3.5.0 #TODO: add to registry
-      command:
-        - '--web.external-url=${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}/prometheus/'
-        - '--web.route-prefix=/prometheus/'
-        - '--config.file=/etc/prometheus/prometheus.yml'
-      ports:
-        - '9090:9090'
-      volumes:
-        - './prometheus.yml:/etc/prometheus/prometheus.yml'
-        - 'prometheus_data:/data/prometheus'
-
 configs: {}
 
 volumes:
@@ -587,10 +489,6 @@ volumes:
   salt_master_saltbox_var: {}
   salt_repos: {}
   saltbox_core_var: {}
-  grafana_data: {}
-  grafana_loki_config: {}
-  promtail_data: {}
-  prometheus_data: {}
 
 secrets:
   keycloak_admin_password:
@@ -617,5 +515,3 @@ secrets:
     file: secrets/sshfs_user_master_password
   sshfs_user_saltbox_password:
     file: secrets/sshfs_user_saltbox_password
-  keycloak_client_grafana_password:
-    file: secrets/keycloak_client_grafana_password
