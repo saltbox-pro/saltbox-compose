@@ -160,7 +160,7 @@ fi
 
 if [ $detach_flag = 1 ]; then up_args+=('--detach'); fi
 
-if [ "$(git_pull_required)" = 1 ]; then echo_run git pull; fi
+if [ "$(git_pull_required)" = 1 ]; then echo_run ./bin/git_pull_dev_repos.py; fi
 
 if [ -f "$env_file" ]; then
   if [ $force_flag = 0 ]; then
