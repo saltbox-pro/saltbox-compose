@@ -5,6 +5,7 @@ git_pull_dev_repos.py is a part of Salt.Box Compose.
 Developement helper script to update Git repositories from dev overrides.
 """
 
+import argparse
 import concurrent.futures
 import subprocess
 import sys
@@ -60,16 +61,18 @@ def git_pull(path: Path, lock: threading.Lock) -> int:
     return res.returncode
 
 
-def main():
-    conf = get_conf()
-    context_repos = get_context_repos(conf)
-    vol_repos = get_volume_repos(conf)
-    repos = list(set(context_repos) | set(vol_repos))
-    repos.append(Path.cwd())
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description='Update Salt.Box source code repositories')
+    parser.add_argument(
+        '-l', '--list',
+        action='store_true',
+        help='List detected Git repositories, do not operate'
+    )
+    return parser.parse_args()
+
+
+def action_pull(repos: list[Path]) -> list[Path]:
     pull_failed = []
-
-    print(f'Found {len(repos)} repositories')
-
     with concurrent.futures.ThreadPoolExecutor(max_workers=PARALLEL_PULLS) as executor:
         print_lock = threading.Lock()
         futures = {executor.submit(git_pull, path, print_lock): path for path in repos}
@@ -77,13 +80,38 @@ def main():
             result = fut.result()
             if result:
                 pull_failed.append(futures[fut])
+    return pull_failed
+
+
+def action_list(repos: list[Path]) -> None:
     print(LINE)
-    if not pull_failed:
-        print('Exit on success')
+    for repo in repos:
+        print(f'- {repo}')
+
+def main():
+    conf = get_conf()
+    context_repos = get_context_repos(conf)
+    vol_repos = get_volume_repos(conf)
+    repos = list(set(context_repos) | set(vol_repos))
+    repos.append(Path.cwd())
+    args = get_args()
+
+    print(f'Found {len(repos)} repositories')
+
+    if args.list:
+        action_list(repos)
+        print(LINE)
+        print('List only, exit now')
+
     else:
-        fail_list = '\n'.join([f'  - {p}' for p in pull_failed])
-        print(f'Failed to pull following repositories:\n{fail_list}\n', file=sys.stderr)
-        print('Exit with warnings', file=sys.stderr)
+        pull_failed = action_pull(repos)
+        print(LINE)
+        if not pull_failed:
+            print('Exit on success')
+        else:
+            fail_list = '\n'.join([f'  - {p}' for p in pull_failed])
+            print(f'Failed to pull following repositories:\n{fail_list}\n', file=sys.stderr)
+            print('Exit with warnings', file=sys.stderr)
 
 
 if __name__ == '__main__':
