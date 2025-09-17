@@ -7,11 +7,22 @@ Salt.Box is a configuration management system wich extends
 
 Look for user documentation on [saltbox.pro](https://saltbox.pro).
 
+
 ## Requirements
 
 - Docker Engine >= 25.0 _(due to healthcheck feature)_
 - Docker Compose >= 2.20.2
 - Python >= 3.9 _(for helper scripts)_
+
+There are recommended host settings:
+
+```bash
+sudo sh -c "echo 'vm.overcommit_memory=1' > /etc/sysctl.d/saltbox.conf"
+sudo sysctl -p /etc/sysctl.d/saltbox.conf
+```
+
+`vm.overcommit_memory=1` is a Redis requirement.
+
 
 ## Helper scripts
 
@@ -22,19 +33,18 @@ be ran from the root of repo by relative path like `./bin/sb-compose.sh`.
 - `git_pull_dev_repos.py` — only for developers — update sources Git repositories.
 - `make_secrets.py` — create required by system passwords.
 - `sb-compose.sh` — thin wrapper over the `docker compose` command is the
-preferred way to manipulate the system.
+preferred way to manipulate a running instance.
 - `sb-exec.sh` — shortcuts for some common commands.
 - `update_and_run.sh` — the main startup script.
+- `validate_dotenv.sh` — check major issues in `.env` file.
 
-
-## Recommended host settings
+Helper scripts supposed to be executable. Some systems may drop executable
+flag due to security reasons. On troubles to start try to re-add the flag:
 
 ```bash
-sudo sh -c "echo 'vm.overcommit_memory=1' > /etc/sysctl.d/saltbox.conf"
-sudo sysctl -p /etc/sysctl.d/saltbox.conf
+chmod a+x ./bin/*
 ```
 
-`vm.overcommit_memory=1` is a Redis requirement.
 
 ## The script to rule them all
 
@@ -48,6 +58,7 @@ The script:
 - Merges `example.env` and `override.env` (if exists) into `.env` config.
 - Makes secrets with `./bin/make_secrets.sh`.
 - Updates images.
+- Prints default administrator credentials.
 - Runs the Salt.Box instance with `./bin/sb-compose.sh`.
 
 Use `override.env` to redefine `example.env` default values.
@@ -71,11 +82,46 @@ repository `HEAD` are in a branch, so a helper script reads the config to
 invoke `git pull` which is a developement feature. To prevent this switch to a
 tag or just pass `--no-git-pull` flag to `./bin/update_and_run.sh`
 
-## Working behind a reverse proxy
 
-Currently to make web interface work properly for remote hosts HTTP connection
-must have SSL termination. Usual way to achieve this is to use Nginx web
-server as a HTTP reverse proxy and terminate SSL on it.
+## HTTPS
+
+System requires HTTP connections to be SSL terminated. System creates a private
+CA and a certificate for the web server on first run.
+
+The authority certificate can be obtained with the command:
+
+```bash
+# System must be running
+sudo ./bin/sb-compose.sh exec redis-salt cat /etc/redis/certs/ca.crt
+```
+
+It will be saved to `ca.crt` file in the current directory and may be installed
+then into a web browser to trust the web UI site.
+
+Out-of-the-box certificate can be also replaced with a relative one:
+
+```bash
+# System have to had been started at least once
+sudo ./bin/sb-compose.sh cp CUSTOM_CERT proxy:/etc/nginx/ssl/proxy.crt
+sudo ./bin/sb-compose.sh cp CUSTOM_CERT_KEY proxy:/etc/nginx/ssl/proxy.key
+```
+
+The out-of-the-box certificate can be made more strict with address and name
+constraints. To make so edit the
+[`./make-certs/hier.yaml.tpl`](make-certs/hier.yaml.tpl) file to enumerate
+allowed IP addresses in `alternative_names_ip` list and DNS names in
+`alternative_names_dns` list of the `/mnt/proxy_certs/proxy.crt` issued
+certificate config. Than **delete** existing certificate files with the
+following command.
+
+```bash
+# System must be running
+sudo ./bin/sb-compose.sh exec proxy find /etc/nginx/ssl/ -name 'proxy.*' -delete
+```
+
+ **restart** the system to apply changes and recreate the certificate.
+
+## Working behind a reverse proxy
 
 First, be sure to set `WEB_SERVER_OUTER_SOCKET` to match `server_name` and port
 of the reverse proxy.
@@ -127,7 +173,7 @@ To run test suites enable `compose-autotests.yaml` in the local`.env` file.
 Then execute:
 
 ```bash
-sudo docker compose up autotests
+sudo ./bin/sb-compose.sh up autotests
 ```
 
 Autotests depends on direct access to Keycloak API, so existing realm should be
@@ -137,7 +183,7 @@ Keycloak client settings.
 To prevent pulling a new image:
 
 ```bash
-sudo docker compose up autotests --pull=never
+sudo ./bin/sb-compose up autotests --pull=never
 ```
 
 ## Dev mode
@@ -162,7 +208,7 @@ may change the data.
 To build clean images use command with enabled `COMPOSE_FILE` overrides:
 
 ```bash
-sudo docker compose build --no-cache
+sudo ./bin/sb-compose.sh build --no-cache
 ```
 
 `--no-cache` guarantees build with latest dependencies.
@@ -175,7 +221,8 @@ a certificate validation (option like `--insecure`) or use a CA certificate.
 The last may be obtained with command:
 
 ```bash
-sudo docker compose exec redis-salt cat /etc/redis/certs/ca.crt
+# System must be running
+sudo ./bin/sb-compose.sh exec redis-salt cat /etc/redis/certs/ca.crt
 ```
 
 ### Dev minions
@@ -188,10 +235,10 @@ on the master. Some operations may lead to lost minions. It that keys try the
 following command, which should reconnect minions:
 
 ```bash
-sudo docker compose restart salt-master
+sudo ./bin/sb-compose.sh restart salt-master
 ```
 
-Note: `docker compose up --force-recreate salt-master` not regenerates
+Note: `./bin/sb-compose up --force-recreate salt-master` not regenerates
 minions.
 
 ### Dev Git repositories updater
@@ -219,7 +266,7 @@ To fix startup problems on developement environment stop containters with `^C`
 and make them down:
 
 ```bash
-sudo docker compose -f compose.yaml -f compose-dev-override.yaml down --volumes
+sudo ./bin/sb-compose.sh -f compose.yaml -f compose-dev-override.yaml down --volumes
 ```
 
 **ATTENTION!** The `--volumes` flag will purge attached volumes and will lead
@@ -227,11 +274,11 @@ to data lost. Be sure to not lost production data.
 
 ### Cleanup Keycloak data only
 
-Run followin commands:
+Run following commands:
 
 ```bash
-sudo docker compose down
-sudo docker compose down keycloak-db --volume
+sudo ./bin/sb-compose.sh down
+sudo ./bin/sb-compose.sh down keycloak-db --volume
 ```
 
 On the next start the realm will be recreated.

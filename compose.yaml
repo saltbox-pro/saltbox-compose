@@ -25,21 +25,21 @@ services:
       args:
         IMAGE: '${IMAGE_REGISTRY}/saltbox-compose/nginx:${NGINX_IMAGE_TAG}'
     environment:
-      API_BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${GATEWAY_PATH}'
+      API_BASE_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${GATEWAY_PATH}'
       BACKEND_HOSTNAME: saltbox-core
       GATEWAY_HTTP_PORT: '${GATEWAY_HTTP_PORT}'
       BACKEND_HTTP_PORT: '${BACKEND_HTTP_PORT}'
       BACKEND_PATH: '${BACKEND_PATH}'
       GATEWAY_PATH: '${GATEWAY_PATH}'
       KEYCLOAK_BASE_URL: '${KEYCLOAK_BASE_URL}'
-      OPEN_ID_AUTHORITY: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
+      OPEN_ID_AUTHORITY: 'https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
       OPEN_ID_CLIENT_ID: '${KEYCLOAK_CLIENT}'
-      OPEN_ID_REDIRECT_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}'
-      WS_SERVER_URL: '${WEB_SERVER_WS_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${BACKEND_PATH}'
-      WEB_SERVER_WS_SCHEME: '${WEB_SERVER_WS_SCHEME}'
-      WEB_SERVER_SCHEME: '${WEB_SERVER_SCHEME}'
+      OPEN_ID_REDIRECT_URL: 'https://${WEB_SERVER_OUTER_SOCKET}'
+      WS_SERVER_URL: 'wss://${WEB_SERVER_OUTER_SOCKET}${BACKEND_PATH}'
     ports:
-      - '${WEB_SERVER_PORT}:80'
+      - '${WEB_SERVER_PORT}:443'
+    volumes:
+      - 'proxy_certs:/etc/nginx/ssl/'
     secrets:
       - keycloak_client_saltbox_core_password
     depends_on:
@@ -87,7 +87,7 @@ services:
     command:
       - 'start'
       - '--optimized'
-      - '--hostname=${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
+      - '--hostname=https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
       - '--hostname-backchannel-dynamic=true'
     environment:
       KC_DB_URL: 'jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DATABASE}'
@@ -155,14 +155,17 @@ services:
         condition: service_healthy
         restart: false
 
-  make-redis-salt-certs:
+  make-certs:
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-compose/make-certs:${MAKE_CERTS_IMAGE_TAG}'
-    entrypoint: 'sh make-redis-salt-certs.sh'
+    environment:
+      PROXY_ALT_NAME: '${WEB_SERVER_ALT_NAME}'
+    entrypoint: 'sh entrypoint.sh'
     volumes:
       - 'redis_salt_certs:/mnt/redis_certs/'
-      - './make-certs/redis_salt_hier.yaml.tpl:/root/redis_salt_hier.yaml.tpl:ro'
-      - './make-certs/make-redis-salt-certs.sh:/root/make-redis-salt-certs.sh:ro'
+      - 'proxy_certs:/mnt/proxy_certs/'
+      - './make-certs/hier.yaml.tpl:/root/hier.yaml.tpl:ro'
+      - './make-certs/entrypoint.sh:/root/entrypoint.sh:ro'
     secrets:
       - redis_salt_ca_private_key_password
       - redis_salt_private_key_password
@@ -202,7 +205,7 @@ services:
       - redis_salt_password
       - redis_salt_private_key_password
     depends_on:
-      - make-redis-salt-certs
+      - make-certs
 
   redis-taskiq:
     <<: *default
@@ -238,9 +241,7 @@ services:
     command: 'uvicorn'
     environment:
       LOG_LEVEL: '${GATEWAY_LOG_LEVEL:-info}'
-      # BASE_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}'
-      SERVER_SCHEME: '${WEB_SERVER_SCHEME}'
-      SERVER_WS_SCHEME: '${WEB_SERVER_WS_SCHEME}'
+      SERVER_WS_SCHEME: 'wss'
       SERVER_OUTER_SOCKET: '${WEB_SERVER_OUTER_SOCKET}'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
       REDIS_URL: 'rediss://redis-salt:6379/0'
@@ -248,7 +249,7 @@ services:
       TIMEOUT_GRACEFUL_SHUTDOWN: '${GATEWAY_SHUTDOWN_TIMEOUT_SEC}'
       GATEWAY_HTTP_PORT: '${GATEWAY_HTTP_PORT}'
       UVICORN_WORKERS: '${GATEWAY_WORKERS:-1}'
-      KEYCLOAK_FRONT_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_FRONT_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
       KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
@@ -290,8 +291,8 @@ services:
       DISCOVERY_INSTANCE_HOST: '${CORE_HOST}'
       DISCOVERY_INSTANCE_PORT: '${CORE_PORT}'
       DISCOVERY_SERVER_OUTER_SOCKET: '${WEB_SERVER_OUTER_SOCKET}'
-      DISCOVERY_SERVER_SCHEME: '${WEB_SERVER_SCHEME}'
-      DISCOVERY_SERVER_WS_SCHEME: '${WEB_SERVER_WS_SCHEME}'
+      DISCOVERY_SERVER_SCHEME: 'https'
+      DISCOVERY_SERVER_WS_SCHEME: 'wss'
       DISCOVERY_SERVICE_DESCRIPTION: '${CORE_SERVICE_DESCRIPTION}'
       DISCOVERY_SERVICE_NAME: '${CORE_SERVICE_NAME}'
       DISCOVERY_SERVICE_TITLE: '${CORE_SERVICE_TITLE}'
@@ -300,7 +301,7 @@ services:
 
       GITFS_USER: 'git'  # As in users.json of sshfs
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
-      KEYCLOAK_FRONT_URL: '${WEB_SERVER_SCHEME}://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_FRONT_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
       LOG_LEVEL: '${SALTBOX_CORE_LOG_LEVEL}'
@@ -482,6 +483,7 @@ volumes:
   keycloak-db_data: {}
   mongo_config: {}
   mongo_data: {}
+  proxy_certs: {}
   redis_salt_certs: {}
   redis_salt_data: {}
   redis_taskiq_certs: {}

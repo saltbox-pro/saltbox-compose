@@ -18,3 +18,5 @@ location /prometheus/ {
    proxy_set_header Host $host;
    proxy_set_header X-Forwarded-Prefix /prometheus;
 }
+
+# vi: syn=nginx

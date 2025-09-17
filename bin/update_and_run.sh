@@ -7,7 +7,7 @@ bin_dir="$(dirname "$(realpath --relative-to "$(pwd)" "$0")")"
 declare -r bin_dir
 declare -r compose_cmd="${bin_dir}/sb-compose.sh"
 declare -r admin_password_file='secrets/saltbox_admin_password'
-declare -ir success_msg_sleep=1
+declare -ir msg_sleep=1
 declare -ir image_pull_retries=3
 declare -r usage_str="
 Update images and run a Salt.Box Docker Compose based instance.
@@ -191,6 +191,20 @@ if [ ! -f "$env_file" ]; then
   echo "New $env_file has been created"
 fi
 
+
+function on_env_validation_fail() {
+  if [ $force_flag = 1 ]; then
+    warn 'Adviced to correct override.env or .env'
+    sleep $msg_sleep
+  else
+    read -p "Warning on the .env file. Continue? (y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then exit 0; fi
+  fi
+}
+
+echo_run ./bin/validate_dotenv.sh || on_env_validation_fail
+
 if [ $last_stage = 'dotenv' ]; then exit 0; fi
 
 if [ "$(git_pull_required)" = 1 ]; then
@@ -244,7 +258,7 @@ admin_password="$(cat "$admin_password_file")"
 if [ $detach_flag = 0 ]; then
   # shellcheck disable=SC2059
   printf "$success_pre_msg_tpl" "${admin_username}" "$admin_password"
-  sleep $success_msg_sleep
+  sleep $msg_sleep
 fi
 
 echo_run as_root "$compose_cmd" up "${up_args[@]}"
