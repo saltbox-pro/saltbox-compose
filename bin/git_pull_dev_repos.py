@@ -68,6 +68,16 @@ def get_args() -> argparse.Namespace:
         action='store_true',
         help='List detected Git repositories, do not operate'
     )
+    parser.add_argument(
+        '--no-compose',
+        action='store_true',
+        help='Skip pulling SaltBox Compose repo itself'
+    )
+    parser.add_argument(
+        '--only-compose',
+        action='store_true',
+        help='Pull only SaltBox Compose repos, no `.env` required'
+    )
     return parser.parse_args()
 
 
@@ -89,12 +99,20 @@ def action_list(repos: list[Path]) -> None:
         print(f'- {repo}')
 
 def main():
-    conf = get_conf()
-    context_repos = get_context_repos(conf)
-    vol_repos = get_volume_repos(conf)
-    repos = list(set(context_repos) | set(vol_repos))
-    repos.append(Path.cwd())
     args = get_args()
+    conf = get_conf()
+
+    repos = []
+    if not args.only_compose:
+        context_repos = get_context_repos(conf)
+        vol_repos = get_volume_repos(conf)
+        repos.extend(set(context_repos) | set(vol_repos))
+    if not args.no_compose:
+        repos.append(Path.cwd())
+
+    if not len(repos):
+        print('No repositories found to pull, exit now', file=sys.stderr)
+        return
 
     print(f'Found {len(repos)} repositories')
 

@@ -160,7 +160,9 @@ fi
 
 if [ $detach_flag = 1 ]; then up_args+=('--detach'); fi
 
-if [ "$(git_pull_required)" = 1 ]; then echo_run ./bin/git_pull_dev_repos.py; fi
+if [ "$(git_pull_required)" = 1 ]; then
+  echo_run ./bin/git_pull_dev_repos.py --only-compose
+fi
 
 if [ -f "$env_file" ]; then
   if [ $force_flag = 0 ]; then
@@ -190,6 +192,10 @@ if [ ! -f "$env_file" ]; then
 fi
 
 if [ $last_stage = 'dotenv' ]; then exit 0; fi
+
+if [ "$(git_pull_required)" = 1 ]; then
+  echo_run ./bin/git_pull_dev_repos.py --no-compose
+fi
 
 echo_run ./bin/make_secrets.py
 
