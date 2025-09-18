@@ -20,10 +20,12 @@ if possible and purge browser redirects.
 - `BACKEND_LOG_LEVEL` variable.
 - `SALTBOX_BRIDGE_LOG_LEVEL` variable.
 - `bin/update_and_run.sh`: success message with default admin credentials.
-- `bin/update_and_run.sh`: `git pull` for Compose if applicable.
+- `bin/update_and_run.sh`: `git pull` for Compose and connected modules repositories if applicable.
 - `bin/update_and_run.sh`: retries for `docker compose pull`.
 - `bin/update_and_run.sh`: `--no-root` flag to run as a regular user.
 - `./bin/sb-exec.sh`, `./bin/sb-compose.sh` helper scripts.
+- Check `.env` for deprecated variables.
+- Create private certificate for main web server.
 
 ### Changed
 
@@ -43,6 +45,8 @@ if possible and purge browser redirects.
 
 ### Removed
 
+- No-SSL HTTP for the web UI.
+
 ## [0.0.2] - 2025-05-16
 
 ## Added
@@ -53,7 +57,7 @@ if possible and purge browser redirects.
 - `users.json` config for `sshfs` image to recreate users on very start.
 - `SHOW_DOCS` env variable.
 - `./bin/merge_env.sh` helper script.
-- `sshfs` obtain authorized keys with HTTT GET on every connection.
+- `sshfs` obtain authorized keys with HTTP GET on every connection.
 
 ## Updated
 
