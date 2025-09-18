@@ -11,7 +11,7 @@ Look for user documentation on [saltbox.pro](https://saltbox.pro).
 
 - Docker Engine >= 25.0 _(due to healthcheck feature)_
 - Docker Compose >= 2.20.2
-- Python >= 3.9 _(for `./bin/make_secrets.py`)_
+- Python >= 3.9 _(for helper scripts)_
 
 ## Helper scripts
 
@@ -27,60 +27,7 @@ preferred way to manipulate the system.
 - `update_and_run.sh` — the main startup script.
 
 
-## Prepare
-
-Initially secrets must be created in the `./secrets/` subdirectory. It may be
-done with helper script:
-
-```bash
-./bin/make_secrets.py
-```
-
-Make copy of [`example.env`](example.env) file named `.env`. Tune it before run.
-
-To make the UI available on hostname or address other than `localhost` override
-variables those defaults are `localhost`.
-
-## Helper script to start
-
-Easy way to run the system is execute:
-```bash
-sudo ./bin/update_and_run.sh
-```
-
-Helper script:
-- Merges `example.env` and `override.env` (if exists) into `.env` config.
-- Makes secrets.
-- Updates images.
-- Runs the Salt.Box instance.
-
-Use `override.env` to redefine `example.env` default values.
-
-Use `-h` or `--help` flag to look script options.
-
-Another way is to go step-by-step.
-
-## Run step-by-step
-
-```bash
-sudo docker compose up --build
-```
-
-**ATTENTION!** Check there are no warnings on not setted variables to avoid
-confusing errors.
-
-To update outer images:
-
-```bash
-sudo docker compose pull
-```
-
-than restart e.g. with `sudo docker compose down && sudo docker compose up -d`.
-
-It is possible to pull images on start with an additional flag `sudo
-docker compose up --build --pull=always`.
-
-For production use following commands are recommended:
+## Recommended host settings
 
 ```bash
 sudo sh -c "echo 'vm.overcommit_memory=1' > /etc/sysctl.d/saltbox.conf"
@@ -88,6 +35,41 @@ sudo sysctl -p /etc/sysctl.d/saltbox.conf
 ```
 
 `vm.overcommit_memory=1` is a Redis requirement.
+
+## The script to rule them all
+
+Easy way to startup the system is to execute:
+
+```bash
+sudo ./bin/update_and_run.sh
+```
+
+The script:
+- Merges `example.env` and `override.env` (if exists) into `.env` config.
+- Makes secrets with `./bin/make_secrets.sh`.
+- Updates images.
+- Runs the Salt.Box instance with `./bin/sb-compose.sh`.
+
+Use `override.env` to redefine `example.env` default values.
+
+Use `-h` or `--help` flag to look script options.
+
+To make the UI available on hostname or address other than `localhost` override
+variables those defaults points to `localhost`.
+
+**ATTENTION!** Check there are no warnings on not setted variables to avoid
+confusing errors.
+
+**ATTENTION!** It is possible to get the following error:
+
+```plain
+ModuleNotFoundError: No module named 'yaml'
+```
+
+It happens when the SaltBox Compose directory is a Git repository and
+repository `HEAD` are in a branch, so a helper script reads the config to
+invoke `git pull` which is a developement feature. To prevent this switch to a
+tag or just pass `--no-git-pull` flag to `./bin/update_and_run.sh`
 
 ## Working behind a reverse proxy
 
@@ -220,6 +202,9 @@ or a volume in dev overrides:
 ```bash
 ./bin/git_pull_dev_repos.py
 ```
+
+It invokes by `./bin/update_and_run.sh` every time if current directory is a
+Git repository and `HEAD` is on a branch.
 
 `PyYAML` module is required (usually named like `python-yaml` in distros).
 

@@ -5,6 +5,10 @@ git_pull_dev_repos.py is a part of Salt.Box Compose.
 Developement helper script to update Git repositories from dev overrides.
 """
 
+# Requires python >= 3.8
+
+from __future__ import annotations
+
 import argparse
 import concurrent.futures
 import subprocess
