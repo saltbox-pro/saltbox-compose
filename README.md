@@ -56,7 +56,7 @@ sudo ./bin/update_and_run.sh
 
 The script:
 - Merges `example.env` and `override.env` (if exists) into `.env` config.
-- Makes secrets with `./bin/make_secrets.sh`.
+- Makes secrets with `./bin/make_secrets.py`.
 - Updates images.
 - Prints default administrator credentials.
 - Runs the Salt.Box instance with `./bin/sb-compose.sh`.
