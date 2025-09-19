@@ -23,7 +23,7 @@ RUN \
 set -e
 mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
-apt-get install -y java-21-openjdk wget
+apt-get install -y java-21-openjdk wget python3-module-pip glibc-pthread
 EOF
 
 COPY --from=builder /usr/lib/keycloak/ /srv/keycloak
@@ -58,6 +58,7 @@ set -e
 mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
 apt-get install -y jq
+pip3 install --no-cache-dir python-keycloak
 EOF
 
 ENV KEYCLOAK_USER_NAME=''
@@ -67,9 +68,12 @@ ENV KEYCLOAK_USER_LASTNAME=''
 # false | true to control access to API
 ENV KEYCLOAK_CLIENT_DIRECT_ACCESS='false'
 
-COPY --chmod=755 salt-box-create-realm /usr/local/lib/salt-box/
-COPY --chmod=755 bin/kcadm-init.sh bin/create-realm.sh /usr/local/bin/
+COPY --chmod=755 bin/kc_init.py /usr/local/bin/salt-box-realm/
+COPY --chmod=755 bin/kc_settings.py /usr/local/bin/salt-box-realm/
 COPY client.json ./
 COPY grafana_client.json ./
+# COPY --chmod=755 salt-box-create-realm /usr/local/lib/salt-box/
+# COPY --chmod=755 bin/kcadm-init.sh bin/create-realm.sh /usr/local/bin/
 
-ENTRYPOINT ["/usr/local/bin/create-realm.sh"]
+ENTRYPOINT [ "python3", "/usr/local/bin/salt-box-realm/kc_init.py" ]
+# ENTRYPOINT ["/usr/local/bin/create-realm.sh"]

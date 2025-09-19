@@ -1,4 +1,7 @@
 {
+  "id": "grafana",
+  "name": "grafana",
+  "clientId": "grafana",
   "rootUrl": "",
   "adminUrl": "",
   "baseUrl": "",

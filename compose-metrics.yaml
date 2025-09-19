@@ -9,7 +9,7 @@ x-default-service: &default
 services:
   proxy:
     volumes:
-      - ./proxy/includes/metrics.enabled.conf.template:/etc/nginx/includes/10-metrics.conf.template:ro
+      - ./proxy/includes/metrics.enabled.conf.template:/etc/nginx/includes/10-metrics.conf:ro
 
   keycloak-init:
     environment:

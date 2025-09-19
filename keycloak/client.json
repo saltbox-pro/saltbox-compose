@@ -1,4 +1,7 @@
 {
+  "id": "saltbox_core",
+  "name": "saltbox_core",
+  "clientId": "saltbox_core",
   "rootUrl": "",
   "adminUrl": "",
   "baseUrl": "",
