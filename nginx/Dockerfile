@@ -1,5 +1,5 @@
 FROM registry.altlinux.org/alt/alt:p11 AS base
-LABEL version='0.1'
+LABEL version='0.2'
 EXPOSE 80
 
 RUN \
@@ -12,11 +12,14 @@ apt-get update
 apt-get install -y gettext nginx
 EOF
 
+COPY nginx.conf /etc/nginx/
 COPY --chmod=755 entrypoint.sh /docker/
-COPY --chmod=755 20-process_templates.sh /docker/entrypoint.d/
-COPY override.conf /etc/nginx/conf-enabled.d/
-RUN sed --in-place 's/\(http\s*{\)/\1\n\taccess_log off;/' /etc/nginx/nginx.conf
+COPY --chmod=755 10-nginx-tune.sh 20-process_templates.sh /docker/entrypoint.d/
+COPY 00-override.conf /etc/nginx/conf-enabled.d/
 
 ENTRYPOINT ["/docker/entrypoint.sh"]
 CMD ["nginx"]
 STOPSIGNAL SIGQUIT
+
+ENV NGINX_WORKER_PROCESSES=auto
+ENV NGINX_WORKER_CPU_AFFINITY=auto

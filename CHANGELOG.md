@@ -26,6 +26,7 @@ if possible and purge browser redirects.
 - `./bin/sb-exec.sh`, `./bin/sb-compose.sh` helper scripts.
 - Check `.env` for deprecated variables.
 - Create private certificate for main web server.
+- Nginx workers tuning.
 
 ### Changed
 
