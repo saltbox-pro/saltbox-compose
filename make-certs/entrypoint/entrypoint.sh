@@ -28,7 +28,7 @@ touch "$proxy_cert_state_file"
 proxy_cert_last_state="$(cat "$proxy_cert_state_file")"
 if [ "$(proxy_state)" != "$proxy_cert_last_state" ]; then
   warn Proxy certificate Alternative Names has been changed, certificate will be reissued
-  rm "$PROXY_CERT"
+  rm --force "$PROXY_CERT"
 fi
 
 make-certs /root/hier.yaml
