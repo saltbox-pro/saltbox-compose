@@ -101,7 +101,11 @@ then into a web browser to trust the web UI site.
 Generated certificate is bind to `localhost` and `saltbox.local` DNS names by
 default. To change it override `WEB_SERVER_SSL_ALT_NAMES_DNS` variable and/or
 `WEB_SERVER_SSL_ALT_NAMES_IP` to access the system by IP address rather than a
-DNS name. Both variables may be in form of comma separate list.
+DNS name. Both variables may be in form of comma separate list. DNS names may
+be [RFC compliant
+wildcards](https://www.rfc-editor.org/rfc/rfc6125#section-7.2)
+(`*.saltbox.local`, but not `*saltbox.local`). Wildcards for IP addresses are
+not supported.
 
 **restart** the system to apply changes and recreate the certificate.
 
@@ -113,7 +117,7 @@ sudo ./bin/sb-compose.sh cp CUSTOM_CERT proxy:/etc/nginx/ssl/proxy.crt
 sudo ./bin/sb-compose.sh cp CUSTOM_CERT_KEY proxy:/etc/nginx/ssl/proxy.key
 ```
 
-**ATTENTION** Changing `WEB_SERVER_SSL_ALT_NAMES_*` variables will lead to
+**ATTENTION!** Changing `WEB_SERVER_SSL_ALT_NAMES_*` variables will lead to
 overwriting the custom certificate with new generated one.
 
 
@@ -124,7 +128,13 @@ of the reverse proxy.
 
 Nginx may be installed on the same host with Salt.Box, or on another one. In
 the last case be sure the Salt.Box is available for the Nginx host e.g. with
-command `curl http://<SALTBOX_HOST>:<SALTBOX_WEB_SERVER_PORT>/auth/keycloak/realms/salt.box/.well-known/openid-configuration`. It should return long JSON response.
+command:
+
+```bash
+curl http://<SALTBOX_HOST>:<SALTBOX_WEB_SERVER_PORT>/auth/keycloak/realms/salt.box/.well-known/openid-configuration
+```
+
+It should return long JSON response.
 
 An example Nginx config following. Remember to edit `< ... >` placeholders and
 check config with `sudo nginx -t`.
@@ -162,6 +172,9 @@ server {
   return 301 https://$host$request_uri;
 }
 ```
+
+**NOTE** Remember to set `WEB_SERVER_SSL_ALT_NAMES_*` variables in compliance
+with `proxy_pass` URL.
 
 ## Autotests
 
