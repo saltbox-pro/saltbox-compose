@@ -27,6 +27,8 @@ if possible and purge browser redirects.
 - Check `.env` for deprecated variables.
 - Create private certificate for main web server.
 - Nginx workers tuning.
+- New variables: `WEB_SERVER_SSL_ALT_NAMES_DNS`, `WEB_SERVER_SSL_ALT_NAMES_IP`,
+`WEB_SERVER_WORKER_PROCESSES`, `WEB_SERVER_WORKER_CPU_AFFINITY`.
 
 ### Changed
 
@@ -47,6 +49,7 @@ if possible and purge browser redirects.
 ### Removed
 
 - No-SSL HTTP for the web UI.
+- Deleted variables: `WEB_SERVER_SCHEME`, `WEB_SERVER_WS_SCHEME`.
 
 ## [0.0.2] - 2025-05-16
 
