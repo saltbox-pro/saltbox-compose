@@ -11,7 +11,7 @@ RUN \
 set -e
 mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
-apt-get install --yes gettext glibc-pthread python3 python3-module-pip
+apt-get install --yes glibc-pthread python3 python3-module-jinja2 python3-module-pip
 pip3 install "make-certs==${MAKE_CERTS_VERSION}" --index-url "$PIP_INDEX_URL"
 apt-get remove --auto-remove --yes python3-module-pip
 EOF

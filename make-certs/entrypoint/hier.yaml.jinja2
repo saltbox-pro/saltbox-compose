@@ -24,7 +24,7 @@ certs:
   /mnt/redis_certs/ca.crt:
     subject: saltbox
     not_valid_after_days: null
-    key_password: '${CA_KEY_PASSWORD}'
+    key_password: '{{ env['CA_KEY_PASSWORD'] }}'
     basic_constraints:
       ca: true
       path_length: 0  # No further CA certificates
@@ -32,7 +32,7 @@ certs:
       /mnt/redis_certs/redis.crt:
         subject: redis-salt
         not_valid_after_days: null
-        key_password: '${REDIS_KEY_PASSWORD}'
+        key_password: '{{ env['REDIS_KEY_PASSWORD'] }}'
         basic_constraints:
           ca: false
           path_length: null
@@ -44,20 +44,25 @@ certs:
         extended_key_usage:
           server: true
           client: false
-      /mnt/proxy_certs/proxy.crt:
+      {{ env['PROXY_CERT'] }}:
         subject: proxy
         not_valid_after_days: null
         key_password: null
         basic_constraints:
           ca: false
           path_length: null
+        {%- if env.get('SSL_ALT_NAMES_IP') %}
         alternative_names_ip:
-          - '127.0.0.1'
+          {%- for i in env['SSL_ALT_NAMES_IP'].split(',') %}
+          - '{{- i | trim }}'
+          {%- endfor %}
+        {%- endif %}
+        {%- if env.get('SSL_ALT_NAMES_DNS') %}
         alternative_names_dns:
-          - '${PROXY_ALT_NAME}'
-          - localhost
+          {%- for i in env['SSL_ALT_NAMES_DNS'].split(',') %}
+          - '{{- i | trim }}'
+          {%- endfor %}
+        {%- endif %}
         extended_key_usage:
           server: true
           client: false
-
-# vi: syn=yaml

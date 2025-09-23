@@ -161,13 +161,15 @@ services:
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-compose/make-certs:${MAKE_CERTS_IMAGE_TAG}'
     environment:
-      PROXY_ALT_NAME: '${WEB_SERVER_ALT_NAME}'
-    entrypoint: 'sh entrypoint.sh'
+      PROXY_CERT: '/mnt/proxy_certs/proxy.crt'
+      SSL_ALT_NAMES_DNS: '${WEB_SERVER_SSL_ALT_NAMES_DNS}'
+      SSL_ALT_NAMES_IP: '${WEB_SERVER_SSL_ALT_NAMES_IP}'
+    working_dir: '/mnt/entrypoint/'
+    entrypoint: './entrypoint.sh'
     volumes:
       - 'redis_salt_certs:/mnt/redis_certs/'
       - 'proxy_certs:/mnt/proxy_certs/'
-      - './make-certs/hier.yaml.tpl:/root/hier.yaml.tpl:ro'
-      - './make-certs/entrypoint.sh:/root/entrypoint.sh:ro'
+      - './make-certs/entrypoint/:/mnt/entrypoint/:ro'
     secrets:
       - redis_salt_ca_private_key_password
       - redis_salt_private_key_password
