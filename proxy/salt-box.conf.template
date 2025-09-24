@@ -70,7 +70,7 @@ server {
         proxy_set_header X-Forwarded-Host $host;
     }
 
-    include /etc/nginx/includes/*.conf.template;
+    include /etc/nginx/includes/*.conf;
 }
 
 server {
@@ -79,3 +79,4 @@ server {
 }
 
 # vi: syn=nginx
+
