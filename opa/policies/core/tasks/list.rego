@@ -10,6 +10,7 @@ default can_read_collection := false
 default is_collection_owner := false
 default has_collection_access := false
 default query := null
+default collection := ""
 
 allow if is_admin
 allow if is_tasks_admin
@@ -26,7 +27,7 @@ is_admin := utils.base.is_admin
 is_tasks_admin := utils.base.is_tasks_admin
 
 collection := col if {
-    slug := input.resource.query_params.collection_slug
+    slug := input.resource.body.query["target_collection.slug"]
     resp := http.send({
         "method": "GET",
         "url": sprintf("http://saltbox-core:8000/collections/%s", [slug]),
@@ -102,5 +103,6 @@ query := conds_with_owner[0] if {
 is_action_list if {
     utils.base.is_tasks_resource
     input.action.name == "list"
-    count(input.resource.path) == 1
+    count(input.resource.path) == 2
+    input.resource.path[1] == "list"
 }
