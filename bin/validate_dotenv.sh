@@ -3,6 +3,8 @@
 declare -A deprecated_vars
 
 
+deprecated_vars['BACKEND_HOST']='Obsolete on v0.0.2'
+
 deprecated_vars['WEB_SERVER_SCHEME']='HTTPS is the only proto after v0.0.2'
 deprecated_vars['WEB_SERVER_WS_SCHEME']='WSS is the only proto after v0.0.2'
 deprecated_vars['KEYCLOAK_ADMIN_NAME']="$kc_adm_msg"
