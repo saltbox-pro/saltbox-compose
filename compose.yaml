@@ -322,6 +322,9 @@ services:
       REDIS_URL: 'rediss://redis-salt:6379/0'
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       SALT_FUNC_REPO_URL: '${SALT_FUNC_REPO_URL}'
+      GITLAB_BASE_URL: '${GITLAB_BASE_URL}'
+      GITLAB_TOKEN: '${GITLAB_TOKEN}'
+      GITLAB_GROUP_ID: '${GITLAB_GROUP_ID}'
       SALT_MODULES_SERVE_DIR: '/mnt/salt/'
       SHOW_DOCS: '${SHOW_DOCS:-false}'
       SSHFS_USER: 'saltbox'  # As in users.json of sshfs
