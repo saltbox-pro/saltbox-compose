@@ -14,6 +14,7 @@ if possible and purge browser redirects.
 
 ### Added
 
+- Salt.Box Gateway service which coordinates HTTP communications.
 - `SALT_FUNC_REPO_URL` with default repository URL to environment configuration
 - `bin/update_and_run.sh`: `--only-env`, `--only-update` flags for more
   selective execution.
@@ -23,12 +24,14 @@ if possible and purge browser redirects.
 - `bin/update_and_run.sh`: `git pull` for Compose and connected modules repositories if applicable.
 - `bin/update_and_run.sh`: retries for `docker compose pull`.
 - `bin/update_and_run.sh`: `--no-root` flag to run as a regular user.
+- `bin/update_and_run.sh`: handle `_UPDATE_AND_RUN_EXTRA_ENV_FILES` list
+variable from `.env` to connect outer dotenv files easily.
 - `./bin/sb-exec.sh`, `./bin/sb-compose.sh` helper scripts.
 - Check `.env` for deprecated variables.
-- Create private certificate for main web server.
-- Nginx workers tuning.
-- New variables: `WEB_SERVER_SSL_ALT_NAMES_DNS`, `WEB_SERVER_SSL_ALT_NAMES_IP`,
-`WEB_SERVER_WORKER_PROCESSES`, `WEB_SERVER_WORKER_CPU_AFFINITY`.
+- Create private certificate for main web server, related new variables:
+`WEB_SERVER_SSL_ALT_NAMES_DNS`, `WEB_SERVER_SSL_ALT_NAMES_IP`.
+- Nginx workers tuning, related new variables: `WEB_SERVER_WORKER_PROCESSES`,
+`WEB_SERVER_WORKER_CPU_AFFINITY`.
 
 ### Changed
 
