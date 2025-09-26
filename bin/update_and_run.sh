@@ -7,7 +7,7 @@ bin_dir="$(dirname "$(realpath --relative-to "$(pwd)" "$0")")"
 declare -r bin_dir
 declare -r compose_cmd="${bin_dir}/sb-compose.sh"
 declare -r admin_password_file='secrets/saltbox_admin_password'
-declare -ir msg_sleep=1
+declare -ir msg_sleep=2
 declare -ir image_pull_retries=3
 declare -r usage_str="
 Update images and run a Salt.Box Docker Compose based instance.
