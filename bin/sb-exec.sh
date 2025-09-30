@@ -37,8 +37,9 @@ Unknown command, valid commands are:
 
 case $1 in
   salt) cmd+=(salt-master salt) ;;
-  salt-run) cmd+=(salt-master salt-run) ;;
+  salt-cp) cmd+=(salt-master salt-cp) ;;
   salt-key) cmd+=(salt-master salt-key) ;;
+  salt-run) cmd+=(salt-master salt-run) ;;
   *) err "$err_msg" ;;
 esac
 
