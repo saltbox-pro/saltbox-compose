@@ -33,7 +33,6 @@ services:
       context: $CORE_BUILD_DIR
       target: dev
     environment:
-      - LOG_LEVEL=DEBUG
       - DISCOVERY_LOG_LEVEL=DEBUG
     tty: true  # colorize logs
     image: 'saltbox-core:dev'
