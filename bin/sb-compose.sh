@@ -1,7 +1,7 @@
 #! /bin/bash
 
 declare -r env_file='.env'
-declare -a compose_args=('--env-file=.env')
+declare -a compose_args
 
 function set_extra_env_files {
   # shellcheck source=/dev/null
@@ -12,5 +12,6 @@ function set_extra_env_files {
 }
 
 set_extra_env_files
+compose_args+=('--env-file=.env')
 
 exec docker compose "${compose_args[@]}" "$@"
