@@ -744,7 +744,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "last_over_time(job_ret{instance=\"saltbox-metric:8004\"}[$__range])",
+          "expr": "last_over_time(job_ret{instance=\"saltbox-metric-app:8004\"}[$__range])",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "__auto",

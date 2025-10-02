@@ -3,10 +3,10 @@ global:
 
 scrape_configs:
 
-  - job_name: "saltbox-metric"
+  - job_name: "saltbox-metric-app"
     metrics_path: /metrics
     static_configs:
-      - targets: ["saltbox-metric:8004"]
+      - targets: ["saltbox-metric-app:8004"]
 
   - job_name: "saltbox-core"
     metrics_path: /metrics
