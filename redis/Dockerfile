@@ -1,5 +1,7 @@
 FROM redis:7-alpine
 LABEL version='0.3'
+# Increase to trigger build. Drop to 0 on version change.
+LABEL release="1"
 
 COPY --chmod=755 entrypoint.sh /usr/local/bin/
 COPY redis.conf /etc/redis/
