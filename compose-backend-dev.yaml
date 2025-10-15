@@ -55,6 +55,9 @@ services:
   saltbox-core-tasks-watcher:
     <<: *core
 
+  saltbox-core-salt-buffer-manager:
+    <<: *core
+
   saltbox-core-taskiq-worker:
     <<: *core
 

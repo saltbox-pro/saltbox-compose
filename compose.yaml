@@ -309,7 +309,8 @@ services:
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
       LOG_LEVEL: '${SALTBOX_CORE_LOG_LEVEL}'
-      MODULE_INVENTORY_ON: '${SALTBOX_MODULE_INVENTORY_ON:-false}'
+      IS_MODULE_INVENTORY_ON: '${SALTBOX_MODULE_INVENTORY_ON:-false}'
+      IS_MODULE_METRIC_ON: '${SALTBOX_MODULE_METRIC_ON:-false}'
       MONGO_DB: '${MONGO_DB}'
       MONGO_USER: '${MONGO_USER}'
       OPA_URL: 'http://opa:8181'
@@ -379,6 +380,18 @@ services:
   saltbox-core-tasks-watcher:
     <<: *core
     command: 'shell saltbox-tasks-watcher'
+    expose: []
+    depends_on:
+      redis-salt:
+        condition: service_started
+        restart: false
+      rabbitmq:
+        condition: service_healthy
+        restart: false
+
+  saltbox-core-salt-buffer-manager:
+    <<: *core
+    command: 'shell saltbox-salt-buffer-manager'
     expose: []
     depends_on:
       redis-salt:
