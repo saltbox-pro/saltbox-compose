@@ -28,7 +28,7 @@ services:
       API_BASE_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${GATEWAY_PATH}'
       BACKEND_HOSTNAME: saltbox-core
       GATEWAY_HTTP_PORT: '${GATEWAY_HTTP_PORT}'
-      BACKEND_HTTP_PORT: '${BACKEND_HTTP_PORT}'
+      BACKEND_HTTP_PORT: '${CORE_PORT}'
       BACKEND_PATH: '${BACKEND_PATH}'
       GATEWAY_PATH: '${GATEWAY_PATH}'
       KEYCLOAK_BASE_URL: '${KEYCLOAK_BASE_URL}'
@@ -345,7 +345,7 @@ services:
       - mongo_admin_password
       - keycloak_client_saltbox_core_password
     expose:
-      - ${BACKEND_HTTP_PORT}
+      - ${CORE_PORT}
     depends_on:
       mongo:
         condition: service_started
@@ -463,9 +463,9 @@ services:
         exec mongod --replSet ${MONGO_REPLICASET} --bind_ip_all --keyFile /data/configdb/mongo-keyfile
     healthcheck:
       test: >
-        echo "try { rs.status() } catch (err) { rs.initiate({_id:'${MONGO_REPLICASET}',members:[{_id:0,host:'mongo:${MONGO_PORT}'}]}) }"
+        echo "try { rs.status() } catch (err) { rs.initiate({_id:'${MONGO_REPLICASET}',members:[{_id:0,host:'mongo:27017'}]}) }"
         |
-        mongosh --port ${MONGO_PORT} --quiet
+        mongosh --port 27017 --quiet
       interval: 5s
       timeout: 30s
       start_period: 0s
@@ -475,7 +475,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
       MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_admin_password
     ports:
-      - '${MONGO_EXPOSE_SOCKET}:${MONGO_PORT}'
+      - '${MONGO_EXPOSE_SOCKET}:27017'
     volumes:
       - mongo_config:/data/configdb
       - mongo_data:/data/db
@@ -503,7 +503,7 @@ services:
     environment:
       SSHFS_USER: '${SSHFS_USER}'
       USERS_FILE: '/mnt/sshfs_users.json'
-      AUTHORIZED_KEYS_URL: 'http://saltbox-core:${BACKEND_HTTP_PORT}/system/$${user}/authorized_keys'
+      AUTHORIZED_KEYS_URL: 'http://saltbox-core:${CORE_PORT}/system/$${user}/authorized_keys'
     secrets:
       - sshfs_user_saltbox_password
       - sshfs_user_master_password

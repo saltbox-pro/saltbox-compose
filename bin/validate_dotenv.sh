@@ -19,6 +19,8 @@ deprecated_vars['SALT_MOC_MINION_LOG_LEVEL']="$mock_minion_msg"
 deprecated_vars['SALT_MOC_MINION_RETRY_DNS']="$mock_minion_msg"
 deprecated_vars['SALT_MOC_MINION_REPLICAS']="$mock_minion_msg"
 
+deprecated_vars['BACKEND_HTTP_PORT']='Replaced by CORE_PORT'
+
 function warn() {
   1>&2 echo "$@"
 }
