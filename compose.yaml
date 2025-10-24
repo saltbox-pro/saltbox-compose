@@ -313,7 +313,7 @@ services:
       IS_MODULE_METRIC_ON: '${SALTBOX_MODULE_METRIC_ON:-false}'
       MONGO_DB: '${MONGO_DB}'
       MONGO_USER: '${MONGO_USER}'
-      MONGO_REPLICASET: '${MONGO_REPLICASET}'
+      MONGO_REPLICASET: '${MONGO_REPLICA_SET}'
       OPA_URL: 'http://opa:8181'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
       REDIS_TASKIQ_DB: 0
@@ -348,7 +348,7 @@ services:
       - ${CORE_PORT}
     depends_on:
       mongo:
-        condition: service_started
+        condition: service_healthy
         restart: false
       redis-salt:
         condition: service_healthy
@@ -454,34 +454,21 @@ services:
 
   mongo:
     <<: *default
-    image: mongo:7
-    command:
-      - bash
-      - -lc
-      - |
-        install -m 600 -o mongodb -g mongodb /run/secrets/mongo_keyfile /data/configdb/mongo-keyfile
-        exec mongod --replSet ${MONGO_REPLICASET} --bind_ip_all --keyFile /data/configdb/mongo-keyfile
-    healthcheck:
-      test: >
-        echo "try { rs.status() } catch (err) { rs.initiate({_id:'${MONGO_REPLICASET}',members:[{_id:0,host:'mongo:27017'}]}) }"
-        |
-        mongosh --port 27017 --quiet
-      interval: 5s
-      timeout: 30s
-      start_period: 0s
-      start_interval: 1s
-      retries: 30
+    image: '${IMAGE_REGISTRY}/saltbox-compose/mongodb:${MONGODB_IMAGE_TAG}'
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_admin_password
+      MONGO_ADMIN_USERNAME: '${MONGO_USER}'
+      MONGO_ADMIN_PASSWORD_FILE: '/run/secrets/mongo_admin_password'
+      MONGOD_REPLICA_SET: '${MONGO_REPLICA_SET}'
+      MONGOD_KEY_FILE: '/run/secrets/mongo_key_file'
     ports:
       - '${MONGO_EXPOSE_SOCKET}:27017'
     volumes:
-      - mongo_config:/data/configdb
-      - mongo_data:/data/db
+      - mongo_data:/var/lib/mongo/
     secrets:
       - mongo_admin_password
-      - mongo_keyfile
+      - mongo_key_file
+    ulimits:
+      nofile: 65535
 
   opa:
     image: '${IMAGE_REGISTRY}/saltbox-compose/opa:${OPA_IMAGE_TAG}'
@@ -518,7 +505,6 @@ configs: {}
 
 volumes:
   keycloak-db_data: {}
-  mongo_config: {}
   mongo_data: {}
   proxy_certs: {}
   redis_salt_certs: {}
@@ -555,5 +541,5 @@ secrets:
     file: secrets/sshfs_user_master_password
   sshfs_user_saltbox_password:
     file: secrets/sshfs_user_saltbox_password
-  mongo_keyfile:
-    file: secrets/mongo_keyfile
+  mongo_key_file:
+    file: secrets/mongo_key_file

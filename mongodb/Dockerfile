@@ -12,25 +12,37 @@ RUN \
 set -e
 mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
-apt-get install --yes glibc-pthread gosu libssl1.1 mongo7.0-server-mongod wget
+apt-get install --yes glibc-pthread gosu mongo7.0-server-mongod wget
 EOF
 
 ARG MONGOSH_VERSION='2.5.8'
-ARG MONGOSH_DIST_SHA256='46931ff606d9abf24b24e16bfef187c656000e5e58b041c54f42d88a03a7b701'
+ARG MONGOSH_DIST_SHA256='d78e83e72e3b6b56afdf845895881c1d54a6ee589b5111bb4d36feaae813c36c'
 
 WORKDIR /root/dist/
 RUN --mount=type=cache,target=/root/dist/ <<EOF
 set -e
-mongosh_dist="mongodb-mongosh-shared-openssl11-"$MONGOSH_VERSION".x86_64.rpm"
+mongosh_dist="mongodb-mongosh-shared-openssl3-"$MONGOSH_VERSION".x86_64.rpm"
 if [ ! -f "$mongosh_dist" ]; then
   wget "https://github.com/mongodb-js/mongosh/releases/download/v${MONGOSH_VERSION}/${mongosh_dist}"
 fi
 echo "${MONGOSH_DIST_SHA256} ${mongosh_dist}" | sha256sum -c -
 rpm --install "$mongosh_dist"
 rm "$mongosh_dist"
+echo 'disableTelemetry()' | mongosh --nodb
 EOF
 
-COPY --chmod=644 mongod.conf /etc/mongo/
+COPY --chmod=755 entrypoint.sh healthcheck.sh /usr/local/bin/
 
+ENV MONGOD_CONF_FILE='/etc/mongo/mongod.conf'
+COPY --chmod=644 mongod.yaml "$MONGOD_CONF_FILE"
+
+ENV WAIT_FOR_INIT=30
+ENV MONGO_ADMIN_USERNAME=
+ENV MONGO_ADMIN_PASSWORD_FILE=
+ENV MONGOD_REPLICA_SET=
+ENV MONGOD_KEY_FILE=
+WORKDIR /root/
 EXPOSE 27017
-ENTRYPOINT ["gosu", "mongod", "mongod", "--config", "/etc/mongo/mongod.conf", "run"]
+HEALTHCHECK --interval=1s --retries=30 --timeout=10s CMD /usr/local/bin/healthcheck.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD []

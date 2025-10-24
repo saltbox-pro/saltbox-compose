@@ -22,8 +22,7 @@ SECRETS = {
     'saltbox_user_password': 12,
     'sshfs_user_master_password': 12,
     'sshfs_user_saltbox_password': 12,
-    'mongo_keyfile': 16,
-    # TODO 'mongo_keyfile': 512,
+    'mongo_key_file': 512,
 }
 
 SECRET_ALPHABET = string.ascii_letters + string.digits

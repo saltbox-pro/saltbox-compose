@@ -1,0 +1,13 @@
+processManagement:
+  fork: false
+net:
+  bindIpAll: true
+  port: 27017
+storage:
+  dbPath: '/var/lib/mongo/'
+systemLog:
+  verbosity: 0  # 0 default, 1-5 more verbose
+setParameter:
+   enableLocalhostAuthBypass: true
+security:
+  authorization: 'enabled'
