@@ -460,6 +460,7 @@ services:
       MONGO_ADMIN_PASSWORD_FILE: '/run/secrets/mongo_admin_password'
       MONGOD_REPLICA_SET: '${MONGO_REPLICA_SET}'
       MONGOD_KEY_FILE: '/run/secrets/mongo_key_file'
+    command: ['--quiet']
     ports:
       - '${MONGO_EXPOSE_SOCKET}:27017'
     volumes:
