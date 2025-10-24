@@ -23,6 +23,7 @@ SECRETS = {
     'sshfs_user_master_password': 12,
     'sshfs_user_saltbox_password': 12,
     'mongo_keyfile': 16,
+    # TODO 'mongo_keyfile': 512,
 }
 
 SECRET_ALPHABET = string.ascii_letters + string.digits
@@ -39,11 +40,11 @@ def path_of_secret(secrets_dir: Path, secret_name: str) -> Path:
     return secrets_dir / secret_name
 
 
-def make_secret(length=16, alphabet=SECRET_ALPHABET) -> str:
+def random(length, alphabet=SECRET_ALPHABET) -> str:
     return ''.join(secrets.choice(alphabet) for i in range(length))
 
 
-def write_file(path: Path, secret: str, overwrite=False) -> None:
+def make_secret(path: Path, secret_length: int, overwrite=False) -> None:
     is_existing = path.exists()
     if is_existing and not overwrite:
         print(f'Skip existing {path}', file=sys.stderr)
@@ -53,14 +54,13 @@ def write_file(path: Path, secret: str, overwrite=False) -> None:
             print(f'Overwriting {path}')
         else:
             print(f'Creating {path}')
-        f.write(make_secret())
+        f.write(random(length=secret_length))
 
 
 def main(secrets_dir: Path, overwrite: bool) -> None:
     for sec, length in SECRETS.items():
         path = path_of_secret(secrets_dir, sec)
-        secret = make_secret(length=length)
-        write_file(path=path, secret=secret, overwrite=overwrite)
+        make_secret(path=path, secret_length=length, overwrite=overwrite)
 
 
 def prune(secrets_dir: Path) -> None:
