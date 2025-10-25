@@ -304,29 +304,31 @@ services:
       DISCOVERY_SERVICE_VENDOR: '${CORE_SERVICE_VENDOR}'
 
       GITFS_USER: 'git'  # As in users.json of sshfs
+      GITLAB_BASE_URL: '${GITLAB_BASE_URL}'
+      GITLAB_GROUP_ID: '${GITLAB_GROUP_ID}'
+      GITLAB_TOKEN: '${GITLAB_TOKEN}'
+      IS_MODULE_INVENTORY_ON: '${SALTBOX_MODULE_INVENTORY_ON:-false}'
+      IS_MODULE_METRIC_ON: '${SALTBOX_MODULE_METRIC_ON:-false}'
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
       KEYCLOAK_FRONT_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
       LOG_LEVEL: '${SALTBOX_CORE_LOG_LEVEL}'
-      IS_MODULE_INVENTORY_ON: '${SALTBOX_MODULE_INVENTORY_ON:-false}'
-      IS_MODULE_METRIC_ON: '${SALTBOX_MODULE_METRIC_ON:-false}'
       MONGO_DB: '${MONGO_DB}'
-      MONGO_USER: '${MONGO_USER}'
       MONGO_REPLICASET: '${MONGO_REPLICA_SET}'
+      MONGO_USER: '${MONGO_USER}'
+      MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
       OPA_URL: 'http://opa:8181'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
       REDIS_TASKIQ_DB: 0
       REDIS_TASKIQ_HOST: redis-taskiq
-      REDIS_TASKIQ_PASSWORD_SECRET: '/run/secrets/redis_taskiq_password'
       REDIS_TASKIQ_PORT: 6379
       REDIS_TASKIQ_USERNAME: '${REDIS_TASKIQ_USERNAME}'
+      REDIS_TASKIQ_USER_PASSWORD_FILE: '/run/secrets/redis_taskiq_password'
       REDIS_URL: 'rediss://redis-salt:6379/0'
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
+      REDIS_USER_PASSWORD_FILE: '/run/secrets/redis_salt_password'
       SALT_FUNC_REPO_URL: '${SALT_FUNC_REPO_URL}'
-      GITLAB_BASE_URL: '${GITLAB_BASE_URL}'
-      GITLAB_TOKEN: '${GITLAB_TOKEN}'
-      GITLAB_GROUP_ID: '${GITLAB_GROUP_ID}'
       SALT_MODULES_SERVE_DIR: '/mnt/salt/'
       SHOW_DOCS: '${SHOW_DOCS:-false}'
       SSHFS_USER: 'saltbox'  # As in users.json of sshfs
@@ -342,7 +344,7 @@ services:
     secrets:
       - redis_taskiq_password
       - redis_salt_password
-      - mongo_admin_password
+      - mongo_user_password
       - keycloak_client_saltbox_core_password
     expose:
       - ${CORE_PORT}
@@ -457,8 +459,10 @@ services:
     hostname: mongo  # Important for replica set
     image: '${IMAGE_REGISTRY}/saltbox-compose/mongodb:${MONGODB_IMAGE_TAG}'
     environment:
-      MONGO_ADMIN_USERNAME: '${MONGO_USER}'
-      MONGO_ADMIN_PASSWORD_FILE: '/run/secrets/mongo_admin_password'
+      MONGO_ROOT_USERNAME: root
+      MONGO_ROOT_PASSWORD_FILE: '/run/secrets/mongo_root_password'
+      MONGO_USER_USERNAME: '${MONGO_USER}'
+      MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
       MONGOD_REPLICA_SET: '${MONGO_REPLICA_SET}'
       MONGOD_KEY_FILE: '/run/secrets/mongo_key_file'
     command: ['--quiet']
@@ -467,8 +471,9 @@ services:
     volumes:
       - mongo_data:/var/lib/mongo/
     secrets:
-      - mongo_admin_password
       - mongo_key_file
+      - mongo_root_password
+      - mongo_user_password
     ulimits:
       nofile: 65535
 
@@ -525,8 +530,12 @@ secrets:
     file: secrets/keycloak_client_saltbox_core_password
   keycloak_database_password:
     file: secrets/keycloak_database_password
-  mongo_admin_password:
-    file: secrets/mongo_admin_password
+  mongo_root_password:
+    file: secrets/mongo_root_password
+  mongo_user_password:
+    file: secrets/mongo_root_password
+  mongo_key_file:
+    file: secrets/mongo_key_file
   redis_salt_ca_private_key_password:
     file: secrets/redis_salt_ca_private_key_password
   redis_salt_password:
@@ -543,5 +552,3 @@ secrets:
     file: secrets/sshfs_user_master_password
   sshfs_user_saltbox_password:
     file: secrets/sshfs_user_saltbox_password
-  mongo_key_file:
-    file: secrets/mongo_key_file

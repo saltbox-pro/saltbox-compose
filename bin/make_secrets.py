@@ -10,10 +10,12 @@ from pathlib import Path
 
 SECRETS = {
     'keycloak_admin_password': 16,
-    'keycloak_client_saltbox_core_password': 16,
     'keycloak_client_grafana_password': 16,
+    'keycloak_client_saltbox_core_password': 16,
     'keycloak_database_password': 16,
-    'mongo_admin_password': 16,
+    'mongo_key_file': 512,
+    'mongo_root_password': 16,
+    'mongo_user_password': 16,
     'redis_salt_ca_private_key_password': 16,
     'redis_salt_password': 16,
     'redis_salt_private_key_password': 16,
@@ -22,7 +24,6 @@ SECRETS = {
     'saltbox_user_password': 12,
     'sshfs_user_master_password': 12,
     'sshfs_user_saltbox_password': 12,
-    'mongo_key_file': 512,
 }
 
 SECRET_ALPHABET = string.ascii_letters + string.digits

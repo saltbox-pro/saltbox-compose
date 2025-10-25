@@ -14,12 +14,28 @@ var ensure_primary = function() {
     throw new Error("Failed to await MongoDB intance to be a writable primary");
 }
 
+var ensure_user = function(user) {
+    const username = user.user;
+    if (db.getUsers({filter: {'user': username}}).users.length == 0) {
+        db.createUser(user);
+        print(`MongoDB user "${username}" has been created`);
+    } else {
+        print(`MongoDB user "${username}" already exists`);
+    }
+}
+
 var main = function() {
-    const username = get_env("MONGO_ADMIN_USERNAME");
-    const password = get_env("MONGO_ADMIN_PASSWORD");
+    const root_password = get_env("MONGO_ROOT_PASSWORD");
+    const root_username = get_env("MONGO_ROOT_USERNAME");
+    const user_password = get_env("MONGO_USER_PASSWORD");
+    const user_username = get_env("MONGO_USER_USERNAME");
     const replica_set = get_env("MONGOD_REPLICA_SET");
     const host = get_env("HOSTNAME");
     const adm_db = "admin";
+
+    if (user_username == root_username) {
+        throw new Error("MOGNO_ROOT_USERNAME must differ from MONGO_USER_USERNAME");
+    }
 
     use(adm_db);
 
@@ -45,14 +61,20 @@ var main = function() {
         }
     }
 
-    print('Ensure admin');
-    if (db.getUsers({filter: {'user': username}}).users.length == 0) {
-        roles = [{role: "userAdminAnyDatabase", db: adm_db}, "readWriteAnyDatabase"]
-        db.createUser({user: username, pwd: password, roles: roles,});
-        print(`MongoDB user "${username}" has been created`);
-    } else {
-        print(`MongoDB user "${username}" already exists`);
-    }
+    print('Ensure users');
+    const root = {
+        user: root_username,
+        pwd: root_password,
+        roles: [{role: "root", db: adm_db}],
+    };
+    ensure_user(root);
+
+    const user = {
+        user: user_username,
+        pwd: user_password,
+        roles: ["readWriteAnyDatabase"],
+    };
+    ensure_user(user);
 }
 
 main();

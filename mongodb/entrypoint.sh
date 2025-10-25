@@ -48,7 +48,9 @@ init() {
   done
 
   echo 'Run init.js script'
-  env MONGO_ADMIN_PASSWORD="$(cat "$MONGO_ADMIN_PASSWORD_FILE")" \
+  env \
+    MONGO_ROOT_PASSWORD="$(cat "$MONGO_ROOT_PASSWORD_FILE")" \
+    MONGO_USER_PASSWORD="$(cat "$MONGO_USER_PASSWORD_FILE")" \
     "${mongosh_cmd[@]}" --file /etc/mongo/init.js
 
   echo 'Shutting down the init instance'
