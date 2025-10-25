@@ -45,6 +45,13 @@ include:
     CONTEXT_PATH: 'make-certs/'
 
 
+.mongodb:
+  extends: .default
+  variables:
+    REGISTRY_ADDITIONAL_PATH: '/mongodb'
+    CONTEXT_PATH: 'mongodb/'
+
+
 Build Redis image for tag:
   extends: .build-redis-image
   variables:
@@ -127,6 +134,22 @@ Build make-certs image for tag:
 
 Build make-certs image for branch:
   extends: .make-certs
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+
+Build MongoDB image for tag:
+  extends: .mongodb
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_TAG'
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+
+Build MongoDB image for branch:
+  extends: .mongodb
   variables:
     IMAGE_TAG: '$CI_COMMIT_BRANCH'
   rules:
