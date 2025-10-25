@@ -1,4 +1,4 @@
-var get_env = function(name) {
+function get_env(name) {
     let val = process.env[name];
     if (typeof(val) == 'undefined') {
         throw new Error(`Not found ${name} environment variable`);
@@ -6,12 +6,12 @@ var get_env = function(name) {
     return val;
 }
 
-var create_user = function(user) {
+function create_user(user) {
     db.createUser(user);
     print(`MongoDB user "${user.user}" has been created`);
 }
 
-var main = function() {
+function main() {
     const root_password = get_env('MONGO_ROOT_PASSWORD');
     const root_username = get_env('MONGO_ROOT_USERNAME');
     const user_password = get_env('MONGO_USER_PASSWORD');

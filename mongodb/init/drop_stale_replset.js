@@ -1,4 +1,4 @@
-var get_env = function(name) {
+function get_env(name) {
     let val = process.env[name];
     if (typeof(val) == 'undefined') {
         throw new Error(`Not found ${name} environment variable`);

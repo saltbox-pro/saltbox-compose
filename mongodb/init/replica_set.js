@@ -1,4 +1,4 @@
-var get_env = function(name) {
+function get_env(name) {
     let val = process.env[name];
     if (typeof(val) == 'undefined') {
         throw new Error(`Not found ${name} environment variable`);
@@ -6,7 +6,7 @@ var get_env = function(name) {
     return val;
 }
 
-var ensure_state = function(is_primary) {
+function ensure_state(is_primary) {
     print(`Waiting MongoDB intance ${is_primary?'':'to not '}to be a writable primary`);
     for (let i = 0; i < 20; i++) {
         if (db.isMaster().isWritablePrimary == is_primary) return;
@@ -15,7 +15,7 @@ var ensure_state = function(is_primary) {
     throw new Error(`Failed to await MongoDB intance ${is_primary?'':'not '}to be a writable primary`);
 }
 
-var main = function() {
+function main() {
     const replica_set = get_env('MONGOD_REPLICA_SET');
     const host = get_env('HOSTNAME');
     const adm_db = 'admin';
