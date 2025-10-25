@@ -41,19 +41,14 @@ var main = function() {
         // FIXME else if (err.name == "MongoServerError" && err.codeName == "InvalidReplicaSetConfig")
         else {
             print(`Error ${err.name}[${err.codeName}]`);
-            //FIXME throw err;
+            throw err;
         }
     }
 
     print('Ensure admin');
     if (db.getUsers({filter: {'user': username}}).users.length == 0) {
-        db.createUser(
-            {
-                user: username,
-                pwd: password,
-                roles: [{role: "userAdminAnyDatabase", db: adm_db}, "readWriteAnyDatabase"]
-            }
-        )
+        roles = [{role: "userAdminAnyDatabase", db: adm_db}, "readWriteAnyDatabase"]
+        db.createUser({user: username, pwd: password, roles: roles,});
         print(`MongoDB user "${username}" has been created`);
     } else {
         print(`MongoDB user "${username}" already exists`);

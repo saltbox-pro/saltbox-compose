@@ -30,12 +30,14 @@ init() {
   init_pidfile='/tmp/docker-entrypoint-mongod.pid'
   rm -f "$init_pidfile"
 
+  mongosh_cmd=(gosu "$pam_user" mongosh)
+
   echo 'Run MongoDB init instance'
   "${mongod_base[@]}" --noauth --pidfilepath="$init_pidfile" --fork --syslog run
 
   try="$WAIT_FOR_INIT"
   while true; do
-    if mongosh 'admin' --eval 'quit(0)' &> /dev/null; then
+    if "${mongosh_cmd[@]}" 'admin' --eval 'quit(0)'; then
       break
     fi
     (( try-- ))
@@ -47,7 +49,7 @@ init() {
 
   echo 'Run init.js script'
   env MONGO_ADMIN_PASSWORD="$(cat "$MONGO_ADMIN_PASSWORD_FILE")" \
-    mongosh --file /etc/mongo/init.js
+    "${mongosh_cmd[@]}" --file /etc/mongo/init.js
 
   echo 'Shutting down the init instance'
   "${mongod_base[@]}" --keyFile "$key_file" --pidfilepath="$init_pidfile" --shutdown
