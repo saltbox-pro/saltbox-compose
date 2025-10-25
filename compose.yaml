@@ -454,6 +454,7 @@ services:
 
   mongo:
     <<: *default
+    hostname: mongo  # Important for replica set
     image: '${IMAGE_REGISTRY}/saltbox-compose/mongodb:${MONGODB_IMAGE_TAG}'
     environment:
       MONGO_ADMIN_USERNAME: '${MONGO_USER}'
