@@ -2,8 +2,12 @@
 
 set -e
 
+info() {
+  echo "> $*"
+}
+
 warn() {
-  1>&2 echo "$@"
+  1>&2 info "$@"
 }
 
 err() {
@@ -20,21 +24,20 @@ install -m 400 -o "${pam_user}" -g "${pam_user}" "$MONGOD_KEY_FILE" "$key_file"
 
 chown --recursive "${pam_user}:${pam_user}" "$data_dir"
 
-mongod_base=(
+mongod_noauth=(
+  gosu "${pam_user}" mongod
+  --config "$MONGOD_CONF_FILE"
+)
+
+mongod_auth=(
   gosu "${pam_user}" mongod
   --config "$MONGOD_CONF_FILE"
   --replSet "$MONGOD_REPLICA_SET"
+  --keyFile "$key_file"
 )
 
-init() {
-  init_pidfile='/tmp/docker-entrypoint-mongod.pid'
-  rm -f "$init_pidfile"
-
-  mongosh_cmd=(gosu "$pam_user" mongosh)
-
-  echo 'Run MongoDB init instance'
-  "${mongod_base[@]}" --noauth --pidfilepath="$init_pidfile" --fork --syslog run
-
+await_mongod() {
+  info 'Waiting for mongod responce'
   try="$WAIT_FOR_INIT"
   while true; do
     if "${mongosh_cmd[@]}" 'admin' --eval 'quit(0)'; then
@@ -46,26 +49,42 @@ init() {
     fi
     sleep 1
   done
+}
 
-  echo 'Run init.js script'
+init() {
+  init_pidfile='/tmp/docker-entrypoint-mongod.pid'
+  rm -f "$init_pidfile"
+
+  mongosh_cmd=(gosu "$pam_user" mongosh)
+
+  info 'Run MongoDB local init instance'
+  "${mongod_noauth[@]}" --noauth --pidfilepath="$init_pidfile" --fork --syslog run
+  await_mongod
+  "${mongosh_cmd[@]}" --file '/etc/mongo/init/drop_stale_replset.js'
+  info 'Shutting down the local init instance'
+  "${mongod_noauth[@]}" --pidfilepath="$init_pidfile" --shutdown
+  rm -f "$init_pidfile"
+
+  info 'Run MongoDB init instance'
+  "${mongod_auth[@]}" --transitionToAuth --pidfilepath="$init_pidfile" --fork --syslog run
+  await_mongod
+  info 'Init replica set'
+  "${mongosh_cmd[@]}" --file '/etc/mongo/init/replica_set.js'
+  info 'Recreate users'
   env \
     MONGO_ROOT_PASSWORD="$(cat "$MONGO_ROOT_PASSWORD_FILE")" \
     MONGO_USER_PASSWORD="$(cat "$MONGO_USER_PASSWORD_FILE")" \
-    "${mongosh_cmd[@]}" --file /etc/mongo/init.js
-
-  echo 'Shutting down the init instance'
-  "${mongod_base[@]}" --keyFile "$key_file" --pidfilepath="$init_pidfile" --shutdown
+    "${mongosh_cmd[@]}" --file '/etc/mongo/init/users.js'
+  info 'Shutting down the init instance'
+  "${mongod_auth[@]}" --pidfilepath="$init_pidfile" --shutdown
   rm -f "$init_pidfile"
+
   touch "$init_mark_file"
-  echo 'MongoDB init finished'
+  info 'MongoDB init finished'
 }
 
-if [ ! -f "$init_mark_file" ]; then
-  init;
-else
-  echo 'MongoDB instance is already initialized'
-fi
+init
 
-cmd=("${mongod_base[@]}" --keyFile "$key_file" run "$@")
-echo "$ ${cmd[*]}"
+cmd=("${mongod_auth[@]}" run "$@")
+info "$ ${cmd[*]}"
 exec "${cmd[@]}"

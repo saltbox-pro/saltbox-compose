@@ -32,7 +32,12 @@ echo 'disableTelemetry()' | mongosh --nodb
 EOF
 
 COPY --chmod=755 entrypoint.sh healthcheck.sh /usr/local/bin/
-COPY --chmod=644 init.js /etc/mongo/
+RUN --mount=type=bind,source=init,target=/mnt/ \
+<<EOF
+set -e
+mkdir --parent /etc/mongo/init/
+install --verbose --mode 644 /mnt/*.js /etc/mongo/init/
+EOF
 
 ENV MONGOD_CONF_FILE='/etc/mongo/mongod.conf'
 COPY --chmod=644 mongod.yaml "$MONGOD_CONF_FILE"
