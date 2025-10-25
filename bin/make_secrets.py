@@ -1,32 +1,23 @@
 #! /usr/bin/env python3
 
 import argparse
-import string
+import json
 import secrets
 import shutil
+import string
 import sys
-
+from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
-
-SECRETS = {
-    'keycloak_admin_password': 16,
-    'keycloak_client_grafana_password': 16,
-    'keycloak_client_saltbox_core_password': 16,
-    'keycloak_database_password': 16,
-    'mongo_key_file': 512,
-    'mongo_root_password': 16,
-    'mongo_user_password': 16,
-    'redis_salt_ca_private_key_password': 16,
-    'redis_salt_password': 16,
-    'redis_salt_private_key_password': 16,
-    'redis_taskiq_password': 16,
-    'saltbox_admin_password': 12,
-    'saltbox_user_password': 12,
-    'sshfs_user_master_password': 12,
-    'sshfs_user_saltbox_password': 12,
-}
+from typing import Any
 
 SECRET_ALPHABET = string.ascii_letters + string.digits
+
+
+@dataclass
+class Secret:
+    name: str
+    length: int
 
 
 def rm(path: Path) -> None:
@@ -57,24 +48,24 @@ def make_secret(path: Path, secret_length: int, overwrite=False) -> None:
         f.write(random(length=secret_length))
 
 
-def main(secrets_dir: Path, overwrite: bool) -> None:
-    for sec, length in SECRETS.items():
-        path = path_of_secret(secrets_dir, sec)
-        make_secret(path=path, secret_length=length, overwrite=overwrite)
-
-
-def prune(secrets_dir: Path) -> None:
-    good_files = {path_of_secret(secrets_dir, sec) for sec in SECRETS}
+def prune(secrets: list[Secret], secrets_dir: Path) -> None:
+    good_files = {path_of_secret(secrets_dir, sec.name) for sec in secrets}
     for path in secrets_dir.iterdir():
         if path not in good_files and path and not path.name.startswith('.'):
             print(f'Delete {path}')
             rm(path)
 
 
-if __name__ == '__main__':
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='make_secrets',
         description='Generate passwords for Salt.Box installation',)
+    parser.add_argument(
+        'file',
+        nargs='*',
+        default=['secrets.json'],
+        help='Files with',
+    )
     parser.add_argument(
         '-w',
         '--overwrite',
@@ -84,9 +75,60 @@ if __name__ == '__main__':
         '--prune',
         help='Delete files, which are not related to specified secrets',
         action='store_true',)
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def validate_conf(data: Any) -> list[Secret]:
+    if not isinstance(data, list):
+        raise ValueError('Secrets config must be enumerated in array')
+
+    result = []
+
+    for i in data:
+        if not isinstance(i, dict):
+            raise ValueError('Secret must be declared as an object')
+        for field, f_type in {'name': str, 'length': int}.items():
+            if field not in i:
+                msg = f'Missing "{field}" in {i}'
+                raise ValueError(msg)
+            if not isinstance(i[field], f_type):
+                msg = f'"{field}" must be of type {f_type} in {i}'
+                raise ValueError(msg)
+        result.append(Secret(**i))
+
+    return result
+
+
+def parse_configs(paths: list[str | Path]) -> list[Secret]:
+    result = []
+    for path in paths:
+        print(f'Reading "{path}"')
+        with Path(path).open('r') as file:
+            result.extend(validate_conf(json.load(file)))
+    secrets = [i.name for i in result]
+    dups = [item for item, cnt in Counter(secrets).items() if cnt > 1]
+    if dups:
+        msg = f'Duplicated secrets found in configs: {", ".join(dups)}'
+        raise ValueError(msg)
+    return result
+
+
+def main() -> None:
+    args = parse_args()
     secrets_dir = Path(__file__).parent.parent / 'secrets'
     assert secrets_dir.is_absolute(), 'Expected to have absolute path to secrets dir'
+    try:
+        secrets = parse_configs(args.file)
+    except ValueError as err:
+        print(f'ERROR {err}', file=sys.stderr)
+        sys.exit(1)
+    print(f'Found {len(secrets)} secret entries in {len(args.file)} config files')
     if args.prune:
-        prune(secrets_dir)
-    main(secrets_dir=secrets_dir, overwrite=args.overwrite)
+        prune(secrets=secrets, secrets_dir=secrets_dir)
+    for sec in secrets:
+        path = path_of_secret(secrets_dir, sec.name)
+        make_secret(path=path, secret_length=sec.length, overwrite=args.overwrite)
+
+
+if __name__ == '__main__':
+    main()

@@ -211,7 +211,7 @@ if [ "$(git_pull_required)" = 1 ]; then
   echo_run ./bin/git_pull_dev_repos.py --no-compose
 fi
 
-echo_run ./bin/make_secrets.py
+echo_run ./bin/make_secrets.py secrets.json
 
 if [ $login_flag = 1 ]; then
   # shellcheck source=/dev/null
