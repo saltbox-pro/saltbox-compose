@@ -123,6 +123,7 @@ function retry() {
 }
 
 up_args=('--remove-orphans')
+make_secrets_arg=('secrets.json')
 down_args=()
 detach_flag=0
 drop_data_flag=0
@@ -211,7 +212,10 @@ if [ "$(git_pull_required)" = 1 ]; then
   echo_run ./bin/git_pull_dev_repos.py --no-compose
 fi
 
-echo_run ./bin/make_secrets.py secrets.json
+# shellcheck source=/dev/null
+IFS=',' read -ra make_secrets_confs <<< "$(source "$env_file" && echo "$_UPDATE_AND_RUN_EXTRA_SECRETS_CONFS")"
+make_secrets_arg+=("${make_secrets_confs[@]}")
+echo_run ./bin/make_secrets.py "${make_secrets_arg[@]}"
 
 if [ $login_flag = 1 ]; then
   # shellcheck source=/dev/null

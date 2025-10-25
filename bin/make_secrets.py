@@ -119,7 +119,7 @@ def main() -> None:
     assert secrets_dir.is_absolute(), 'Expected to have absolute path to secrets dir'
     try:
         secrets = parse_configs(args.file)
-    except ValueError as err:
+    except (ValueError, OSError) as err:
         print(f'ERROR {err}', file=sys.stderr)
         sys.exit(1)
     print(f'Found {len(secrets)} secret entries in {len(args.file)} config files')
