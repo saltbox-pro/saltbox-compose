@@ -2,6 +2,7 @@
 set -e
 
 init_pidfile='/tmp/docker-entrypoint-mongod.pid'
+pam_user='mongod'
 
 warn() {
   1>&2 echo "$@"
@@ -16,4 +17,4 @@ if [ -e "$init_pidfile" ]; then
     err 'Initialization seems in progress'
 fi
 
-mongosh 'admin' --eval 'db.hello()'
+gosu "$pam_user" mongosh 'admin' --eval 'quit(0)'

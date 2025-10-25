@@ -44,6 +44,11 @@ ENV MONGOD_REPLICA_SET=
 ENV MONGOD_KEY_FILE=
 WORKDIR /var/lib/mongo/
 EXPOSE 27017
-HEALTHCHECK --interval=1s --retries=30 --timeout=10s CMD /usr/local/bin/healthcheck.sh
+HEALTHCHECK \
+  --interval=1m \
+  --start-interval=10s \
+  --start-period=1s \
+  --timeout=10s \
+  CMD /usr/local/bin/healthcheck.sh
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD []
