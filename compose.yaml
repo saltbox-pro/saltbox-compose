@@ -344,6 +344,7 @@ services:
     secrets:
       - redis_taskiq_password
       - redis_salt_password
+      - mongo_root_password
       - mongo_user_password
       - keycloak_client_saltbox_core_password
     expose:
