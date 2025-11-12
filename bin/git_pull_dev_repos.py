@@ -11,13 +11,12 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import json
 import subprocess
 import sys
 import threading
 from pathlib import Path
 from typing import Any
-
-import yaml  # type: ignore[import-untyped]
 
 # Int for limit, None for no limit
 PARALLEL_PULLS: int | None = None
@@ -27,7 +26,7 @@ LINE = '_' * 40
 def get_conf() -> dict:
     bin_dir = Path(__file__).resolve().parent
     bin_path = bin_dir / 'sb-compose.sh'
-    cmd = [str(bin_path), 'config']
+    cmd = [str(bin_path), 'config', '--format=json']
     try:
         result = subprocess.run(cmd, capture_output=True, check=True)
     except subprocess.CalledProcessError as err:
@@ -35,7 +34,7 @@ def get_conf() -> dict:
         stderr = err.stderr.decode()
         dosa = f'Command failed: {cmd_str}, sterr:\n{stderr}'
         raise RuntimeError(dosa)
-    return yaml.safe_load(result.stdout)
+    return json.loads(result.stdout)
 
 
 def get_context_repos(config: dict[str, Any]) -> list[Path]:

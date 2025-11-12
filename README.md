@@ -71,18 +71,6 @@ variables those defaults points to `localhost`.
 **ATTENTION!** Check there are no warnings on not setted variables to avoid
 confusing errors.
 
-**ATTENTION!** It is possible to get the following error:
-
-```plain
-ModuleNotFoundError: No module named 'yaml'
-```
-
-It happens when the SaltBox Compose directory is a Git repository and
-repository `HEAD` are in a branch, so a helper script reads the config to
-invoke `git pull` which is a developement feature. To prevent this switch to a
-tag or just pass `--no-git-pull` flag to `./bin/update_and_run.sh`
-
-
 ## HTTPS
 
 System requires HTTP connections to be SSL terminated. System creates a private
@@ -261,8 +249,6 @@ or a volume in dev overrides:
 
 It invokes by `./bin/update_and_run.sh` every time if current directory is a
 Git repository and `HEAD` is on a branch.
-
-`PyYAML` module is required (usually named like `python-yaml` in distros).
 
 ## Cleanup
 
