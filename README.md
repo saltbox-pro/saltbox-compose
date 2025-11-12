@@ -320,6 +320,29 @@ requirements](#requirements) are installed. The way to bring images on it is:
 5. Run the [startup script](#the-script-to-rule-them-all): `sudo ./bin/update_and_run.sh --no-pull`. `--no-pull` flag makes Compose
    uses local images.
 
+Next optional part is to provide SLS repositories a.k.a Config Boxes:
+
+1. Put local git repository into `LOCAL_CONFIG_BOXES_PATH` directory (`./_local-config-boxes/`
+   inside Compose directory by default).
+
+2. Add the new repository on "Configuration Repositories" page with URL
+   `file:///mnt/config_boxes/REPO_NAME` where `REPO_NAME` corresponds to local repository name. But
+   **do not synchronize the new entry yet**.
+
+> TODO: Local URLs are not currently supported. Use an arbitrary `https://` URL than change the URL
+> in MongoDB.
+
+3. Download all files from repository `manifest.yaml` `sshfs_files` section. The easiest way is to
+   synchronize the repository on an online host instance from the previous part, than take files
+   including checksum files from `SSHFS_STORAGE_PATH` directory (`./_sshfs-storage/` inside Compose
+   directory by default). Place obtained files into `SSHFS_STORAGE_PATH` of an instance on the
+   offline host.
+
+4. On "Configuration Repositories" page of the offline instance switch the repository on and click
+   "Sync" button in actions next to the switch.
+
+5. Check new files with `sudo ./bin/sb-exec.sh salt-run fileserver.file_list` (if local Salt Master
+   is enabled).
 
 ## Development agreements
 
