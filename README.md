@@ -1,5 +1,10 @@
 # Salt.Box Compose
 
+> **NOTE:** Commands in examples suppose shell of non-root user and `docker` command requires root privileges
+to operate. When working by root or `docker` needs no root privileges, `sudo` should be avoided.
+Running docker by non-root user may bring some security risks because of ability to run privileged
+commands through Docker Engine.
+
 ## About Salt.Box
 
 Salt.Box is a configuration management system wich extends
@@ -29,12 +34,13 @@ sudo sysctl -p /etc/sysctl.d/saltbox.conf
 Useful scripts are collected in [`./bin/`](./bin/) directory. They supposed to
 be ran from the root of repo by relative path like `./bin/sb-compose.sh`.
 
-- `export_images.sh` — dump current images to disk to use on an offline host.
 - `git_pull_dev_repos.py` — only for developers — update sources Git repositories.
 - `make_secrets.py` — create required by system passwords.
-- `sb-compose.sh` — thin wrapper over the `docker compose` command is the
-preferred way to manipulate a running instance.
+- `sb-compose.sh` — thin wrapper over the `docker compose` command is the preferred way to
+manipulate a running instance.
 - `sb-exec.sh` — shortcuts for some common commands.
+- `sb-images-export.sh` — dump current images to disk e.g. to use on an offline host.
+- `sb-images-import.sh` — load dumped with `./bin/sb-images-export.sh` images.
 - `update_and_run.sh` — the main startup script.
 - `validate_dotenv.sh` — check major issues in `.env` file.
 
@@ -44,7 +50,6 @@ flag due to security reasons. On troubles to start try to re-add the flag:
 ```bash
 chmod a+x ./bin/*
 ```
-
 
 ## The script to rule them all
 
@@ -68,7 +73,7 @@ Use `-h` or `--help` flag to look script options.
 To make the UI available on hostname or address other than `localhost` override
 variables those defaults points to `localhost`.
 
-**ATTENTION!** Check there are no warnings on not setted variables to avoid
+> **ATTENTION!** Check there are no warnings on not setted variables to avoid
 confusing errors.
 
 ## HTTPS
@@ -95,7 +100,7 @@ wildcards](https://www.rfc-editor.org/rfc/rfc6125#section-7.2)
 (`*.saltbox.local`, but not `*saltbox.local`). Wildcards for IP addresses are
 not supported.
 
-**restart** the system to apply changes and recreate the certificate.
+**Restart** the system to apply changes and recreate the certificate.
 
 Out-of-the-box certificate can be also replaced with a relative one:
 
@@ -105,7 +110,7 @@ sudo ./bin/sb-compose.sh cp CUSTOM_CERT proxy:/etc/nginx/ssl/proxy.crt
 sudo ./bin/sb-compose.sh cp CUSTOM_CERT_KEY proxy:/etc/nginx/ssl/proxy.key
 ```
 
-**ATTENTION!** Changing `WEB_SERVER_SSL_ALT_NAMES_*` variables will lead to
+> **ATTENTION!** Changing `WEB_SERVER_SSL_ALT_NAMES_*` variables will lead to
 overwriting the custom certificate with new generated one.
 
 
@@ -161,7 +166,7 @@ server {
 }
 ```
 
-**NOTE** Remember to set `WEB_SERVER_SSL_ALT_NAMES_*` variables in compliance
+> **NOTE:** Remember to set `WEB_SERVER_SSL_ALT_NAMES_*` variables in compliance
 with `proxy_pass` URL.
 
 ## Autotests
@@ -197,7 +202,7 @@ compose as usual.
 Use `--watch` flag or toggle watch with `w` in attached mode to rebuld
 dev-services on changes.
 
-**ATTENTION!** Do not use development mode on production environments cause it
+> **ATTENTION!** Do not use development mode on production environments cause it
 may change the data.
 
 ### Build images in dev mode
@@ -235,7 +240,7 @@ following command, which should reconnect minions:
 sudo ./bin/sb-compose.sh restart salt-master
 ```
 
-Note: `./bin/sb-compose up --force-recreate salt-master` not regenerates
+> **NOTE:** `./bin/sb-compose up --force-recreate salt-master` not regenerates
 minions.
 
 ### Dev Git repositories updater
@@ -264,7 +269,7 @@ and make them down:
 sudo ./bin/sb-compose.sh -f compose.yaml -f compose-dev-override.yaml down --volumes
 ```
 
-**ATTENTION!** The `--volumes` flag will purge attached volumes and will lead
+> **ATTENTION!** The `--volumes` flag will purge attached volumes and will lead
 to data lost. Be sure to not lost production data.
 
 ### Cleanup Keycloak data only
@@ -288,6 +293,33 @@ sudo docker system prune --force
 ```
 
 Usually it is safe and deletes only stale data.
+
+## Run without Internet
+
+Salt.Box Compose needs Internet connection to get images. And also Salt.Box utilizes Internet
+connection to download Config Boxes.
+
+Suppose there is a target offline host to setup the Salt.Box AND it already has [Salt.Box Compose
+requirements](#requirements) are installed. The way to bring images on it is:
+
+1. On a host with an Internet link configure and run Salt.Box once by standard manual. `.env`
+   Compose config MUST be the same with the target offline host at least in a part of connected
+   Compose-files.
+
+> **NOTE:** Enabled [Compose dev overrides](#dev-mode) with `service[].build` sections may require additional
+> base images to be transferred manually.
+
+2. Export images with `sudo ./bin/sb-images-export.sh` command. The Salt.Box install may be stopped but
+   not downed. Images will be saved into `./images/` directory by default.
+
+3. Copy the `saltbox-compose` directory including the images directory on the target offline host.
+   Make the copy the current working directory.
+
+4. Import images with `sudo ./bin/sb-images-import.sh` command.
+
+5. Run the [startup script](#the-script-to-rule-them-all): `sudo ./bin/update_and_run.sh --no-pull`. `--no-pull` flag makes Compose
+   uses local images.
+
 
 ## Development agreements
 
