@@ -20,10 +20,7 @@ x-default-service: &default
 services:
   proxy:
     <<: *default
-    build:
-      context: proxy/
-      args:
-        IMAGE: '${IMAGE_REGISTRY}/saltbox-compose/nginx:${NGINX_IMAGE_TAG}'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/proxy:${PROXY_IMAGE_TAG}'
     environment:
       API_BASE_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${GATEWAY_PATH}'
       BACKEND_HOSTNAME: saltbox-core

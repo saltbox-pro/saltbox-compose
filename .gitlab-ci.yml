@@ -24,6 +24,13 @@ include:
     CONTEXT_PATH: 'nginx/'
 
 
+.build-proxy-image:
+  extends: .default
+  variables:
+    REGISTRY_ADDITIONAL_PATH: '/proxy'
+    CONTEXT_PATH: 'proxy/'
+
+
 .opa:
   extends: .default
   variables:
@@ -78,6 +85,22 @@ Build Nginx image for tag:
 
 Build Nginx image for branch:
   extends: .build-nginx-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+
+Build Proxy image for tag:
+  extends: .build-proxy-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_TAG'
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+
+Build Proxy image for branch:
+  extends: .build-proxy-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_BRANCH'
   rules:
