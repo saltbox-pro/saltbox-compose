@@ -338,7 +338,7 @@ services:
       - 'saltbox_core_var:/var/lib/saltbox-core/'
       - 'salt_repos:/mnt/salt/'
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
-      - '${LOCAL_CONFIG_BOXES_PATH}:/mnt/config_boxes/'
+      - '${LOCAL_CONFIG_BOXES_PATH}:/mnt/config-boxes/'
     secrets:
       - redis_taskiq_password
       - redis_salt_password

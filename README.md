@@ -326,7 +326,7 @@ Next optional part is to provide SLS repositories a.k.a Config Boxes:
    inside Compose directory by default).
 
 2. Add the new repository on "Configuration Repositories" page with URL
-   `file:///mnt/config_boxes/REPO_NAME` where `REPO_NAME` corresponds to local repository name. But
+   `file:///mnt/config-boxes/REPO_NAME` where `REPO_NAME` corresponds to local repository name. But
    **do not synchronize the new entry yet**.
 
 > TODO: Local URLs are not currently supported. Use an arbitrary `https://` URL than change the URL
