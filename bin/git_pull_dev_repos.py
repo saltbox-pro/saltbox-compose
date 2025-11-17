@@ -5,7 +5,7 @@ git_pull_dev_repos.py is a part of Salt.Box Compose.
 Developement helper script to update Git repositories from dev overrides.
 """
 
-# Requires python >= 3.8
+# Requires python>=3.7.3
 
 from __future__ import annotations
 
@@ -40,7 +40,9 @@ def get_conf() -> dict:
 def get_context_repos(config: dict[str, Any]) -> list[Path]:
     paths = set()
     for service in config.get('services', {}).values():
-        if (build := service.get('build')) and (context := build.get('context')):
+        build = service.get('build')
+        context = build.get('context') if build else None
+        if context:
             paths.add(Path(context))
     cwd = Path.cwd()
     return [p for p in paths if cwd not in p.parents]

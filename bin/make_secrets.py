@@ -1,5 +1,17 @@
 #! /usr/bin/env python3
 
+"""
+Create password files by simple JSON config files. Config format is:
+    [
+      {
+        "name": "NAME_OF_SECRET_FILE",
+        "length": PASSWORD_LENGTH
+      },
+    ]
+"""
+
+# Requires python>=3.7.3
+
 import argparse
 import json
 import secrets
@@ -9,7 +21,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, List, Union
 
 SECRET_ALPHABET = string.ascii_letters + string.digits
 
@@ -48,7 +60,7 @@ def make_secret(path: Path, secret_length: int, overwrite=False) -> None:
         f.write(random(length=secret_length))
 
 
-def prune(secrets: list[Secret], secrets_dir: Path) -> None:
+def prune(secrets: List[Secret], secrets_dir: Path) -> None:
     good_files = {path_of_secret(secrets_dir, sec.name) for sec in secrets}
     for path in secrets_dir.iterdir():
         if path not in good_files and path and not path.name.startswith('.'):
@@ -78,7 +90,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def validate_conf(data: Any) -> list[Secret]:
+def validate_conf(data: Any) -> List[Secret]:
     if not isinstance(data, list):
         raise ValueError('Secrets config must be enumerated in array')
 
@@ -99,7 +111,7 @@ def validate_conf(data: Any) -> list[Secret]:
     return result
 
 
-def parse_configs(paths: list[str | Path]) -> list[Secret]:
+def parse_configs(paths: List[Union[str, Path]]) -> List[Secret]:
     result = []
     for path in paths:
         print(f'Reading "{path}"')
@@ -113,10 +125,22 @@ def parse_configs(paths: list[str | Path]) -> list[Secret]:
     return result
 
 
+def get_secrets_dir() -> Path:
+    base_dir = Path(__file__).parent.parent.resolve()
+    secrets_dir =  base_dir / 'secrets'
+    assert secrets_dir.is_absolute(), 'Expected to have absolute path to secrets dir'
+    print(f'Secrets dir is "{secrets_dir}"')
+    if not secrets_dir.exists():
+        secrets_dir.mkdir(parents=True)
+    elif not secrets_dir.is_dir():
+        dosa = f'Output path exists and is not a directory: "{secrets_dir}"'
+        raise OSError(dosa)
+    return secrets_dir
+
+
 def main() -> None:
     args = parse_args()
-    secrets_dir = Path(__file__).parent.parent / 'secrets'
-    assert secrets_dir.is_absolute(), 'Expected to have absolute path to secrets dir'
+    secrets_dir = get_secrets_dir()
     try:
         secrets = parse_configs(args.file)
     except (ValueError, OSError) as err:

@@ -17,7 +17,7 @@ Look for user documentation on [saltbox.pro](https://saltbox.pro).
 
 - Docker Engine >= 25.0 _(due to healthcheck feature)_
 - Docker Compose >= 2.20.2
-- Python >= 3.9 _(for helper scripts)_
+- Python >= 3.7.3 _(for helper scripts)_
 
 There are recommended host settings:
 
