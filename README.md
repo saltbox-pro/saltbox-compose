@@ -312,37 +312,34 @@ requirements](#requirements) are installed. The way to bring images on it is:
 2. Export images with `sudo ./bin/sb-images-export.sh` command. The Salt.Box install may be stopped but
    not downed. Images will be saved into `./images/` directory by default.
 
-3. Copy the `saltbox-compose` directory including the images directory on the target offline host.
-   Make the copy the current working directory.
+3. Put local git repositories of required SLS repositories a.k.a Config Boxes
+   into `LOCAL_CONFIG_BOXES_PATH` directory (`./_local-config-boxes/` inside
+   Compose directory by default).
+
+4. Add the new repositories on "Configuration Repositories" page with URLs in form of
+   `file:///mnt/config-boxes/REPO_NAME` where `REPO_NAME` corresponds to local repository name.
+
+5. On "Configuration Repositories" page of the offline instance switch every added repository on and
+   click "Sync" button in actions next to the switch. Check new files are obtained with `sudo
+    ./bin/sb-exec.sh salt-run fileserver.file_list` (if local Salt Master is enabled).
+
+3. Copy the `saltbox-compose` directory including the `images/` directory on the target offline host.
+   Change current working directory to the new `saltbox-compose` one. If some modules are connected
+   with `_UPDATE_AND_RUN_EXTRA_*` env variables, __corresponding directories must be also copied__.
 
 4. Import images with `sudo ./bin/sb-images-import.sh` command.
 
-5. Run the [startup script](#the-script-to-rule-them-all): `sudo ./bin/update_and_run.sh --no-pull`. `--no-pull` flag makes Compose
-   uses local images.
+5. Run the [startup script](#the-script-to-rule-them-all): `sudo ./bin/update_and_run.sh --no-pull`.
+   `--no-pull` flag makes Compose uses local images.
 
-Next optional part is to provide SLS repositories a.k.a Config Boxes:
+6. Add local repositories on "Configuration Repositories" page again as in an earlier step. Switch
+   the repositories on on and click "Sync" buttons.
 
-1. Put local git repository into `LOCAL_CONFIG_BOXES_PATH` directory (`./_local-config-boxes/`
-   inside Compose directory by default).
+Later when Manifest `sshfs_files` sections of SLS repositories will be changed the AUX files may be
+synced on an online instance and be copied on an offline one. AUX files should be copied with
+checksum files from `SSHFS_STORAGE_PATH` directory (`./_sshfs-storage/` inside Compose directory by
+default).
 
-2. Add the new repository on "Configuration Repositories" page with URL
-   `file:///mnt/config-boxes/REPO_NAME` where `REPO_NAME` corresponds to local repository name. But
-   **do not synchronize the new entry yet**.
-
-> TODO: Local URLs are not currently supported. Use an arbitrary `https://` URL than change the URL
-> in MongoDB.
-
-3. Download all files from repository `manifest.yaml` `sshfs_files` section. The easiest way is to
-   synchronize the repository on an online host instance from the previous part, than take files
-   including checksum files from `SSHFS_STORAGE_PATH` directory (`./_sshfs-storage/` inside Compose
-   directory by default). Place obtained files into `SSHFS_STORAGE_PATH` of an instance on the
-   offline host.
-
-4. On "Configuration Repositories" page of the offline instance switch the repository on and click
-   "Sync" button in actions next to the switch.
-
-5. Check new files with `sudo ./bin/sb-exec.sh salt-run fileserver.file_list` (if local Salt Master
-   is enabled).
 
 ## Development agreements
 
