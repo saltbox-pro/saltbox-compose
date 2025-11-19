@@ -506,6 +506,29 @@ services:
       - 'salt_repos:/srv/master/salt/'
       - './sshfs_conf/users.json:/mnt/sshfs_users.json:ro'
 
+  sshfs_manager:
+    <<: *default
+    image: coderaiser/cloudcmd:19.0.13-alpine
+    environment:
+      CLOUDCMD_ROOT: '/srv/sshfs/'
+      CLOUDCMD_CONTACT: false
+      CLOUDCMD_CONSOLE: true
+      CLOUDCMD_AUTH: true
+      CLOUDCMD_USERNAME: '${SALTBOX_ADMIN_USERNAME}'
+      CLOUDCMD_PASSWORD: '123'
+      CLOUDCMD_VIM: true
+      CLOUDCMD_SHOW_FILE_NAME: true
+    secrets:
+      - saltbox_admin_password
+    volumes:
+      - '${SSHFS_STORAGE_PATH}:/srv/sshfs/' 
+    ports:
+      - '8000:8000'
+    depends_on:
+      sshfs:
+        condition: service_started
+        restart: false
+
 configs: {}
 
 volumes:

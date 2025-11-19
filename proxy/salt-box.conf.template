@@ -70,6 +70,13 @@ server {
         proxy_set_header X-Forwarded-Host $host;
     }
 
+    location /sshfs/ {
+       proxy_pass 'http://sshfs_manager:8000/';
+       proxy_http_version 1.1;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+    }
+
     include /etc/nginx/includes/*.conf;
 }
 
