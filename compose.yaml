@@ -51,6 +51,9 @@ services:
       keycloak:
         condition: service_started
         restart: false
+      keycloak-init:
+        condition: service_completed_successfully
+        restart: false
 
   keycloak-db:
     <<: *default
