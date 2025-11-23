@@ -566,7 +566,7 @@ services:
       PGID: 0
     volumes:
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
-      - './sshfs_manager_conf/filebrowser.db:/database/filebrowser.db'
+      - './sshfs_manager/filebrowser.db:/database/filebrowser.db'
     secrets:
       - saltbox_admin_password
       - saltbox_user_password
