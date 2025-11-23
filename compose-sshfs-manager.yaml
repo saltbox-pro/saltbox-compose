@@ -17,8 +17,6 @@ services:
       FB_BASE_URL: '/sshfs'
       ADMIN_NAME: '${SALTBOX_ADMIN_USERNAME}'
       USER_NAME: '${SALTBOX_USER_USERNAME}'
-      PUID: 0
-      PGID: 0
     volumes:
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
       - './sshfs_manager/filebrowser.db:/database/filebrowser.db'
