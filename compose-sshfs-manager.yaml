@@ -1,0 +1,35 @@
+x-default-service: &default
+  restart: 'on-failure'
+  stop_grace_period: ${STOP_GRACE_PERIOD}
+
+services:
+  sshfs_manager:
+    <<: *default
+    build:
+      context: ./sshfs_manager
+    image: sshfs_manager:${SSHFS_IMAGE_TAG}
+    user: '0'
+    command:
+      - --port=80
+      - --username=${SALTBOX_ADMIN_USERNAME}
+    environment:
+      FB_ROOT: '/srv/sshfs/'
+      FB_BASE_URL: '/sshfs'
+      ADMIN_NAME: '${SALTBOX_ADMIN_USERNAME}'
+      USER_NAME: '${SALTBOX_USER_USERNAME}'
+      PUID: 0
+      PGID: 0
+    volumes:
+      - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
+      - './sshfs_manager/filebrowser.db:/database/filebrowser.db'
+    secrets:
+      - saltbox_admin_password
+      - saltbox_user_password
+    depends_on:
+      sshfs:
+        condition: service_started
+        restart: false
+
+  proxy:
+    volumes:
+      - ./proxy/includes/sshfs-manager.enabled.conf:/etc/nginx/includes/sshfs-manager.conf:ro

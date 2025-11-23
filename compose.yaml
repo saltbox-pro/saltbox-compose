@@ -25,7 +25,6 @@ services:
       API_BASE_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${GATEWAY_PATH}'
       BACKEND_HOSTNAME: saltbox-core
       GATEWAY_HTTP_PORT: '${GATEWAY_HTTP_PORT}'
-      SSHFS_MANAGER_BASE_URL: '${SSHFS_MANAGER_BASE_URL}'
       BACKEND_HTTP_PORT: '${CORE_PORT}'
       BACKEND_PATH: '${BACKEND_PATH}'
       GATEWAY_PATH: '${GATEWAY_PATH}'
@@ -509,71 +508,6 @@ services:
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
       - 'salt_repos:/srv/master/salt/'
       - './sshfs_conf/users.json:/mnt/sshfs_users.json:ro'
-
-  # oauth2-proxy:
-  #   <<: *default
-  #   image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
-  #   extra_hosts: ["localhost:host-gateway"] 
-  #   environment:
-  #     OAUTH2_PROXY_PROVIDER: keycloak-oidc
-  #     OAUTH2_PROXY_INSECURE_OIDC_SKIP_ISSUER_VERIFICATION: true  #TODO: must be implemented
-  #     OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL: true
-  #     OAUTH2_PROXY_OIDC_INSECURE_SKIP_TLS_VERIFY: true
-  #     OAUTH2_PROXY_SSL_INSECURE_SKIP_VERIFY: true
-  #     OAUTH2_PROXY_INSECURE_ALLOW_UNVERIFIED_EMAIL: true
-  #     OAUTH2_PROXY_COOKIE_SECURE: true
-  #     OAUTH2_PROXY_SKIP_JWT_BEARER_TOKENS: false
-  #     OAUTH2_PROXY_PASS_USER_HEADERS: true
-  #     OAUTH2_PROXY_PASS_BASIC_AUTH: true
-  #     OAUTH2_PROXY_PREFER_EMAIL_TO_USER: true
-  #     OAUTH2_PROXY_SET_XAUTHREQUEST: true
-  #     OAUTH2_PROXY_OIDC_EXTRA_AUDIENCES: 'account'
-  #     OAUTH2_PROXY_CODE_CHALLENGE_METHOD: 'S256'
-  #     OAUTH2_PROXY_HTTP_ADDRESS: "0.0.0.0:4180" 
-  #     OAUTH2_PROXY_CLIENT_ID: '${KEYCLOAK_CLIENT}'
-  #     OAUTH2_PROXY_CLIENT_SECRET_FILE: /run/secrets/keycloak_client_saltbox_core_password
-  #     OAUTH2_PROXY_COOKIE_SECRET: '1234567891123456'
-  #     OAUTH2_PROXY_REDIRECT_URL: 'https://${WEB_SERVER_OUTER_SOCKET}/oauth2/callback'
-  #     OAUTH2_PROXY_OIDC_ISSUER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
-  #     # OAUTH2_PROXY_OIDC_ISSUER_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
-  #     OAUTH2_PROXY_UPSTREAM: "http://sshfs_manager:8080"
-  #     OAUTH2_PROXY_EMAIL_DOMAINS: '*'
-  #   secrets:
-  #     - keycloak_client_saltbox_core_password
-  #   depends_on:
-  #     keycloak:
-  #       condition: service_healthy
-  #     keycloak-init:
-  #       condition: service_completed_successfully
-
-  sshfs_manager:
-    <<: *default
-    build:
-      context: ./sshfs_manager
-    image: sshfs_manager:${SSHFS_IMAGE_TAG}
-    user: '0'
-    command:
-      - --port=80
-      - --username=${SALTBOX_ADMIN_USERNAME}
-    environment:
-      FB_ROOT: '/srv/sshfs/'
-      FB_BASE_URL: '${SSHFS_MANAGER_BASE_URL}'
-      ADMIN_NAME: '${SALTBOX_ADMIN_USERNAME}'
-      USER_NAME: '${SALTBOX_USER_USERNAME}'
-      # FB_AUTH_METHOD: proxy
-      # FB_AUTH_HEADER: X-Forwarded-User
-      PUID: 0
-      PGID: 0
-    volumes:
-      - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
-      - './sshfs_manager/filebrowser.db:/database/filebrowser.db'
-    secrets:
-      - saltbox_admin_password
-      - saltbox_user_password
-    depends_on:
-      sshfs:
-        condition: service_started
-        restart: false
 
 configs: {}
 

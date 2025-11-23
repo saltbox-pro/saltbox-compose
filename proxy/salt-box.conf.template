@@ -70,36 +70,6 @@ server {
         proxy_set_header X-Forwarded-Host $host;
     }
 
-    # location /oauth2/ {
-    #     proxy_pass      "http://oauth2-proxy:4180";
-    #     proxy_set_header Host                    $host;
-    #     proxy_set_header X-Real-IP               $remote_addr;
-    #     proxy_set_header X-Auth-Request-Redirect $request_uri;
-    # }
-    #
-    # location = /oauth2/auth {
-    #     proxy_pass      "http://oauth2-proxy:4180";
-    #     proxy_set_header Host            $host;
-    #     proxy_set_header X-Real-IP       $remote_addr;
-    #     proxy_set_header X-Forwarded-Uri $request_uri;
-    #     proxy_set_header Content-Length  "";
-    #     proxy_pass_request_body          off;
-    # }
-
-    location '${SSHFS_MANAGER_BASE_URL}/' {
-        # auth_request /oauth2/auth;
-        # error_page 401 =403 /oauth2/sign_in;
-
-        auth_request_set $user   $upstream_http_x_auth_request_user;
-        auth_request_set $email  $upstream_http_x_auth_request_email;
-        proxy_set_header X-User              $user;
-        proxy_set_header X-Email             $email;
-
-        proxy_set_header X-Forwarded-Prefix '${SSHFS_MANAGER_BASE_URL}';
-        auth_request_set $auth_cookie_name_upstream_1 $upstream_cookie_auth_cookie_name_1;
-        proxy_pass http://sshfs_manager:80;
-    }
-
     include /etc/nginx/includes/*.conf;
 }
 
@@ -109,3 +79,4 @@ server {
 }
 
 # vi: syn=nginx
+
