@@ -1,0 +1,8 @@
+{
+  "root": "/srv/sshfs/",
+  "baseURL": "/sshfs",
+  "port": "80",
+  "address": "",
+  "log": "stdout",
+  "database": "/database/filebrowser.db"
+}
