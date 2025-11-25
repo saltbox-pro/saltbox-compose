@@ -1,0 +1,18 @@
+server:
+  baseURL: "/sshfs"
+  port: 80
+  sources:
+    - path: /folder
+      config:
+        defaultEnabled: true
+auth:
+  methods:
+    oidc:
+      enabled: true
+      clientId: "${KEYCLOAK_CLIENT}"
+      clientSecret: "${OIDC_CLIENT_SECRET}"
+      issuerUrl: "https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}"
+      scopes: "email openid profile groups"
+      userIdentifier: "preferred_username"
+      createUser: true
+      disableVerifyTLS: true

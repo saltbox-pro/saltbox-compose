@@ -34,6 +34,7 @@ declare -A user_client_expected_roles=(
     ["${KEYCLOAK_USER_NAME}:${KEYCLOAK_CLIENT}"]=""
 )
 
+
 kg_get_uid() {
     local username="$1"
     local grep_pattern='"id" : "\K[^"]+'
@@ -41,6 +42,7 @@ kg_get_uid() {
     user_info=$(kcadm.sh get users -r "$KEYCLOAK_REALM" -q username="${username}")
     echo "${user_info}" | grep -oP "${grep_pattern}" || true
 }
+
 
 kc_get_user_client_roles() {
     local uid="$1"
@@ -52,6 +54,7 @@ kc_get_user_client_roles() {
 
     echo "${roles_info}" | grep -oP "${grep_pattern}" || true
 }
+
 
 kc_all_expected_roles_assigned() {
 
@@ -97,6 +100,7 @@ kc_all_expected_roles_assigned() {
     return "${status}"
 }
 
+
 kc_create_user() {
   local username="$1"
   local email="$2"
@@ -127,6 +131,7 @@ kc_create_user() {
   fi
 }
 
+
 kc_create_client() {
   local id="$1"
   local secret="$2"
@@ -153,6 +158,7 @@ kc_create_client() {
   echo "Client '${id}' with UUID '${uuid}' created"
 }
 
+
 kc_create_role() {
   local client_uuid="$1"
   local role="$2"
@@ -170,6 +176,7 @@ kc_create_role() {
   
   echo -e "'${role}' role has been created for UUID: '${client_uuid}'\n"
 }
+
 
 kc_assign_client_role_to_user() {
   local realm="$1"
@@ -191,3 +198,35 @@ if [ -z "$KEYCLOAK_REALM" ]; then
   >&2 echo 'Missing KEYCLOAK_REALM value'
   exit 1
 fi
+
+
+kc_create_and_assign_client_scope() {
+  local client_id="$1"
+  local scope_name="groups"
+
+  scope_json="$(kcadm.sh get client-scopes \
+    -r "${KEYCLOAK_REALM}" \
+    -q name="${scope_name}" \
+    --fields 'id,name')"
+
+  if echo "${scope_json}" | grep -q "\"name\" : \"${scope_name}\""; then
+    echo "Scope '${scope_name}' already exist for client id: '${client_id}'"
+  else
+
+    echo "Creating scope '${scope_name}' for client id: '${client_id}'"
+
+    created_scope_id="$(kcadm.sh create client-scopes \
+      -r "${KEYCLOAK_REALM}" \
+      -b '{ "name": "'${scope_name}'", "protocol": "openid-connect" }' \
+      -i)"
+
+    echo "Created client scope id: ${created_scope_id}"
+
+    kcadm.sh create "client-scopes/${created_scope_id}/protocol-mappers/models" \
+      -r "${KEYCLOAK_REALM}" \
+      --file "./membership_mapper.json"
+
+    kcadm.sh update "clients/${client_id}/default-client-scopes/${created_scope_id}" \
+      -r "${KEYCLOAK_REALM}"
+  fi
+}
