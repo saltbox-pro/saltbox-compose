@@ -118,7 +118,10 @@ else
     "${KEYCLOAK_CLIENT}" \
     "${_scheduler_admin_role}"
 
-  kc_create_and_assign_client_scope "${saltbox_client_uuid}"
+  kc_create_and_assign_client_scope \
+    "${saltbox_client_uuid}" \
+    "groups" \
+    "./membership_mapper.json"
 
   if [ -n "${_grafana_password}" ]; then
 

@@ -1,6 +1,7 @@
 /.env
 /images/
 /override.env
+*.db
 _*
 
 # Editors

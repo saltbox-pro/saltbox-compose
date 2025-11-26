@@ -202,7 +202,8 @@ fi
 
 kc_create_and_assign_client_scope() {
   local client_id="$1"
-  local scope_name="groups"
+  local scope_name="$2"
+  local path_to_mapper_conf="$3"
 
   scope_json="$(kcadm.sh get client-scopes \
     -r "${KEYCLOAK_REALM}" \
@@ -224,9 +225,15 @@ kc_create_and_assign_client_scope() {
 
     kcadm.sh create "client-scopes/${created_scope_id}/protocol-mappers/models" \
       -r "${KEYCLOAK_REALM}" \
-      --file "./membership_mapper.json"
+      --file "${path_to_mapper_conf}"
 
     kcadm.sh update "clients/${client_id}/default-client-scopes/${created_scope_id}" \
       -r "${KEYCLOAK_REALM}"
   fi
+}
+
+
+kc_create_and_assign_client_group() {
+  local client_id="$1"
+  local group_name="$2"
 }
