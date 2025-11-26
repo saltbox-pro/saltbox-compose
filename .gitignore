@@ -1,7 +1,7 @@
 /.env
 /images/
 /override.env
-*.db
+database.db
 _*
 
 # Editors

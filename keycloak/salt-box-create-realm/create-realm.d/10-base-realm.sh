@@ -118,10 +118,18 @@ else
     "${KEYCLOAK_CLIENT}" \
     "${_scheduler_admin_role}"
 
-  kc_create_and_assign_client_scope \
+  kc_assign_client_to_scope \
     "${saltbox_client_uuid}" \
     "groups" \
     "./membership_mapper.json"
+
+  kc_assign_user_to_group \
+    "${KEYCLOAK_ADMIN_NAME}" \
+    "filebrowser-admins"
+
+  kc_assign_user_to_group \
+    "${KEYCLOAK_USER_NAME}" \
+    "filebrowser-users"
 
   if [ -n "${_grafana_password}" ]; then
 

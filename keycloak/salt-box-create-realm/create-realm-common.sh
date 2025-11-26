@@ -200,7 +200,7 @@ if [ -z "$KEYCLOAK_REALM" ]; then
 fi
 
 
-kc_create_and_assign_client_scope() {
+kc_assign_client_to_scope() {
   local client_id="$1"
   local scope_name="$2"
   local path_to_mapper_conf="$3"
@@ -233,7 +233,42 @@ kc_create_and_assign_client_scope() {
 }
 
 
-kc_create_and_assign_client_group() {
-  local client_id="$1"
+kc_assign_user_to_group() {
+  local username="$1"
   local group_name="$2"
+  
+  groups_json=$(kcadm.sh get groups \
+    -r "${KEYCLOAK_REALM}" \
+    -q search="${group_name}" \
+    --fields id)
+
+  if echo "${groups_json}" | grep -oPq '(?<="id" : ")[^"]+'; then
+    echo "Group '${group_name}' already exist for '${username}' user"
+  else
+ 
+  echo "Creating '${group_name}' group for '${username}' user"
+
+  group_id=$(kcadm.sh create groups \
+    -r "${KEYCLOAK_REALM}" \
+    -b '{ "name": "'${group_name}'" }' \
+    -i)
+
+  echo "Created group with id: '${group_id}'"
+
+  user_id=$(kcadm.sh get users \
+    -r salt.box \
+    -q q="username:${username}" \
+    --fields id \
+    | grep -oP '(?<="id" : ")[^"]+')
+ 
+  echo "Assing '${group_name}' group to '${username}' user"
+
+  kcadm.sh update "users/${user_id}/groups/${group_id}" \
+    --target-realm "${KEYCLOAK_REALM}" \
+    --set "userId=${user_id}" \
+    --set "groupId=${group_id}" \
+    --no-merge
+
+  echo "The '${group_name}' group has been successfully assigned to the '${username}' user"
+  fi
 }
