@@ -1,0 +1,51 @@
+server:
+  baseURL: "/sshfs"
+  port: 80
+  sources:
+    - path: /folder
+      config:
+        defaultEnabled: true
+auth:
+  methods:
+    password:
+      enabled: false
+    oidc:
+      enabled: true
+      clientId: "${KEYCLOAK_CLIENT}"
+      clientSecret: "${OIDC_CLIENT_SECRET}"
+      issuerUrl: "https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}"
+      scopes: "email openid profile groups"
+      userIdentifier: "preferred_username"
+      createUser: true
+      groupsClaim: "groups"
+      adminGroup: "filebrowser-admins"
+      disableVerifyTLS: true
+userDefaults:
+  editorQuickSave: true
+  hideSidebarFileActions: false
+  disableQuickToggles: false
+  disableSearchOptions: false
+  darkMode: false
+  locale: "en"
+  showHidden: true
+  quickDownload: true
+  loginMethod: "oidc"
+  preview:
+    disableHideSidebar: false
+    highQuality: true
+    image: true
+    video: true
+    motionVideoPreview: true
+    popup: true
+    autoplayMedia: true
+    defaultMediaPlayer: false
+    folder: true
+  permissions:
+    api: false
+    admin: false
+    modify: false
+    share: false
+    realtime: false
+    delete: false
+    create: true
+    download: true

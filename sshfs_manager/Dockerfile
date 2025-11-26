@@ -1,5 +1,8 @@
-FROM filebrowser/filebrowser:v2.48.2
+FROM gtstef/filebrowser:1.0.1-stable-slim
 
-COPY --chmod=755 entrypoint.sh /docker/
+RUN apk add --no-cache gettext
+
+COPY --chmod=755 entrypoint.sh /docker/entrypoint.sh
+COPY --chmod=655 config.yaml.tmpl /docker/config.yaml.tmpl
 
 ENTRYPOINT ["/docker/entrypoint.sh"]

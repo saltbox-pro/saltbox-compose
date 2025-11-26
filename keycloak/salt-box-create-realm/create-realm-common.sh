@@ -34,6 +34,7 @@ declare -A user_client_expected_roles=(
     ["${KEYCLOAK_USER_NAME}:${KEYCLOAK_CLIENT}"]=""
 )
 
+
 kg_get_uid() {
     local username="$1"
     local grep_pattern='"id" : "\K[^"]+'
@@ -41,6 +42,7 @@ kg_get_uid() {
     user_info=$(kcadm.sh get users -r "$KEYCLOAK_REALM" -q username="${username}")
     echo "${user_info}" | grep -oP "${grep_pattern}" || true
 }
+
 
 kc_get_user_client_roles() {
     local uid="$1"
@@ -52,6 +54,7 @@ kc_get_user_client_roles() {
 
     echo "${roles_info}" | grep -oP "${grep_pattern}" || true
 }
+
 
 kc_all_expected_roles_assigned() {
 
@@ -97,6 +100,7 @@ kc_all_expected_roles_assigned() {
     return "${status}"
 }
 
+
 kc_create_user() {
   local username="$1"
   local email="$2"
@@ -127,6 +131,7 @@ kc_create_user() {
   fi
 }
 
+
 kc_create_client() {
   local id="$1"
   local secret="$2"
@@ -153,6 +158,7 @@ kc_create_client() {
   echo "Client '${id}' with UUID '${uuid}' created"
 }
 
+
 kc_create_role() {
   local client_uuid="$1"
   local role="$2"
@@ -170,6 +176,7 @@ kc_create_role() {
   
   echo -e "'${role}' role has been created for UUID: '${client_uuid}'\n"
 }
+
 
 kc_assign_client_role_to_user() {
   local realm="$1"
@@ -191,3 +198,77 @@ if [ -z "$KEYCLOAK_REALM" ]; then
   >&2 echo 'Missing KEYCLOAK_REALM value'
   exit 1
 fi
+
+
+kc_assign_client_to_scope() {
+  local client_id="$1"
+  local scope_name="$2"
+  local path_to_mapper_conf="$3"
+
+  scope_json="$(kcadm.sh get client-scopes \
+    -r "${KEYCLOAK_REALM}" \
+    -q name="${scope_name}" \
+    --fields 'id,name')"
+
+  if echo "${scope_json}" | grep -q "\"name\" : \"${scope_name}\""; then
+    echo "Scope '${scope_name}' already exist for client id: '${client_id}'"
+  else
+
+    echo "Creating scope '${scope_name}' for client id: '${client_id}'"
+
+    created_scope_id="$(kcadm.sh create client-scopes \
+      -r "${KEYCLOAK_REALM}" \
+      -b '{ "name": "'${scope_name}'", "protocol": "openid-connect" }' \
+      -i)"
+
+    echo "Created client scope id: ${created_scope_id}"
+
+    kcadm.sh create "client-scopes/${created_scope_id}/protocol-mappers/models" \
+      -r "${KEYCLOAK_REALM}" \
+      --file "${path_to_mapper_conf}"
+
+    kcadm.sh update "clients/${client_id}/default-client-scopes/${created_scope_id}" \
+      -r "${KEYCLOAK_REALM}"
+  fi
+}
+
+
+kc_assign_user_to_group() {
+  local username="$1"
+  local group_name="$2"
+  
+  groups_json=$(kcadm.sh get groups \
+    -r "${KEYCLOAK_REALM}" \
+    -q search="${group_name}" \
+    --fields id)
+
+  if echo "${groups_json}" | grep -oPq '(?<="id" : ")[^"]+'; then
+    echo "Group '${group_name}' already exist for '${username}' user"
+  else
+ 
+  echo "Creating '${group_name}' group for '${username}' user"
+
+  group_id=$(kcadm.sh create groups \
+    -r "${KEYCLOAK_REALM}" \
+    -b '{ "name": "'${group_name}'" }' \
+    -i)
+
+  echo "Created group with id: '${group_id}'"
+
+  user_id=$(kcadm.sh get users \
+    -r salt.box \
+    -q q="username:${username}" \
+    --fields id \
+    | grep -oP '(?<="id" : ")[^"]+')
+ 
+  echo "Assing '${group_name}' group to '${username}' user"
+
+  kcadm.sh update "users/${user_id}/groups/${group_id}" \
+    --target-realm "${KEYCLOAK_REALM}" \
+    --set "userId=${user_id}" \
+    --set "groupId=${group_id}" \
+    --no-merge
+
+  echo "The '${group_name}' group has been successfully assigned to the '${username}' user"
+  fi
+}

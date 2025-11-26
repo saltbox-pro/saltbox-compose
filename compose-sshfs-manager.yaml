@@ -8,24 +8,23 @@ services:
     build:
       context: ./sshfs_manager
     image: sshfs_manager:${SSHFS_IMAGE_TAG}
+    extra_hosts: [ "localhost:host-gateway" ]
     user: '0'
-    command:
-      - --port=80
-      - --username=${SALTBOX_ADMIN_USERNAME}
     environment:
-      FB_ROOT: '/srv/sshfs/'
-      FB_BASE_URL: '/sshfs'
-      ADMIN_NAME: '${SALTBOX_ADMIN_USERNAME}'
-      USER_NAME: '${SALTBOX_USER_USERNAME}'
+      FILEBROWSER_CONFIG: "data/config.yaml"
+      FILEBROWSER_DATABASE: "./database.db"
+      WEB_SERVER_OUTER_SOCKET: "${WEB_SERVER_OUTER_SOCKET}"
+      KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
+      KEYCLOAK_CLIENT: ${KEYCLOAK_CLIENT}
+      KEYCLOAK_BASE_URL: "${KEYCLOAK_BASE_URL}"
     volumes:
-      - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
-      - './sshfs_manager/filebrowser.db:/database/filebrowser.db'
+      - '${SSHFS_STORAGE_PATH}:/folder'
+      - './sshfs_manager/database.db:/home/filebrowser/database.db'
     secrets:
-      - saltbox_admin_password
-      - saltbox_user_password
+      - keycloak_client_saltbox_core_password
     depends_on:
-      sshfs:
-        condition: service_started
+      keycloak-init:
+        condition: service_completed_successfully
         restart: false
 
   proxy:
