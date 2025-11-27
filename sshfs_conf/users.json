@@ -14,5 +14,13 @@
     "home_dir": "/srv/master/",
     "password_file": "/run/secrets/sshfs_user_master_password",
     "shell": "/usr/bin/sh"
+  },
+  {
+    "name": "migrator",
+    "uid": 1002,
+    "gid": 1002,
+    "home_dir": "/srv/migrator/",
+    "password_file": "/run/secrets/sshfs_user_migrator_password",
+    "shell": "/usr/bin/sh"
   }
 ]

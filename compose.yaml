@@ -502,10 +502,12 @@ services:
     secrets:
       - sshfs_user_saltbox_password
       - sshfs_user_master_password
+      - sshfs_user_migrator_password
     ports:
       - '${SSHFS_EXPOSE_SOCKET:-1022}:1022'
     volumes:
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
+      - '${SSHFS_MIGRATION_PATH}:/srv/migrator/'
       - 'salt_repos:/srv/master/salt/'
       - './sshfs_conf/users.json:/mnt/sshfs_users.json:ro'
 
@@ -553,3 +555,5 @@ secrets:
     file: secrets/sshfs_user_master_password
   sshfs_user_saltbox_password:
     file: secrets/sshfs_user_saltbox_password
+  sshfs_user_migrator_password:
+    file: secrets/sshfs_user_migrator_password
