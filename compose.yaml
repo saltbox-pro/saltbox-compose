@@ -230,8 +230,10 @@ services:
   rabbitmq:
     <<: *default
     image: rabbitmq:3-management
-    expose:
-      - 5672
+    # expose:
+      # - 5672
+    ports:
+      - 5672:5672
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "check_running"]
       interval: 5s
