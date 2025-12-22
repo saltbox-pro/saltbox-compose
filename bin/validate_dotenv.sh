@@ -20,6 +20,7 @@ deprecated_vars['SALT_MOC_MINION_RETRY_DNS']="$mock_minion_msg"
 deprecated_vars['SALT_MOC_MINION_REPLICAS']="$mock_minion_msg"
 
 deprecated_vars['BACKEND_HTTP_PORT']='Replaced by CORE_PORT'
+deprecated_vars['MONGO_PORT']='Use MONGO_EXPOSE_SOCKET instead'
 
 function warn() {
   1>&2 echo "$@"
