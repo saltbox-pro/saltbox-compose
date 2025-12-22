@@ -7,15 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > Types of changes: Added, Changed, Deprecated, Removed, Fixed, Security.
 
-## [Unreleased]
-
 __Some changes are breaking__. Cleanup Keycloak database before update
 if possible and purge browser redirects.
+
+## [0.1.2]
+
+### Added
+
+- `./bin/check_image_tag.sh` helper script to check available tags.
+- `migrator` user of SSHFS.
+- Experimental `sshfs_file_manager`.
+
+### Changed
+
+- Decrease required by scripts Python version to `3.7.3`.
+
+### Fixed
+
+- RabbitMQ port forwarding.
+
+## [0.1.1] - 2025-11-15
+
+### Added
+
+- `./bin/make_secrets.py` now reads config from JSON files.
+- `_UPDATE_AND_RUN_EXTRA_SECRETS_CONFS` var allows to attach configs for
+`make_secrets.py` from external modules.
+
+### Changed
+
+- Custom MongoDB ALT Linux based image.
+- Switch MongoDB to replica set.
+- Better MongoDB containers healthcheck.
+- Pre-built proxy image.
+- No more PyYAML requirement for scripts.
+- Update Redis image due to vulnerability fix.
+
+### Removed
+
+- Remove metric related services.
+- `BACKEND_HTTP_PORT` and `MONGO_PORT` variables.
+
+## [0.1.0] - 2025-09-30
 
 ### Added
 
 - Salt.Box Gateway service which coordinates HTTP communications.
 - `SALT_FUNC_REPO_URL` with default repository URL to environment configuration
+- Centralized logging with Graphana.
 - `bin/update_and_run.sh`: `--only-env`, `--only-update` flags for more
   selective execution.
 - `BACKEND_LOG_LEVEL` variable.
