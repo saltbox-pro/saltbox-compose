@@ -204,7 +204,7 @@ function on_env_validation_fail() {
   fi
 }
 
-echo_run ./bin/validate_dotenv.sh || on_env_validation_fail
+echo_run ./bin/validate_dotenv.py || on_env_validation_fail
 
 if [ $last_stage = 'dotenv' ]; then exit 0; fi
 

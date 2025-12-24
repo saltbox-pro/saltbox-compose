@@ -10,7 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 __Some changes are breaking__. Cleanup Keycloak database before update
 if possible and purge browser redirects.
 
-## [0.1.2]
+## [UNRELEASED]
+
+### Added
+
+- Validation of `.env` checks for "unknown variables" (usually misstypes on
+overriding). Unknown variables means not specified in `example.env` and
+external dotenv files.
+
+### Changed
+
+- Rewrite `validate_dotenv.sh` script with Python.
+
+## [0.1.2] - 2025-12-22
 
 ### Added
 

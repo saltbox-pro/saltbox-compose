@@ -1,3 +1,9 @@
+[project]
+requires-python = '>=3.7.3'
+
 [tool.flake8]
 max-line-length = 120
 extend-ignore = [ ]
+
+[tool.ruff]
+max-line-length = 120
