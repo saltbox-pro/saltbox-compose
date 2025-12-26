@@ -1,5 +1,22 @@
 [project]
+name = 'saltbox-compose-scripts'
 requires-python = '>=3.7.3'
+dynamic = ['version']
+
+[project.optional-dependencies]
+dev = [
+  'mypy',
+  'python-lsp-server[all]',
+  'ruff',
+  'ipython',
+]
+
+[build-system]
+requires = ['setuptools', 'setuptools-scm']
+build-backend = 'setuptools.build_meta'
+
+[tool.setuptools.packages.find]
+where = ['bin']
 
 [tool.flake8]
 max-line-length = 120
@@ -7,3 +24,7 @@ extend-ignore = [ ]
 
 [tool.ruff]
 max-line-length = 120
+
+[tool.uv.build-backend]
+module-name = 'bin'
+module-root = ''

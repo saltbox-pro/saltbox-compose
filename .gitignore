@@ -5,9 +5,10 @@
 ca.crt
 _*
 
-# Editors
+# Dev
 /.vscode
 /.idea
 .ruff.toml
 .mypy.ini
 .flake8
+uv.lock
