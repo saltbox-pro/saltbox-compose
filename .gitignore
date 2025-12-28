@@ -1,7 +1,8 @@
 /.env
 /images/
 /override.env
-database.db
+/sshfs_manager/database.db
+ca.crt
 _*
 
 # Editors
