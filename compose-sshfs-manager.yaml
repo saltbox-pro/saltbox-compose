@@ -27,6 +27,10 @@ services:
         condition: service_completed_successfully
         restart: false
 
+  keycloak-init:
+    environment:
+      SSHFS_MANAGER_ENABLED: true
+
   proxy:
     volumes:
       - ./proxy/includes/sshfs-manager.enabled.conf:/etc/nginx/includes/sshfs-manager.conf:ro

@@ -1,6 +1,5 @@
 #! /bin/sh
 # shellcheck disable=SC3043
-set -e
 
 trap '[ $? -eq 0 ] && exit 0 || echo "ERROR on $0 line ${LINENO}"' EXIT
 
@@ -37,22 +36,30 @@ declare -A user_client_expected_roles=(
 
 kg_get_uid() {
     local username="$1"
-    local grep_pattern='"id" : "\K[^"]+'
-    
-    user_info=$(kcadm.sh get users -r "$KEYCLOAK_REALM" -q username="${username}")
-    echo "${user_info}" | grep -oP "${grep_pattern}" || true
+    uid=$(kcadm.sh get users \
+            -r "$KEYCLOAK_REALM" \
+            -q username="${username}" \
+            --format csv \
+            --fields id \
+            --noquotes)
+
+    echo "${uid}"
 }
 
 
 kc_get_user_client_roles() {
     local uid="$1"
     local client="$2"
-    local grep_pattern='"name" : "\K[^"]+'
-    
-    roles_info=$(kcadm.sh get-roles -r "${KEYCLOAK_REALM}" \
-        --uid "${uid}" --cclientid "${client}")
 
-    echo "${roles_info}" | grep -oP "${grep_pattern}" || true
+    roles=$(kcadm.sh get-roles \
+              -r salt.box \
+              --uid "${uid}" \
+              --cclientid "${client}" \
+              --format csv \
+              --fields name \
+              --noquotes)
+
+    echo "${roles}"
 }
 
 
@@ -91,10 +98,10 @@ kc_all_expected_roles_assigned() {
         done
 
         if (( "${#missing[@]}" )); then
-            echo "Missing roles for '${username} in client '${client}': ${missing[*]}"
+            echo -e "\nMissing roles for '${username} in client '${client}': ${missing[*]}"
             status=1
         else
-            echo "All expected roles are assigned for user: '${username}' in client: '${client}'"
+            echo -e "\nAll expected roles are assigned for user: '${username}' in client: '${client}'"
         fi
     done
     return "${status}"
@@ -139,23 +146,29 @@ kc_create_client() {
   local config="$4"
   local desc="$5"
   
-  local uuid_pattern='"id" : "\K[^"]+'
-  client_info=$(kcadm.sh get -r "${KEYCLOAK_REALM}" clients -q clientId="${id}" --fields id,clientId)
-  uuid=$(echo "${client_info}" | grep -oP "${uuid_pattern}" || true)
+  client_uuid=$(kcadm.sh get clients \
+    -r "${KEYCLOAK_REALM}" \
+    -q clientId="${id}" \
+    --format csv \
+    --fields id \
+    --noquotes)
 
-  if [ -n "${uuid}" ]; then
-      echo "Client '${id}' already exists with UUID '${uuid}'"
+  if [ -n "${client_uuid}" ]; then
+      echo "Client '${id}' already exists with UUID '${client_uuid}'" >&2
+      echo "${client_uuid}"
       return
   fi
 
-  uuid=$(kcadm.sh create clients \
+  client_uuid=$(kcadm.sh create clients \
     --target-realm "${KEYCLOAK_REALM}" \
     --file "${config}" \
     --set "clientId=${id}" \
     --set "secret=${secret}" -i)
 
-  kc_create_role "${uuid}" "${role}" "${desc}"
-  echo "Client '${id}' with UUID '${uuid}' created"
+  kc_create_role "${client_uuid}" "${role}" "${desc}" >&2
+  echo "Client '${id}' with UUID '${client_uuid}' created" >&2
+  echo "${client_uuid}"
+  return
 }
 
 
@@ -164,8 +177,12 @@ kc_create_role() {
   local role="$2"
   local desc="$3"
 
-  if kcadm.sh get "clients/${client_uuid}/roles/${role}" -r "${KEYCLOAK_REALM}" >/dev/null 2>&1; then
-     echo "Role '${role}' already exists for UUID: '${client_uuid}'" >&2
+  client_role_payload=$(kcadm.sh get "clients/${client_uuid}/roles/${role}" \
+    -r "${KEYCLOAK_REALM}" \
+    2> /dev/null)
+
+  if [ -n "${client_role_payload}" ]; then
+     echo "Role '${role}' already exist for UUID: '${client_uuid}'" >&2
      return 0
   fi
 
@@ -174,7 +191,7 @@ kc_create_role() {
     -s name="${role}" \
     -s "description=${desc}"
   
-  echo -e "'${role}' role has been created for UUID: '${client_uuid}'\n"
+  echo -e "Role '${role}' has been created for UUID: '${client_uuid}'\n" >&2
 }
 
 
@@ -184,15 +201,15 @@ kc_assign_client_role_to_user() {
   local client_id="$3"
   local rolename="$4"
 
-  echo -e "\nAssigning client role '${rolename}' \
-from client '${client_id}' to user '${username}' in realm '${realm}'"
+  echo -e "\nAssigning client '${rolename}' role \
+from '${client_id}' client to '${username}' user in '${realm}' realm"
 
   kcadm.sh add-roles -r "${realm}" \
     --uusername "${username}" \
     --cclientid "${client_id}" \
     --rolename "${rolename}"
 
-  echo "Role '${rolename}' assigned to user '${username}'"
+  echo "Role '${rolename}' assigned to '${username}' user"
 }
 if [ -z "$KEYCLOAK_REALM" ]; then
   >&2 echo 'Missing KEYCLOAK_REALM value'
@@ -205,12 +222,13 @@ kc_assign_client_to_scope() {
   local scope_name="$2"
   local path_to_mapper_conf="$3"
 
-  scope_json="$(kcadm.sh get client-scopes \
+  scopes=$(kcadm.sh get client-scopes \
     -r "${KEYCLOAK_REALM}" \
     -q name="${scope_name}" \
-    --fields 'id,name')"
+    --format csv \
+    --fields name)
 
-  if echo "${scope_json}" | grep -q "\"name\" : \"${scope_name}\""; then
+  if echo "${scopes}" | grep -q "${scope_name}"; then
     echo "Scope '${scope_name}' already exist for client id: '${client_id}'"
   else
 
@@ -236,17 +254,19 @@ kc_assign_client_to_scope() {
 kc_assign_user_to_group() {
   local username="$1"
   local group_name="$2"
-  
-  groups_json=$(kcadm.sh get groups \
+
+  group_id=$(kcadm.sh get groups \
     -r "${KEYCLOAK_REALM}" \
     -q search="${group_name}" \
-    --fields id)
+    --format csv \
+    --fields id \
+    --noquotes)
 
-  if echo "${groups_json}" | grep -oPq '(?<="id" : ")[^"]+'; then
-    echo "Group '${group_name}' already exist for '${username}' user"
+  if [ -n "${group_id}" ]; then
+    echo -e "\nGroup '${group_name}' already exist for '${username}' user"
   else
  
-  echo "Creating '${group_name}' group for '${username}' user"
+  echo -e "\nCreating '${group_name}' group for '${username}' user"
 
   group_id=$(kcadm.sh create groups \
     -r "${KEYCLOAK_REALM}" \
@@ -256,10 +276,11 @@ kc_assign_user_to_group() {
   echo "Created group with id: '${group_id}'"
 
   user_id=$(kcadm.sh get users \
-    -r salt.box \
+    -r "${KEYCLOAK_REALM}" \
     -q q="username:${username}" \
     --fields id \
-    | grep -oP '(?<="id" : ")[^"]+')
+    --format csv \
+    --noquotes)
  
   echo "Assing '${group_name}' group to '${username}' user"
 
@@ -269,6 +290,6 @@ kc_assign_user_to_group() {
     --set "groupId=${group_id}" \
     --no-merge
 
-  echo "The '${group_name}' group has been successfully assigned to the '${username}' user"
+  echo -e "The '${group_name}' group has been successfully assigned to the '${username}' user\n"
   fi
 }

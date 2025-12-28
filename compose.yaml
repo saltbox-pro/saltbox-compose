@@ -120,6 +120,7 @@ services:
       KEYCLOAK_USER_FIRSTNAME: '${SALTBOX_USER_FIRSTNAME}'
       KEYCLOAK_USER_LASTNAME: '${SALTBOX_USER_LASTNAME}'
       KEYCLOAK_USER_NAME: '${SALTBOX_USER_USERNAME}'
+      KEYCLOAK_STRICT_ROLE_CHECK: '${KEYCLOAK_STRICT_ROLE_CHECK:-false}'
     secrets:
       - keycloak_admin_password
       - keycloak_client_saltbox_core_password

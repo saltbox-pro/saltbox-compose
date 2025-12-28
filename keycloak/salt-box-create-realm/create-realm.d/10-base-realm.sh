@@ -1,5 +1,4 @@
 #! /bin/sh
-set -e
 
 ## The sub-script creates very basic realm and may be used as example to extend
 ## the realm.
@@ -9,12 +8,13 @@ set -e
 
 # shellcheck source=../create-realm-common.sh
 . '/usr/local/lib/salt-box/create-realm-common.sh'
+: "${SSHFS_MANAGER_ENABLED:=false}"
 
 if ! kcadm.sh get realms/"${KEYCLOAK_REALM}" --fields id >/dev/null 2>&1; then
-  echo "Realm '${KEYCLOAK_REALM}' does not exist. Creating."
+  echo -e "\nRealm '${KEYCLOAK_REALM}' does not exist. Creating."
   kcadm.sh create realms -s "realm=${KEYCLOAK_REALM}" -s enabled=true
 else
-  echo "Realm '${KEYCLOAK_REALM}' exists. Checking assigned entites."
+  echo -e "\nRealm '${KEYCLOAK_REALM}' exists. Checking assigned entites."
 fi
 
 saltbox_client_uuid=$(kc_create_client \
@@ -22,8 +22,7 @@ saltbox_client_uuid=$(kc_create_client \
   "${_saltbox_core_password}" \
   "${_collections_admin_role}" \
   "./client.json" \
-  "Collections admin role" \
-  | tee /dev/stderr | grep -oP "(?<=UUID ')[^']+")
+  "Collections admin role")
 
 kc_create_role \
   "${saltbox_client_uuid}" \
@@ -118,42 +117,45 @@ else
     "${KEYCLOAK_CLIENT}" \
     "${_scheduler_admin_role}"
 
-  kc_assign_client_to_scope \
-    "${saltbox_client_uuid}" \
-    "groups" \
-    "./membership_mapper.json"
+  if [ "${SSHFS_MANAGER_ENABLED}" = "true" ]; then
+    kc_assign_client_to_scope \
+      "${saltbox_client_uuid}" \
+      "groups" \
+      "./membership_mapper.json"
 
-  kc_assign_user_to_group \
-    "${KEYCLOAK_ADMIN_NAME}" \
-    "filebrowser-admins"
+    kc_assign_user_to_group \
+      "${KEYCLOAK_ADMIN_NAME}" \
+      "filebrowser-admins"
 
-  kc_assign_user_to_group \
-    "${KEYCLOAK_USER_NAME}" \
-    "filebrowser-users"
+    kc_assign_user_to_group \
+      "${KEYCLOAK_USER_NAME}" \
+      "filebrowser-users"
+  fi
 
   if [ -n "${_grafana_password}" ]; then
 
-      grafana_client_uuid=$(kc_create_client \
-        "${KEYCLOAK_CLIENT_GRAFANA}" \
-        "${_grafana_password}" \
-        "${_grafana_admin_role}" \
-        "./grafana_client.json" \
-        "Grafana admin role" \
-        | tee /dev/stderr | grep -oP "(?<=UUID ')[^']+")
+    grafana_client_uuid=$(kc_create_client \
+      "${KEYCLOAK_CLIENT_GRAFANA}" \
+      "${_grafana_password}" \
+      "${_grafana_admin_role}" \
+      "./grafana_client.json" \
+      "Grafana admin role")
 
-      kc_assign_client_role_to_user \
-          "${KEYCLOAK_REALM}" \
-          "${KEYCLOAK_ADMIN_NAME}" \
-          "${KEYCLOAK_CLIENT_GRAFANA}" \
-          "${_grafana_admin_role}"
+    kc_assign_client_role_to_user \
+      "${KEYCLOAK_REALM}" \
+      "${KEYCLOAK_ADMIN_NAME}" \
+      "${KEYCLOAK_CLIENT_GRAFANA}" \
+      "${_grafana_admin_role}"
 
-       user_client_expected_roles["${KEYCLOAK_ADMIN_NAME}:${KEYCLOAK_CLIENT_GRAFANA}"]="${_grafana_admin_role}"
+     user_client_expected_roles["${KEYCLOAK_ADMIN_NAME}:${KEYCLOAK_CLIENT_GRAFANA}"]="${_grafana_admin_role}"
   fi
 fi
 
-if kc_all_expected_roles_assigned; then
-  echo -e "Realm '${KEYCLOAK_REALM}' exists and all expected roles are assigned\n"
-  exit 0
-else
-  echo -e "Realm '${KEYCLOAK_REALM}' exists but some expected roles are missing\n"
+if "${KEYCLOAK_STRICT_ROLE_CHECK}"; then
+  if kc_all_expected_roles_assigned; then
+    echo -e "Realm '${KEYCLOAK_REALM}' exists and all expected roles are assigned\n"
+    exit 0
+  else
+    echo -e "Realm '${KEYCLOAK_REALM}' exists but some expected roles are missing\n"
+  fi
 fi
