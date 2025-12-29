@@ -1,43 +1,42 @@
 #! /usr/bin/env python3
 
+# TODO Interactive
+# TODO Alternative obtaining with Git
+
+import argparse
+import itertools
 import json
+import os
+import re
+import shutil
 import sys
+import tempfile
 import urllib.parse
 import urllib.request
+import zipfile
+from functools import cache
 from pathlib import Path
+from typing import List
 
 HTTP_CHUNK_BYTE = 8192
 HTTP_TIMEOUT_SEC = 30
-GITLAB_SERVER = 'dev.saltbox.pro'
-COMPOSE_PROJ = 'saltbox/saltbox-compose'
-SUFFIX = 'tar.gz'
+COMPOSE_DEFAULT_REF = 'RELEASE'
+VERSION_TAG_PATTERN = re.compile(r'^v\d+\.\d+\.\d+.*$')
+LOCAL_PATH = Path('./saltbox-compose/')
+BIN_DIR = LOCAL_PATH / 'bin'
+ENTRYPOINT = [str(BIN_DIR / 'update_and_run.sh'), '--no-root']  # TODO Parametric flags
+SCRIPT_SUFFIXES = ('*.sh', '*.py',)
 
-URL_TPL = 'https://{host}/{group}/{project}/-/archive/master/{project}-{ref}.{suffix}'
-url = 'https://dev.saltbox.pro/saltbox/saltbox-compose/-/archive/413e8f42b75476edae2663098369e58805a0572b/saltbox-compose-413e8f42b75476edae2663098369e58805a0572b.tar.gz'
-url = 'https://dev.saltbox.pro/saltbox/saltbox-compose/-/archive/v0.1.2/saltbox-compose-v0.1.2.tar.gz?ref_type=tags'
-
-
-class GitLabRepo:
-    def __init__(self, url: str) -> None:
-        url = urllib.parse.urlparse(url)
-        path = Path(url.path)
-        self.scheme = url.scheme
-        self.server = url.netloc
-        self.owner = str(path.parent).lstrip('/')
-        self.project = path.name
+URLS = {
+    'saltbox-compose': 'https://dev.saltbox.pro/saltbox/saltbox-compose',
+}
 
 
-    def get_tags(self) -> None:
-        url = (
-            f'{self.scheme}://{self.server}/api/v4/projects/'
-            f'{self.owner}%2F{self.project}/repository/tags'
-        )
-        resp = urllib.request.urlopen(url)
-        body = json.load(resp)
-        return [i['name'] for i in body]
+class InstallerError(RuntimeError): ...
 
 
-COMPOSE_REPO = GitLabRepo('https://dev.saltbox.pro/saltbox/saltbox-compose')
+def print_err(*args):
+    print(*args, file=sys.stderr, sep='\n')
 
 
 def download_file(url: str, output: Path) -> None:
@@ -62,8 +61,85 @@ def download_file(url: str, output: Path) -> None:
         sys.stdout.write('\n')
 
 
+class GitLabRepo:
+    ARCHIVE_SUFFIX = 'zip'  # Supposed to be better on error detection
+
+    def __init__(self, url: str) -> None:
+        url_obj = urllib.parse.urlparse(url)
+        path = Path(url_obj.path)
+        self.scheme = url_obj.scheme
+        self.server = url_obj.netloc
+        self.owner = str(path.parent).lstrip('/')
+        self.project = path.name
+
+
+    @cache
+    def get_tags(self) -> List[str]:
+        url = (
+            f'{self.scheme}://{self.server}/api/v4/projects/'
+            f'{self.owner}%2F{self.project}/repository/tags'
+        )
+        try:
+            resp = urllib.request.urlopen(url)
+        except urllib.error.URLError as papa:
+            dosa = f'Error on requesting URL {url}: {papa}'
+            raise InstallerError(dosa) from None
+        body = json.load(resp)
+        return sorted(i['name'] for i in body)
+
+    def get_version_tags(self) -> List[str]:
+        return list(filter(lambda x: VERSION_TAG_PATTERN.match(x), self.get_tags()))
+
+    def get_latest_version_tag(self) -> str:
+        tags = self.get_version_tags()
+        assert len(tags) > 0, 'Found no tags in saltbox-compose repository'
+        return tags[-1]
+
+    def download_ref(self, ref: str, output_dir: Path = Path()) -> Path:
+        filename = f'{self.project}-{ref}.{self.ARCHIVE_SUFFIX}'
+        full_path = output_dir / filename
+        url = f'{self.scheme}://{self.server}/{self.owner}/{self.project}/-/archive/master/{filename}'
+        try:
+            download_file(url, output=full_path)
+        except urllib.error.URLError as papa:
+            dosa = f'Error on requesting URL {url}: {papa}'
+            raise InstallerError(dosa) from None
+        return full_path
+
+
+COMPOSE_REPO = GitLabRepo(URLS['saltbox-compose'])
+
+
 def download() -> None:
-    print(COMPOSE_REPO.get_tags())
+    if LOCAL_PATH.exists():
+        dosa = f'Already exists: {LOCAL_PATH}'
+        raise InstallerError(dosa)
+
+    # TODO Refs: latest, tag, branch, arbitrary
+    if COMPOSE_DEFAULT_REF == 'RELEASE':
+        ref = COMPOSE_REPO.get_latest_version_tag()
+    else:
+        ref = COMPOSE_DEFAULT_REF
+
+    print('Downloading Salt.Box Compose...')
+    with tempfile.TemporaryDirectory() as tmp_dir_name:
+        tmp_path = Path(tmp_dir_name)
+        try:
+            arch_path = COMPOSE_REPO.download_ref(ref, output_dir=tmp_path)
+        except urllib.error.URLError as papa:
+            raise InstallerError(papa) from None
+        arch = zipfile.ZipFile(arch_path)
+        dir_name = arch.namelist()[0]
+        arch.extractall(path=tmp_path)
+        shutil.move(src=tmp_path / dir_name, dst=LOCAL_PATH)
+    print()
+
+    glob_iters = [BIN_DIR.glob(ptrn) for ptrn in SCRIPT_SUFFIXES]
+    print('Making scripts executable:')
+    for script in itertools.chain(*glob_iters):
+        print(f'  - {script}')
+        script.chmod(0o755)
+    print()
 
 
 def configure() -> None:
@@ -71,13 +147,21 @@ def configure() -> None:
 
 
 def run() -> None:
-    ...
+    cmd = ' '.join(ENTRYPOINT)
+    print(f'Running {cmd}')
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os.execv(ENTRYPOINT[0], ENTRYPOINT)
 
 
 def main() -> None:
-    download()
-    configure()
-    run()
+    try:
+        download()
+        configure()
+        run()
+    except InstallerError as papa:
+        print_err('', papa, '', 'Exit now', '')
+        sys.exit(1)
 
 
 if __name__ == '__main__':
