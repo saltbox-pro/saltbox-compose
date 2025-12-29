@@ -22,6 +22,12 @@ external dotenv files.
 
 - Rewrite `validate_dotenv.sh` script with Python.
 
+
+### Fixed
+
+- `./bin/update_and_run.sh` does not ask for `sudo` password with `--no-root`
+flag.
+
 ## [0.1.2] - 2025-12-22
 
 ### Added

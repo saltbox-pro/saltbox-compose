@@ -74,8 +74,12 @@ function echo_run() {
   "$@"
 }
 
+function sudo_predic() {
+  [ $no_root_flag = 0 ] && [ "$(id -u)" -ne 0 ]
+}
+
 function as_root() {
-  if [ $no_root_flag = 0 ] && [ "$(id -u)" -ne 0 ]; then
+  if sudo_predic; then
     sudo "$@"
   else
     "$@"
@@ -154,7 +158,7 @@ for i in "$@"; do
   esac
 done
 
-if [ "$(id -u)" -ne 0 ]; then
+if sudo_predic; then
   msg="Failed to execute by root. Run by root or configure sudo for the user."
   sudo --validate || err "$msg"
 fi
