@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 # TODO Interactive
+# TODO Check Docker, Docker Compose
 # TODO Alternative obtaining with Git
 
 import argparse
@@ -24,7 +25,7 @@ COMPOSE_DEFAULT_REF = 'RELEASE'
 VERSION_TAG_PATTERN = re.compile(r'^v\d+\.\d+\.\d+.*$')
 LOCAL_PATH = Path('./saltbox-compose/')
 BIN_DIR = LOCAL_PATH / 'bin'
-ENTRYPOINT = [str(BIN_DIR / 'update_and_run.sh'), '--no-root']  # TODO Parametric flags
+ENTRYPOINT = ['bin/update_and_run.sh', '--no-root', '--detach', '--no-git-pull']  # TODO Parametric flags
 SCRIPT_SUFFIXES = ('*.sh', '*.py',)
 
 URLS = {
@@ -151,6 +152,7 @@ def run() -> None:
     print(f'Running {cmd}')
     sys.stdout.flush()
     sys.stderr.flush()
+    os.chdir(LOCAL_PATH)
     os.execv(ENTRYPOINT[0], ENTRYPOINT)
 
 

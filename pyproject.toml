@@ -28,6 +28,7 @@ line-length = 120
 target-version = "py37"
 ignore = [
     "B019",
+    "SIM108",  # Annoying ternary op suggestion
 ]
 
 [tool.ruff.format]
