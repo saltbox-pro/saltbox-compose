@@ -70,6 +70,8 @@ def warn(msg: str, prefix='WARN') -> None:
 
 
 def parse_val_extra(val: str) -> List[Path]:
+    if not val:
+        return []
     return [Path(token) for token in val.split(',')]
 
 
