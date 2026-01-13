@@ -2,8 +2,11 @@
 
 > **NOTE:** Commands in examples suppose shell of non-root user and `docker` command requires root privileges
 to operate. When working by root or `docker` needs no root privileges, `sudo` should be avoided.
-Running docker by non-root user may bring some security risks because of ability to run privileged
-commands through Docker Engine.
+
+> **ATTENTION!** Adding non-root user to `docker` group has some security risks because of ability to run privileged
+commands through Docker Engine. Decide to set up Docker in [rootless
+mode](https://docs.docker.com/engine/security/rootless/).
+
 
 ## About Salt.Box
 
@@ -35,6 +38,7 @@ Useful scripts are collected in [`./bin/`](./bin/) directory. They supposed to
 be ran from the root of repo by relative path like `./bin/sb-compose.sh`.
 
 - `git_pull_dev_repos.py` — only for developers — update sources Git repositories.
+- `install_saltbox.sh` — donwload Salt.Box Compose, configure and run.
 - `make_secrets.py` — create required by system passwords.
 - `sb-compose.sh` — thin wrapper over the `docker compose` command is the preferred way to
 manipulate a running instance.
@@ -51,7 +55,22 @@ flag due to security reasons. On troubles to start try to re-add the flag:
 chmod a+x ./bin/*
 ```
 
-## The script to rule them all
+
+## Quick start with `install_saltbox.py`
+
+Obtain the [install_saltbox.py](./bin/install_saltbox.py) script and run in a
+directory where you prefer to have Salt.Box Compose related stuff.
+
+See `install_saltbox.py --help` for options.
+
+> **NOTE** the `install_saltbox.py` is not currently support extra modules.
+> Extra modules can be plugged after installation.
+
+When the `install_saltbox.py` will finish downloading and configuring, the
+startup script `update_and_run.sh` will be executed.
+
+
+## The startup script `update_and_run.sh`
 
 Easy way to startup the system is to execute:
 
@@ -75,6 +94,7 @@ variables those defaults points to `localhost`.
 
 > **ATTENTION!** Check there are no warnings on not setted variables to avoid
 confusing errors.
+
 
 ## HTTPS
 
