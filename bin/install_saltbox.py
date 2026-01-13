@@ -1,5 +1,24 @@
 #! /usr/bin/env python3
 
+# Copyright 2025, 2026 Anton Karmanov
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""
+The script is a part of Salt.Box Compose
+"""
+
+
 # TODO Extra modules
 # TODO Interactive
 # TODO Alternative obtaining with Git
@@ -27,7 +46,6 @@ from typing import Any, List, Type, TypeVar
 ENC='UTF-8'
 HTTP_CHUNK_BYTE = 8192
 HTTP_TIMEOUT_SEC = 30
-COMPOSE_DEFAULT_REF = 'RELEASE'
 VERSION_TAG_PATTERN = re.compile(r'^v\d+\.\d+\.\d+.*$')
 LOCAL_PATH = Path('./saltbox-compose/')
 BIN_DIR = LOCAL_PATH / 'bin'
@@ -47,6 +65,7 @@ cache = functools.lru_cache(maxsize=None)
 
 
 class InstallerError(RuntimeError): ...
+class HttpNotFoundError(InstallerError): ...
 
 def print_out(*args) -> None:
     print(*args, file=sys.stdout, sep='\n')
@@ -63,6 +82,7 @@ class Config:
 
     host: str = 'saltbox.local'
     port: int = 443
+    compose_ref = 'RELEASE'
 
     def validate(self) -> None:
         if not self.MIN_PORT <= self.port <= self.MAX_PORT:
@@ -84,6 +104,8 @@ class Config:
             raise ValueError('Too long DNS name')
         elif not self.host:
             raise ValueError('Empty hostname')
+        if not self.compose_ref:
+            raise ValueError('Empty compose_ref')
         for part in self.host.split('.'):
             if not self.HOSTNAME_LABEL_PATTERN.match(part):
                 dosa = f'Hostname part `{part}` seems not valid'
@@ -99,6 +121,15 @@ def get_args() -> argparse.Namespace:
         nargs='*',
         type=str,
         help="Extra values to include into dotenv in form of NAME='VAL'",
+    )
+    parser.add_argument(
+        '--compose-ref',
+        type=str,
+        help=(
+            'Salt.Box Compose Git reference to obtain, '
+            '`RELEASE` to search fo latest release tag'
+            f'`{Config.compose_ref}` by default'
+        )
     )
     parser.add_argument(
         '--host',
@@ -130,6 +161,11 @@ def get_args() -> argparse.Namespace:
         '-u', '--skip-run',
         action='store_true',
         help='Prepare but not run',
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='Print more info',
     )
     return parser.parse_args()
 
@@ -190,24 +226,34 @@ class Version:
 
 def download_file(url: str, output: Path) -> None:
     req = urllib.request.Request(url)
-    with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as resp:
-        total = resp.getheader('Content-Length')
-        total = int(total) if total and total.isdigit() else None
-        downloaded = 0
-        with output.open('wb') as file:
-            while True:
-                data = resp.read(HTTP_CHUNK_BYTE)
-                if not data:
-                    break
-                file.write(data)
-                downloaded += len(data)
-                if total:
-                    pct = downloaded * 100 / total
-                    sys.stdout.write(f'\r{downloaded}/{total} bytes ({pct:.1f}%)')
-                else:
-                    sys.stdout.write(f'\r{downloaded} bytes')
-                sys.stdout.flush()
-        sys.stdout.write('\n')
+    try:
+        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as resp:
+            total = resp.getheader('Content-Length')
+            total = int(total) if total and total.isdigit() else None
+            downloaded = 0
+            with output.open('wb') as file:
+                while True:
+                    data = resp.read(HTTP_CHUNK_BYTE)
+                    if not data:
+                        break
+                    file.write(data)
+                    downloaded += len(data)
+                    if total:
+                        pct = downloaded * 100 / total
+                        sys.stdout.write(f'\r{downloaded}/{total} bytes ({pct:.1f}%)')
+                    else:
+                        sys.stdout.write(f'\r{downloaded} bytes')
+                    sys.stdout.flush()
+            sys.stdout.write('\n')
+    except urllib.error.HTTPError as papa:
+        if papa.code == 404:
+            dosa = 'Not found: {url}'
+            raise HttpNotFoundError(dosa) from None
+        dosa = f'HTTP error on `GET {url}`: {papa}'
+        raise InstallerError(dosa) from None
+    except urllib.error.URLError as papa:
+        dosa = f'Network error on `GET {url}`: {papa}'
+        raise InstallerError(dosa) from None
 
 
 class GitLabRepo:
@@ -220,7 +266,6 @@ class GitLabRepo:
         self.server = url_obj.netloc
         self.owner = str(path.parent).lstrip('/')
         self.project = path.name
-
 
     @cache
     def get_tags(self) -> List[str]:
@@ -244,19 +289,46 @@ class GitLabRepo:
         assert len(tags) > 0, 'Found no tags in saltbox-compose repository'
         return tags[-1]
 
+    def filename_for_ref(self, ref: str) -> str:
+        return f'{self.project}-{ref}.{self.ARCHIVE_SUFFIX}'
+
+    def url_for_ref(self, ref: str) -> str:
+        filename = self.filename_for_ref(ref)
+        url = f'{self.scheme}://{self.server}/{self.owner}/{self.project}/-/archive/{ref}/{filename}'
+        return url
+
     def download_ref(self, ref: str, output_dir: Path = Path()) -> Path:
-        filename = f'{self.project}-{ref}.{self.ARCHIVE_SUFFIX}'
+        """
+        :raises HttpNotFoundError: on 404
+        :raises InstallerError: on HTTP or network errors
+        """
+        filename = self.filename_for_ref(ref)
         full_path = output_dir / filename
-        url = f'{self.scheme}://{self.server}/{self.owner}/{self.project}/-/archive/master/{filename}'
-        try:
-            download_file(url, output=full_path)
-        except urllib.error.URLError as papa:
-            dosa = f'Error on requesting URL {url}: {papa}'
-            raise InstallerError(dosa) from None
+        url = self.url_for_ref(ref)
+        download_file(url, output=full_path)
         return full_path
 
 
 COMPOSE_REPO = GitLabRepo(URLS['saltbox-compose'])
+
+def get_config(args: argparse.Namespace) -> Config:
+    conf = Config()
+    if args.host is not None:
+        conf.host = args.host
+    if args.port is not None:
+        conf.port = args.port
+    if args.compose_ref is not None:
+        conf.compose_ref = args.compose_ref
+
+    if conf.compose_ref == 'RELEASE':
+        conf.compose_ref = COMPOSE_REPO.get_latest_version_tag()
+
+    try:
+        conf.validate()
+    except ValueError as err:
+        raise InstallerError(err) from err
+
+    return conf
 
 def check(args: argparse.Namespace) -> None:
     if args.skip_check:
@@ -279,9 +351,10 @@ def check(args: argparse.Namespace) -> None:
     try:
         proc = subprocess.run(docker_cmd, capture_output=True, text=True)
     except FileNotFoundError:
-        raise InstallerError('Not found `docker` command. Not installed or not in PATH?')
+        dosa = 'Not found `docker` command. Not installed or not in PATH?'
+        raise InstallerError(dosa) from None
     except OSError as err:
-        raise InstallerError(err)
+        raise InstallerError(err) from None
     if proc.returncode != 0:
         print_err(proc.stderr)
         dosa = f'Command `{" ".join(docker_cmd)}` failed. May be use `sudo` to run as root?'
@@ -297,7 +370,7 @@ def check(args: argparse.Namespace) -> None:
     try:
         proc = subprocess.run(compose_cmd, capture_output=True, text=True)
     except OSError as err:
-        raise InstallerError(err)
+        raise InstallerError(err) from None
     if proc.returncode != 0:
         print_err(proc.stderr)
         dosa = f'Command `{" ".join(compose_cmd)}` failed. Is Docker Compose installed?'
@@ -314,24 +387,21 @@ def check(args: argparse.Namespace) -> None:
     print_out()
 
 
-def download(args: argparse.Namespace) -> None:
+def download(args: argparse.Namespace, config: Config) -> None:
     if LOCAL_PATH.exists():
         dosa = f'Already exists: {LOCAL_PATH}'
         raise InstallerError(dosa)
 
-    # TODO Refs: latest, tag, branch, arbitrary
-    if COMPOSE_DEFAULT_REF == 'RELEASE':
-        ref = COMPOSE_REPO.get_latest_version_tag()
-    else:
-        ref = COMPOSE_DEFAULT_REF
-
-    print_out('Downloading Salt.Box Compose...')
+    print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}`...')
+    if args.verbose:
+        print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}')
     with tempfile.TemporaryDirectory() as tmp_dir_name:
         tmp_path = Path(tmp_dir_name)
         try:
-            arch_path = COMPOSE_REPO.download_ref(ref, output_dir=tmp_path)
-        except urllib.error.URLError as papa:
-            raise InstallerError(papa) from None
+            arch_path = COMPOSE_REPO.download_ref(config.compose_ref, output_dir=tmp_path)
+        except HttpNotFoundError:
+            dosa = f'Server returns `Not found` for Compose ref `{config.compose_ref}`'
+            raise InstallerError(dosa) from None
         arch = zipfile.ZipFile(arch_path)
         dir_name = arch.namelist()[0]
         arch.extractall(path=tmp_path)
@@ -346,22 +416,12 @@ def download(args: argparse.Namespace) -> None:
     print_out()
 
 
-def configure(args: argparse.Namespace) -> None:
-    conf = Config()
-    if args.host is not None:
-        conf.host = args.host
-    if args.port is not None:
-        conf.port = args.port
-    try:
-        conf.validate()
-    except ValueError as err:
-        raise InstallerError(err) from err
-
-    override = [f"WEB_SERVER_OUTER_SOCKET='{conf.host}:{conf.port}'"]
-    if conf.is_host_seems_ip and not args.host_is_name:
-        override.append(f"WEB_SERVER_SSL_ALT_NAMES_IP='127.0.0.1,{conf.host}'")
+def configure(args: argparse.Namespace, config: Config) -> None:
+    override = [f"WEB_SERVER_OUTER_SOCKET='{config.host}:{config.port}'"]
+    if config.is_host_seems_ip and not args.host_is_name:
+        override.append(f"WEB_SERVER_SSL_ALT_NAMES_IP='127.0.0.1,{config.host}'")
     else:
-        override.append(f"WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,{conf.host}'")
+        override.append(f"WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,{config.host}'")
 
     override.extend(args.overrides)
 
@@ -389,9 +449,10 @@ def main() -> None:
     print_out()
 
     try:
+        conf = get_config(args)
         check(args)
-        download(args)
-        configure(args)
+        download(args, config=conf)
+        configure(args, config=conf)
         run(args)
     except InstallerError as papa:
         print_err('', papa, '', 'Exit on error', '')
