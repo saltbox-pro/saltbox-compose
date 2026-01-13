@@ -1,11 +1,14 @@
 #! /usr/bin/env python3
 
+# TODO Extra modules
 # TODO Interactive
 # TODO Alternative obtaining with Git
 # TODO Should it deal with upgrades?
+# TODO Offline mode with images
 
 import argparse
 import functools
+import ipaddress
 import itertools
 import json
 import os
@@ -17,8 +20,8 @@ import tempfile
 import urllib.parse
 import urllib.request
 import zipfile
+from dataclasses import dataclass
 from pathlib import Path
-from textwrap import dedent
 from typing import Any, List, Type, TypeVar
 
 ENC='UTF-8'
@@ -52,22 +55,65 @@ def print_err(*args) -> None:
     print(*args, file=sys.stderr, sep='\n')
 
 
+@dataclass
+class Config:
+    MIN_PORT = 1
+    MAX_PORT = 2**16 - 1
+    HOSTNAME_LABEL_PATTERN = re.compile(r'^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$')
+
+    host: str = 'saltbox.local'
+    port: int = 443
+
+    def validate(self) -> None:
+        if not self.MIN_PORT <= self.port <= self.MAX_PORT:
+            raise ValueError(f'Port {self.port} is out of range {self.MIN_PORT}-{self.MAX_PORT}')
+        self._validate_host()
+
+    @property
+    def is_host_seems_ip(self) -> bool:
+        try:
+            ipaddress.ip_address(self.host)
+        except ValueError:
+            return False
+        return True
+
+    def _validate_host(self) -> None:
+        if self.is_host_seems_ip:
+            return
+        if len(self.host) > 255:
+            raise ValueError('Too long DNS name')
+        elif not self.host:
+            raise ValueError('Empty hostname')
+        for part in self.host.split('.'):
+            if not self.HOSTNAME_LABEL_PATTERN.match(part):
+                dosa = f'Hostname part `{part}` seems not valid'
+                raise ValueError(dosa)
+
+
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=('Run Salt.Box Docker Compose based instance from scratch'),
     )
-    # TODO Impl
     parser.add_argument(
         'overrides',
         nargs='*',
         type=str,
         help="Extra values to include into dotenv in form of NAME='VAL'",
     )
-    # TODO Impl
     parser.add_argument(
         '--host',
         type=str,
-        help='Hostname to ...',
+        help=f'Hostname or real address to serve on, `{Config.host}` by default',
+    )
+    parser.add_argument(
+        '--host-is-name',
+        action='store_true',
+        help='Force SSL cert for DNS name even if `host` looks like IP address'
+    )
+    parser.add_argument(
+        '--port',
+        type=int,
+        help=f'Port to serve HTTPS, `{Config.port}` by default',
     )
     # TODO Impl
     parser.add_argument(
@@ -79,6 +125,11 @@ def get_args() -> argparse.Namespace:
         '-s', '--skip-check',
         action='store_true',
         help='Do not check Docker install before run',
+    )
+    parser.add_argument(
+        '-u', '--skip-run',
+        action='store_true',
+        help='Prepare but not run',
     )
     return parser.parse_args()
 
@@ -296,19 +347,38 @@ def download(args: argparse.Namespace) -> None:
 
 
 def configure(args: argparse.Namespace) -> None:
-    override = dedent(f'''
-        WEB_SERVER_OUTER_SOCKET='saltbox.local:443'
-        WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,saltbox.local'
-    ''')
+    conf = Config()
+    if args.host is not None:
+        conf.host = args.host
+    if args.port is not None:
+        conf.port = args.port
+    try:
+        conf.validate()
+    except ValueError as err:
+        raise InstallerError(err) from err
+
+    override = [f"WEB_SERVER_OUTER_SOCKET='{conf.host}:{conf.port}'"]
+    if conf.is_host_seems_ip and not args.host_is_name:
+        override.append(f"WEB_SERVER_SSL_ALT_NAMES_IP='127.0.0.1,{conf.host}'")
+    else:
+        override.append(f"WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,{conf.host}'")
+
+    override.extend(args.overrides)
+
     with ENV_OVERRIDE.open('w', encoding=ENC) as fstream:
-        fstream.write(override)
+        fstream.write('\n'.join(override) + '\n')
+
+    print_out(f'Override file `{ENV_OVERRIDE}` has been saved', '')
 
 
 def run(args: argparse.Namespace) -> None:
     cmd = ' '.join(ENTRYPOINT)
-    print_out(f'Running {cmd}')
+    print_out(f'Running {cmd}', '')
     sys.stdout.flush()
     sys.stderr.flush()
+    if args.skip_run:
+        print_out('Skipping run!', '')
+        return
     os.chdir(LOCAL_PATH)
     os.execv(ENTRYPOINT[0], ENTRYPOINT)
 
@@ -324,7 +394,7 @@ def main() -> None:
         configure(args)
         run(args)
     except InstallerError as papa:
-        print_err('', papa, '', 'Exit now', '')
+        print_err('', papa, '', 'Exit on error', '')
         sys.exit(1)
 
 
