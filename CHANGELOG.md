@@ -17,6 +17,7 @@ if possible and purge browser redirects.
 - Validation of `.env` checks for "unknown variables" (usually misstypes on
 overriding). Unknown variables means not specified in `example.env` and
 external dotenv files.
+- `install_saltbox.py` script to simplify startup.
 
 ### Changed
 
