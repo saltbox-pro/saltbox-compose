@@ -20,7 +20,6 @@ The script is a part of Salt.Box Compose
 
 
 # TODO Extra modules
-# TODO Interactive
 # TODO Alternative obtaining with Git
 # TODO Should it deal with upgrades?
 # TODO Offline mode with images
@@ -41,7 +40,8 @@ import urllib.request
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Type, TypeVar
+from typing import Any, List, Optional, Type, TypeVar
+
 
 ENC='UTF-8'
 HTTP_CHUNK_BYTE = 8192
@@ -67,11 +67,68 @@ cache = functools.lru_cache(maxsize=None)
 class InstallerError(RuntimeError): ...
 class HttpNotFoundError(InstallerError): ...
 
-def print_out(*args) -> None:
+
+def print_out(*args, verbose: bool=False) -> None:
+    if verbose and not VERBOSE:
+        return
     print(*args, file=sys.stdout, sep='\n')
 
-def print_err(*args) -> None:
+
+def print_err(*args, verbose: bool=False) -> None:
+    if verbose and not VERBOSE:
+        return
     print(*args, file=sys.stderr, sep='\n')
+
+
+class Interactions:
+    def __init__(self, non_interactive=False) -> None:
+        self.non_interactive = non_interactive
+
+    def ask(self, prompt: str, default: Optional[str] = None) -> str:
+        if self.non_interactive:
+            if default is None:
+                dosa = f'No data for prompt `{prompt}`'
+                raise InstallerError(dosa)
+            return default
+
+        if default is None:
+            prompt = f'{prompt}: '
+        else:
+            prompt = f'{prompt} [{default}]: '
+        val = input(prompt).strip()
+
+        if not val:
+            if default is None:
+                raise InstallerError('Expected input, but empty string recieved')
+            else:
+                return default
+
+        return val
+
+
+    def ask_int(self, prompt: str, default: Optional[int] = None) -> int:
+        val = self.ask(prompt, default=str(default))
+        try:
+            return int(val)
+        except ValueError as err:
+            raise InstallerError(err) from None
+
+
+    def ask_confirm(self, prompt: str, default: bool = True) -> bool:
+        if self.non_interactive:
+            return True
+
+        yn = 'Y/n' if default else 'y/N'
+
+        while True:
+            resp = input(f'{prompt} [{yn}]: ').strip().lower()
+            if not resp:
+                return default
+            elif resp in ('y', 'yes',):
+                return True
+            elif resp in ('n', 'no',):
+                return False
+            print_err('Unexpected input')
 
 
 @dataclass
@@ -83,6 +140,7 @@ class Config:
     host: str = 'saltbox.local'
     port: int = 443
     compose_ref = 'RELEASE'
+    force_host_as_name: bool = False
 
     def validate(self) -> None:
         if not self.MIN_PORT <= self.port <= self.MAX_PORT:
@@ -97,8 +155,12 @@ class Config:
             return False
         return True
 
+    @property
+    def is_host_ip(self) -> bool:
+        return self.is_host_seems_ip and not self.force_host_as_name
+
     def _validate_host(self) -> None:
-        if self.is_host_seems_ip:
+        if self.is_host_ip:
             return
         if len(self.host) > 255:
             raise ValueError('Too long DNS name')
@@ -110,6 +172,14 @@ class Config:
             if not self.HOSTNAME_LABEL_PATTERN.match(part):
                 dosa = f'Hostname part `{part}` seems not valid'
                 raise ValueError(dosa)
+
+    def __str__(self) -> str:
+        data = [f'Serve on: `{self.host}:{self.port}`']
+        if self.is_host_seems_ip:
+            wut = 'a DNS name' if self.force_host_as_name else 'an IP address'
+            data[0] += f' (Host part is treated as {wut})'
+        data.append(f'Salt.Box Compose reference is: `{self.compose_ref}`')
+        return '\n'.join(data)
 
 
 def get_args() -> argparse.Namespace:
@@ -146,7 +216,6 @@ def get_args() -> argparse.Namespace:
         type=int,
         help=f'Port to serve HTTPS, `{Config.port}` by default',
     )
-    # TODO Impl
     parser.add_argument(
         '-n', '--non-interactive',
         action='store_true',
@@ -169,6 +238,7 @@ def get_args() -> argparse.Namespace:
     )
     return parser.parse_args()
 
+VERBOSE=False
 
 VersionSelf = TypeVar('VersionSelf', bound='Version')
 class Version:
@@ -311,14 +381,24 @@ class GitLabRepo:
 
 COMPOSE_REPO = GitLabRepo(URLS['saltbox-compose'])
 
-def get_config(args: argparse.Namespace) -> Config:
-    conf = Config()
+
+def configure_script(args: argparse.Namespace, interactions: Interactions) -> Config:
+    conf = Config(force_host_as_name=args.host_is_name)
+
     if args.host is not None:
         conf.host = args.host
+    else:
+        conf.host = interactions.ask('Real address or name)', conf.host)
+
     if args.port is not None:
         conf.port = args.port
+    else:
+        conf.port = interactions.ask_int('Port to serve HTTPS', conf.port)
+
     if args.compose_ref is not None:
         conf.compose_ref = args.compose_ref
+    else:
+        conf.compose_ref = interactions.ask('Salt.Box reference', conf.compose_ref)
 
     if conf.compose_ref == 'RELEASE':
         conf.compose_ref = COMPOSE_REPO.get_latest_version_tag()
@@ -327,6 +407,10 @@ def get_config(args: argparse.Namespace) -> Config:
         conf.validate()
     except ValueError as err:
         raise InstallerError(err) from err
+
+    print_out('', conf, '')
+    if not interactions.ask_confirm('Continue?'):
+        raise InstallerError('Cancelled by user')
 
     return conf
 
@@ -393,8 +477,7 @@ def download(args: argparse.Namespace, config: Config) -> None:
         raise InstallerError(dosa)
 
     print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}`...')
-    if args.verbose:
-        print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}')
+    print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
     with tempfile.TemporaryDirectory() as tmp_dir_name:
         tmp_path = Path(tmp_dir_name)
         try:
@@ -409,16 +492,16 @@ def download(args: argparse.Namespace, config: Config) -> None:
     print_out()
 
     glob_iters = [BIN_DIR.glob(ptrn) for ptrn in SCRIPT_SUFFIXES]
-    print('Making scripts executable:')
+    print_out('Making scripts executable:')
     for script in itertools.chain(*glob_iters):
-        print(f'  - {script}')
+        print_out(f'  - {script}')
         script.chmod(0o755)
     print_out()
 
 
-def configure(args: argparse.Namespace, config: Config) -> None:
+def configure_system(args: argparse.Namespace, config: Config) -> None:
     override = [f"WEB_SERVER_OUTER_SOCKET='{config.host}:{config.port}'"]
-    if config.is_host_seems_ip and not args.host_is_name:
+    if config.is_host_seems_ip and not config.force_host_as_name:
         override.append(f"WEB_SERVER_SSL_ALT_NAMES_IP='127.0.0.1,{config.host}'")
     else:
         override.append(f"WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,{config.host}'")
@@ -444,15 +527,19 @@ def run(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
+    global VERBOSE
     args = get_args()
+    VERBOSE = args.verbose
+    interactions = Interactions(non_interactive=args.non_interactive)
 
-    print_out()
+    msg = '\nNon-interactive mode, no confirmations will be asked!' if interactions.non_interactive else ''
+    print_out(msg)
 
     try:
-        conf = get_config(args)
+        conf = configure_script(args, interactions=interactions)
         check(args)
         download(args, config=conf)
-        configure(args, config=conf)
+        configure_system(args, config=conf)
         run(args)
     except InstallerError as papa:
         print_err('', papa, '', 'Exit on error', '')
