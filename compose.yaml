@@ -150,6 +150,10 @@ services:
     volumes:
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt/'
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
+      - 'saltbox_salt_extmod:/srv/salt_extmod/'
+      - 'saltbox_salt_local:/srv/salt_local/'
+      - 'saltbox_salt_master_local:/srv/salt_master_local/'
+      - 'saltbox_saltbox_salt:/srv/saltbox_salt/'
       - 'redis_salt_certs:/etc/redis/certs/:ro'
       - 'salt_master_pki:/etc/salt/pki/'
       - 'salt_master_saltbox_var:/var/lib/saltbox-bridge/'
@@ -530,6 +534,10 @@ volumes:
   salt_master_saltbox_var: {}
   salt_repos: {}
   saltbox_core_var: {}
+  saltbox_salt_extmod: {}
+  saltbox_salt_local: {}
+  saltbox_salt_master_local: {}
+  saltbox_saltbox_salt: {}
 
 secrets:
   keycloak_admin_password:
