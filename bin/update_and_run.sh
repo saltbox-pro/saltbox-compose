@@ -80,7 +80,7 @@ function sudo_predic() {
 
 function as_root() {
   if sudo_predic; then
-    sudo "$@"
+    SHELL="$BASH" sudo --shell "$@"; return $?
   else
     "$@"
   fi
@@ -158,13 +158,30 @@ for i in "$@"; do
   esac
 done
 
+# Update sudo cached credentials
 if sudo_predic; then
   msg="Failed to execute by root. Run by root or configure sudo for the user."
   sudo --validate || err "$msg"
 fi
 
+# Docker smoke-test
+as_root docker version > /dev/null && err=0 || err=$?
+if [ "$err" -eq 1 ]; then
+  warn ''
+  warn "Failed to connecto to \`dockerd\`"
+  err "Run again with \`--no-root\` flag if docker command not requires to be run as root."
+elif [ "$err" -eq 127 ]; then
+  warn ''
+  err "Failed to run \`docker\`. Check required Docker version is installed."
+elif [ "$err" -ne 0 ]; then
+  warn ''
+  err "Unexpected error on \`docker version\` command, retcode was ${err}"
+fi
+
 if [ $detach_flag = 1 ]; then up_args+=('--detach'); fi
 
+
+# Update dev stuff, if can
 if [ "$(git_pull_required)" = 1 ]; then
   echo_run ./bin/git_pull_dev_repos.py --only-compose
 fi

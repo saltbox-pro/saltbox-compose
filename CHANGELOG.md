@@ -22,7 +22,8 @@ external dotenv files.
 ### Changed
 
 - Rewrite `validate_dotenv.sh` script with Python.
-
+- `./bin/update_and_run.sh`: more clear error on dockerd socket connection fail
+and on missing `docker` command.
 
 ### Fixed
 
