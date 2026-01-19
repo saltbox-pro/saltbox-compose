@@ -8,7 +8,6 @@ services:
     build:
       context: ./sshfs_manager
     image: sshfs_manager:${SSHFS_IMAGE_TAG}
-    extra_hosts: [ "localhost:host-gateway" ]
     user: '0'
     environment:
       FILEBROWSER_CONFIG: "data/config.yaml"
@@ -17,6 +16,7 @@ services:
       KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
       KEYCLOAK_CLIENT: ${KEYCLOAK_CLIENT}
       KEYCLOAK_BASE_URL: "${KEYCLOAK_BASE_URL}"
+      KEYCLOAK_INTERNAL_PROXY: "proxy"
     volumes:
       - './sshfs_manager/database.db:/home/filebrowser/database.db'
       - 'saltbox_salt_extmod:/srv/salt_extmod:ro'
@@ -37,5 +37,7 @@ services:
       SSHFS_MANAGER_ENABLED: true
 
   proxy:
+    links:
+      - sshfs_manager:sshfs_manager
     volumes:
       - ./proxy/includes/sshfs-manager.enabled.conf:/etc/nginx/includes/sshfs-manager.conf:ro
