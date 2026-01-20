@@ -380,6 +380,9 @@ services:
       mongo:
         condition: service_healthy
         restart: false
+      rabbitmq:
+        condition: service_healthy
+        restart: false
       redis-salt:
         condition: service_healthy
         restart: false
