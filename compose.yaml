@@ -284,7 +284,7 @@ services:
       rabbitmq:
         condition: service_healthy
         restart: false
-
+  
   saltbox-core: &core
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}'
@@ -368,6 +368,24 @@ services:
       rabbitmq:
         condition: service_healthy
         restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
+        restart: false
+
+  saltbox-core-init:
+    <<: *core
+    command: 'shell saltbox-module-init'
+    expose: []
+    depends_on:
+      mongo:
+        condition: service_healthy
+        restart: false
+      rabbitmq:
+        condition: service_healthy
+        restart: false
+      redis-salt:
+        condition: service_healthy
+        restart: false
 
   saltbox-core-faststream-redis:
     <<: *core
@@ -376,6 +394,9 @@ services:
     depends_on:
       redis-salt:
         condition: service_started
+        restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
         restart: false
 
   saltbox-core-faststream-rabbit:
@@ -389,6 +410,9 @@ services:
       rabbitmq:
         condition: service_healthy
         restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
+        restart: false
 
   saltbox-core-tasks-watcher:
     <<: *core
@@ -400,6 +424,9 @@ services:
         restart: false
       rabbitmq:
         condition: service_healthy
+        restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
         restart: false
 
   saltbox-core-salt-buffer-manager:
@@ -413,6 +440,9 @@ services:
       rabbitmq:
         condition: service_healthy
         restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
+        restart: false
 
   saltbox-core-taskiq-worker:
     <<: *core
@@ -425,6 +455,9 @@ services:
       rabbitmq:
         condition: service_healthy
         restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
+        restart: false
 
   saltbox-core-taskiq-scheduler:
     <<: *core
@@ -436,6 +469,9 @@ services:
         restart: false
       rabbitmq:
         condition: service_healthy
+        restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
         restart: false
 
   saltbox-frontend-root-config:
