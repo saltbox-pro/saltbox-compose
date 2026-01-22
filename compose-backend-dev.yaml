@@ -46,6 +46,9 @@ services:
       - '/mnt/saltbox-sdk/build/'
       - '/mnt/saltbox-sdk/saltbox_sdk.egg-info/'
 
+  saltbox-core-init:
+    <<: *core
+
   saltbox-core-faststream-redis:
     <<: *core
 
