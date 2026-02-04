@@ -187,7 +187,7 @@ def get_args() -> argparse.Namespace:
         description=('Run Salt.Box Docker Compose based instance from scratch'),
     )
     parser.add_argument(
-        'overrides',
+        'OVERRIDE',
         nargs='*',
         type=str,
         help="Extra values to include into dotenv in form of NAME='VAL'",
@@ -197,7 +197,7 @@ def get_args() -> argparse.Namespace:
         type=str,
         help=(
             'Salt.Box Compose Git reference to obtain, '
-            '`RELEASE` to search fo latest release tag'
+            '`RELEASE` to search fo latest release tag, '
             f'`{Config.compose_ref}` by default'
         )
     )
@@ -506,7 +506,7 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
     else:
         override.append(f"WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,{config.host}'")
 
-    override.extend(args.overrides)
+    override.extend(args.override)
 
     with ENV_OVERRIDE.open('w', encoding=ENC) as fstream:
         fstream.write('\n'.join(override) + '\n')
