@@ -506,7 +506,7 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
     else:
         override.append(f"WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,{config.host}'")
 
-    override.extend(args.override)
+    override.extend(args.OVERRIDE)
 
     with ENV_OVERRIDE.open('w', encoding=ENC) as fstream:
         fstream.write('\n'.join(override) + '\n')
