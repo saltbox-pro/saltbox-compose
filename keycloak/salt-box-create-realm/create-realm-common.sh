@@ -222,32 +222,33 @@ kc_assign_client_to_scope() {
   local scope_name="$2"
   local path_to_mapper_conf="$3"
 
-  scopes=$(kcadm.sh get client-scopes \
+  scope_id=$(kcadm.sh get client-scopes \
     -r "${KEYCLOAK_REALM}" \
     -q name="${scope_name}" \
     --format csv \
-    --fields name)
+    --fields id \
+    --noquotes)
 
-  if echo "${scopes}" | grep -q "${scope_name}"; then
-    echo "Scope '${scope_name}' already exist for client id: '${client_id}'"
+  if [ -n "${scope_id}" ]; then
+    echo "Scope '${scope_name}' already exists with id: '${scope_id}'"
   else
-
     echo "Creating scope '${scope_name}' for client id: '${client_id}'"
 
-    created_scope_id="$(kcadm.sh create client-scopes \
+    scope_id="$(kcadm.sh create client-scopes \
       -r "${KEYCLOAK_REALM}" \
       -b '{ "name": "'${scope_name}'", "protocol": "openid-connect" }' \
       -i)"
 
-    echo "Created client scope id: ${created_scope_id}"
+    echo "Created client scope id: ${scope_id}"
 
-    kcadm.sh create "client-scopes/${created_scope_id}/protocol-mappers/models" \
+    kcadm.sh create "client-scopes/${scope_id}/protocol-mappers/models" \
       -r "${KEYCLOAK_REALM}" \
       --file "${path_to_mapper_conf}"
-
-    kcadm.sh update "clients/${client_id}/default-client-scopes/${created_scope_id}" \
-      -r "${KEYCLOAK_REALM}"
   fi
+
+  echo "Assigning scope '${scope_name}' to client id: '${client_id}'"
+  kcadm.sh update "clients/${client_id}/default-client-scopes/${scope_id}" \
+    -r "${KEYCLOAK_REALM}" 2>/dev/null || echo "Scope already assigned to client"
 }
 
 
@@ -263,17 +264,17 @@ kc_assign_user_to_group() {
     --noquotes)
 
   if [ -n "${group_id}" ]; then
-    echo -e "\nGroup '${group_name}' already exist for '${username}' user"
+    echo -e "\nGroup '${group_name}' already exists with id: '${group_id}'"
   else
- 
-  echo -e "\nCreating '${group_name}' group for '${username}' user"
+    echo -e "\nCreating '${group_name}' group"
 
-  group_id=$(kcadm.sh create groups \
-    -r "${KEYCLOAK_REALM}" \
-    -b '{ "name": "'${group_name}'" }' \
-    -i)
+    group_id=$(kcadm.sh create groups \
+      -r "${KEYCLOAK_REALM}" \
+      -b '{ "name": "'${group_name}'" }' \
+      -i)
 
-  echo "Created group with id: '${group_id}'"
+    echo "Created group with id: '${group_id}'"
+  fi
 
   user_id=$(kcadm.sh get users \
     -r "${KEYCLOAK_REALM}" \
@@ -281,14 +282,14 @@ kc_assign_user_to_group() {
     --fields id \
     --format csv \
     --noquotes)
- 
-  echo "Assing '${group_name}' group to '${username}' user"
+
+  echo "Assigning '${group_name}' group to '${username}' user"
 
   kcadm.sh update "users/${user_id}/groups/${group_id}" \
     --target-realm "${KEYCLOAK_REALM}" \
     --set "userId=${user_id}" \
     --set "groupId=${group_id}" \
-    --no-merge
+    --no-merge 2>/dev/null || echo "User already in group"
 
   echo -e "The '${group_name}' group has been successfully assigned to the '${username}' user\n"
   fi

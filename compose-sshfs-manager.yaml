@@ -12,13 +12,12 @@ services:
     user: '0'
     environment:
       FILEBROWSER_CONFIG: "data/config.yaml"
-      FILEBROWSER_DATABASE: "./database.db"
       WEB_SERVER_OUTER_SOCKET: "${WEB_SERVER_OUTER_SOCKET}"
       KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
       KEYCLOAK_CLIENT: ${KEYCLOAK_CLIENT}
       KEYCLOAK_BASE_URL: "${KEYCLOAK_BASE_URL}"
     volumes:
-      - './sshfs_manager/database.db:/home/filebrowser/database.db'
+      - 'sshfs_manager_db:/home/filebrowser'
       - 'saltbox_salt_extmod:/srv/salt_extmod:ro'
       - 'saltbox_salt_local:/srv/salt_local'
       - 'saltbox_salt_master_local:/srv/salt_master_local'
@@ -31,6 +30,9 @@ services:
       keycloak-init:
         condition: service_completed_successfully
         restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
+        restart: false
 
   keycloak-init:
     environment:
@@ -39,3 +41,7 @@ services:
   proxy:
     volumes:
       - ./proxy/includes/sshfs-manager.enabled.conf:/etc/nginx/includes/sshfs-manager.conf:ro
+
+volumes:
+  sshfs_manager_db:
+    external: false
