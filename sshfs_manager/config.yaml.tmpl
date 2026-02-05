@@ -1,6 +1,7 @@
 server:
   baseURL: "/sshfs"
   port: 80
+  database: /home/filebrowser/database.db
   sources:
     - path: /srv/sshfs
       config:
@@ -54,10 +55,10 @@ userDefaults:
     folder: true
   permissions:
     api: false
-    admin: false
-    modify: false
-    share: false
-    realtime: false
-    delete: false
-    create: false
+    admin: true
+    modify: true
+    share: true
+    realtime: true
+    delete: true
+    create: true
     download: true

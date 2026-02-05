@@ -1,4 +1,4 @@
-FROM gtstef/filebrowser:1.0.1-stable-slim
+FROM gtstef/filebrowser:1.1.1-stable-slim
 
 RUN apk add --no-cache gettext
 
