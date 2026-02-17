@@ -284,7 +284,7 @@ services:
       rabbitmq:
         condition: service_healthy
         restart: false
-  
+
   saltbox-core: &core
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}'
@@ -342,6 +342,7 @@ services:
       SSHFS_PERMISSIONS: '{"user": "root", "group": "root", "file_mode": "0o644", "dir_mode": "0o755"}'
       SSHFS_USER: 'saltbox'  # As in users.json of sshfs
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
+      PILLARS_KEK_B64: '${PILLARS_KEK_B64}'
     volumes:
       - type: volume
         source: redis_salt_certs

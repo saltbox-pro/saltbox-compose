@@ -36,6 +36,7 @@ services:
       - '4505-4506:4505-4506'
       - '8001:8000'
     volumes:
+      - '${SALT_BUILD_DIR}/pillar:/srv/salt_extmod/pillar'
       - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages:ro'
     tmpfs:
       - '/mnt/saltbox-bridge-messages/build/'
