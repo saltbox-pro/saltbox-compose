@@ -23,7 +23,7 @@ Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
   --no-git-pull\t\tDo not pull current repository even if possible
   --no-image-pull\tDo not pull newer images from registry
   --no-root\t\tDo not use sudo, run by current user
-  --only-env\t\tOnly merge example.env and override.env and exit
+  --only-env\t\tOnly merge base.env and override.env and exit
   --only-update\t\tOnly merge .env file and update images
   -w|--watch\t\tEnable Docker Compose watch for developement
 
@@ -201,7 +201,7 @@ if [ -f "$env_file" ]; then
 fi
 
 if [ ! -f "$env_file" ]; then
-  cat example.env > "$env_file"
+  cat base.env > "$env_file"
 
   if [ -f "$override_env" ]; then
     cat "$override_env" >> "$env_file"

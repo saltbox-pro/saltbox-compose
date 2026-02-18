@@ -15,8 +15,8 @@ if possible and purge browser redirects.
 ### Added
 
 - Validation of `.env` checks for "unknown variables" (usually misstypes on
-overriding). Unknown variables means not specified in `example.env` and
-external dotenv files.
+  overriding). Unknown variables means not specified in `base.env` and external
+  dotenv files.
 - `install_saltbox.py` script to simplify startup.
 
 ### Changed
@@ -24,6 +24,8 @@ external dotenv files.
 - Rewrite `validate_dotenv.sh` script with Python.
 - `./bin/update_and_run.sh`: more clear error on dockerd socket connection fail
 and on missing `docker` command.
+- Rename `example.env` -> `base.env` to be more clear. Keep symlink for
+  compability.
 
 ### Fixed
 

@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List
 
-REF_FILE = Path('example.env')
+REF_FILE = Path('base.env')
 ENV_FILE = Path('.env')
 EXTRA_ENV_VAR = '_UPDATE_AND_RUN_EXTRA_ENV_FILES'
 

@@ -79,13 +79,13 @@ sudo ./bin/update_and_run.sh
 ```
 
 The script:
-- Merges `example.env` and `override.env` (if exists) into `.env` config.
+- Merges `base.env` and `override.env` (if exists) into `.env` config.
 - Makes secrets with `./bin/make_secrets.py`.
 - Updates images.
 - Prints default administrator credentials.
 - Runs the Salt.Box instance with `./bin/sb-compose.sh`.
 
-Use `override.env` to redefine `example.env` default values.
+Use `override.env` to redefine `base.env` default values.
 
 Use `-h` or `--help` flag to look script options.
 
@@ -215,7 +215,7 @@ sudo ./bin/sb-compose up autotests --pull=never
 Dev mode allows to build images instead of pulling pre-built and adds some
 useful overrides.
 
-Look at "Dev options" section of your [`example.env`](example.env) file copy.
+Look at "Dev options" section of your [`base.env`](base.env) file copy.
 To enable dev options uncomment required `COMPOSE_FILE=` lines. Than run
 compose as usual.
 
@@ -250,7 +250,7 @@ sudo ./bin/sb-compose.sh exec redis-salt cat /etc/redis/certs/ca.crt
 ### Dev minions
 
 Dev mode provides amount of impersistent minions in replica mode. Look for
-options in the [`example.env`](./example.env) file.
+options in the [`base.env`](./base.env) file.
 
 Dev minions does not keep their keys between restarts so keys will be dropped
 on the master. Some operations may lead to lost minions. It that keys try the
