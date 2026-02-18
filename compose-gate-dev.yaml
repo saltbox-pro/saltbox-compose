@@ -1,0 +1,9 @@
+services:
+  gate-front:
+    build: ../gate-front
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_GATEWAY_URL=https://10.1.10.10
+    depends_on:
+      - saltbox-gateway
