@@ -26,6 +26,8 @@ extend-ignore = [ ]
 [tool.ruff]
 line-length = 120
 target-version = "py37"
+
+[tool.ruff.lint]
 ignore = [
     "B019",
     "SIM108",  # Annoying ternary op suggestion
