@@ -415,6 +415,10 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
     return conf
 
 def check(args: argparse.Namespace) -> None:
+    if LOCAL_PATH.exists():
+        dosa = f'Already exists: {LOCAL_PATH}'
+        raise InstallerError(dosa)
+
     if args.skip_check:
         print_out('Skipping requirements checkup!', '')
         return
@@ -472,10 +476,6 @@ def check(args: argparse.Namespace) -> None:
 
 
 def download(args: argparse.Namespace, config: Config) -> None:
-    if LOCAL_PATH.exists():
-        dosa = f'Already exists: {LOCAL_PATH}'
-        raise InstallerError(dosa)
-
     print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}`...')
     print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
     with tempfile.TemporaryDirectory() as tmp_dir_name:
@@ -536,8 +536,8 @@ def main() -> None:
     print_out(msg)
 
     try:
-        conf = configure_script(args, interactions=interactions)
         check(args)
+        conf = configure_script(args, interactions=interactions)
         download(args, config=conf)
         configure_system(args, config=conf)
         run(args)
