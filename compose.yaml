@@ -169,12 +169,13 @@ services:
       PROXY_CERT: '/mnt/proxy_certs/proxy.crt'
       SSL_ALT_NAMES_DNS: '${WEB_SERVER_SSL_ALT_NAMES_DNS}'
       SSL_ALT_NAMES_IP: '${WEB_SERVER_SSL_ALT_NAMES_IP}'
-    working_dir: '/mnt/entrypoint/'
-    entrypoint: './entrypoint.sh'
+      HIER_TEMPLATE: '/mnt/hier.yaml.jinja2'
+      STATE_FILE: '/mnt/proxy_certs/.proxy_alt_names'
+    entrypoint: '/docker/entrypoint.sh'
     volumes:
       - 'redis_salt_certs:/mnt/redis_certs/'
       - 'proxy_certs:/mnt/proxy_certs/'
-      - './make-certs/entrypoint/:/mnt/entrypoint/:ro'
+      - './make-certs/hier.yaml.jinja2/:/mnt/hier.yaml.jinja2:ro'
     secrets:
       - redis_salt_ca_private_key_password
       - redis_salt_private_key_password

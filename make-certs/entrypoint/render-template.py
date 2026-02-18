@@ -25,7 +25,7 @@ TPL_SUFFIXES = {'.tpl', '.jinja', '.jinja2', '.j2'}
 
 class JinjaEnv:
     @staticmethod
-    def __getattr__(name: str) -> Any:
+    def __getattr__(name: str, _=None) -> str:
         try:
             return os.environ[name]
         except KeyError:

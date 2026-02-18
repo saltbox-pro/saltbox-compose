@@ -1,6 +1,7 @@
 ARG BASE_IMAGE='registry.altlinux.org/alt/alt:p11'
 FROM "$BASE_IMAGE"
-LABEL name='make-certs' version='0.1'
+LABEL name='make-certs' version='0.2'
+
 ARG MAKE_CERTS_VERSION='0.2.1'
 ARG PIP_INDEX_URL='https://dev.saltbox.pro/api/v4/projects/8/packages/pypi/simple'
 RUN \
@@ -15,4 +16,9 @@ apt-get install --yes glibc-pthread python3 python3-module-jinja2 python3-module
 pip3 install "make-certs==${MAKE_CERTS_VERSION}" --index-url "$PIP_INDEX_URL"
 apt-get remove --auto-remove --yes python3-module-pip
 EOF
+
+COPY --chmod=755 entrypoint/* /docker/
+
 WORKDIR /root/ 
+ENV STATE_FILE=/root/hier.state
+ENV HIER_TEMPLATE=/root/hier.yaml.jinja2
