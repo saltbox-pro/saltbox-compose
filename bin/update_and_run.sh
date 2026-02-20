@@ -22,6 +22,7 @@ Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
   -n|--no-pull\t\tAvoid to update current repository and images from Internet
   --no-git-pull\t\tDo not pull current repository even if possible
   --no-image-pull\tDo not pull newer images from registry
+  --no-progress\t\tHide progress bars, good for CI
   --no-root\t\tDo not use sudo, run by current user
   --only-env\t\tOnly merge base.env and override.env and exit
   --only-update\t\tOnly merge .env file and update images
@@ -127,6 +128,7 @@ function retry() {
 }
 
 up_args=('--remove-orphans')
+pull_args=('--ignore-buildable')
 make_secrets_arg=('secrets.json')
 down_args=()
 detach_flag=0
@@ -147,6 +149,7 @@ for i in "$@"; do
     -h|--help) printf "$usage_str" && exit 0 ;;
     -l|--login) login_flag=1 ;;
     -n|--no-pull) git_pull_flag=0; image_pull_flag=0 ;;
+    --no-progress) pull_args+=('--quiet') ;;
     --no-git-pull) git_pull_flag=0 ;;
     --no-image-pull) image_pull_flag=0 ;;
     --no-root) no_root_flag=1 ;;
@@ -253,7 +256,7 @@ fi
 
 
 if [ $image_pull_flag = 1 ]; then
-  retry $image_pull_retries echo_run as_root "$compose_cmd" pull --ignore-buildable
+  retry $image_pull_retries echo_run as_root "$compose_cmd" pull "${pull_args[@]}"
 fi
 
 echo_run as_root "$compose_cmd" build

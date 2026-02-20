@@ -18,6 +18,7 @@ if possible and purge browser redirects.
   overriding). Unknown variables means not specified in `base.env` and external
   dotenv files.
 - `install_saltbox.py` script to simplify startup.
+- `update_and_run.sh` flag `--no-progress` to hide dynamic progress-bars.
 
 ### Changed
 
