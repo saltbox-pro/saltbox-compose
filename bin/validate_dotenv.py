@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Dict, List
 
 REF_FILE = Path('base.env')
-ENV_FILE = Path('.env')
+ENV_FILE = Path('.envlocalhost')
 EXTRA_ENV_VAR = '_UPDATE_AND_RUN_EXTRA_ENV_FILES'
 
 _kc_adm_msg='KEYCLOAK_ADMIN_* variables replaced by SALTBOX_ADMIN_*'
@@ -40,6 +40,8 @@ DEPRECATIONS = {
 
     'BACKEND_HTTP_PORT': 'Replaced by CORE_PORT',
     'MONGO_PORT': 'Use MONGO_EXPOSE_SOCKET instead',
+
+    'REDIS_SALT_OUTER_SOCKET': 'Use REDIS_SALT_EXPOSE_SOCKET instead'
 }
 
 

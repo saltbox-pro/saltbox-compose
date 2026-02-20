@@ -19,6 +19,7 @@ if possible and purge browser redirects.
   dotenv files.
 - `install_saltbox.py` script to simplify startup.
 - `update_and_run.sh` flag `--no-progress` to hide dynamic progress-bars.
+- Check for `REDIS_SALT_OUTER_SOCKET` deprecated var.
 
 ### Changed
 
