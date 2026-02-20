@@ -28,6 +28,8 @@ if possible and purge browser redirects.
 and on missing `docker` command.
 - Rename `example.env` -> `base.env` to be more clear. Keep symlink for
   compability.
+- `git_pull_dev_repos.py`: more precise Git repositories detection in
+  `service[].volumes.source` values.
 
 ### Fixed
 

@@ -15,8 +15,9 @@ import json
 import subprocess
 import sys
 import threading
+from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, List
 
 # Int for limit, None for no limit
 PARALLEL_PULLS: int | None = None
@@ -37,7 +38,19 @@ def get_conf() -> dict:
     return json.loads(result.stdout)
 
 
+lru_cache(maxsize=None)
+def get_repo_root(repo: Path) -> Path | None:
+    """ Get Git repo root or None if path is not a repo """
+    ...
+    cmd = ['git', '-C', str(repo), 'rev-parse', '--show-toplevel']
+    res = subprocess.run(cmd, stderr=subprocess.DEVNULL, stdout=subprocess.PIPE)
+    if res.returncode != 0:
+        return None
+    return Path(res.stdout.decode().strip())
+
+
 def get_context_repos(config: dict[str, Any]) -> list[Path]:
+    return []  # FIXME
     paths = set()
     for service in config.get('services', {}).values():
         build = service.get('build')
@@ -49,12 +62,20 @@ def get_context_repos(config: dict[str, Any]) -> list[Path]:
 
 
 def get_volume_repos(config: dict[str, Any]) -> list[Path]:
-    sources = set()
-    for service in config.get('services', {}).values():
-        for vol in service.get('volumes', []):
-            sources.add(Path(vol['source']))
+    sources: List[Path] = []
+    repos = set()
     cwd = Path.cwd()
-    return [p for p in sources if p.is_absolute() and cwd not in p.parents]
+
+    for service in config.get('services', {}).values():
+        sources.extend(Path(vol['source']) for vol in service.get('volumes', []))
+
+    for path in sources:
+        if path.is_absolute() and path.is_dir() and cwd not in path.parents:
+            repo_root = get_repo_root(path)
+            if repo_root is not None:
+                repos.add(repo_root)
+
+    return list(repos)
 
 
 def git_pull(path: Path, lock: threading.Lock) -> int:
