@@ -37,6 +37,8 @@ sudo sysctl -p /etc/sysctl.d/saltbox.conf
 Useful scripts are collected in [`./bin/`](./bin/) directory. They supposed to
 be ran from the root of repo by relative path like `./bin/sb-compose.sh`.
 
+- `get_ca.sh` — obtain `ca.crt` local authority certificate file (and
+  optionally inject it into Firefox).
 - `git_pull_dev_repos.py` — only for developers — update sources Git repositories.
 - `install_saltbox.sh` — donwload Salt.Box Compose, configure and run.
 - `make_secrets.py` — create required by system passwords.
@@ -105,7 +107,7 @@ The authority certificate can be obtained with the command:
 
 ```bash
 # System must be running
-sudo ./bin/sb-compose.sh cp redis-salt:/etc/redis/certs/ca.crt ./
+sudo ./bin/get_ca.sh
 ```
 
 It will be saved to `ca.crt` file in the current directory and may be installed
@@ -244,7 +246,7 @@ The last may be obtained with command:
 
 ```bash
 # System must be running
-sudo ./bin/sb-compose.sh exec redis-salt cat /etc/redis/certs/ca.crt
+sudo ./bin/get_ca.sh
 ```
 
 ### Dev minions

@@ -20,6 +20,7 @@ if possible and purge browser redirects.
 - `install_saltbox.py` script to simplify startup.
 - `update_and_run.sh` flag `--no-progress` to hide dynamic progress-bars.
 - Check for `REDIS_SALT_OUTER_SOCKET` deprecated var.
+- `get_ca.sh` script to obtain `ca.crt` and optionally inject into Firefox.
 
 ### Changed
 
