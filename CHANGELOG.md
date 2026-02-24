@@ -36,6 +36,8 @@ and on missing `docker` command.
 - `./bin/update_and_run.sh` does not ask for `sudo` password with `--no-root`
 flag.
 - Unmatched `fi` in `kc_assign_user_to_group` function in `create-realm-common.sh`
+- `./bin/update_and_run.sh`: fix `git_pull_dev_repos.py` call with error when
+  `.env` file does not exist.
 
 ## [0.1.2] - 2025-12-22
 

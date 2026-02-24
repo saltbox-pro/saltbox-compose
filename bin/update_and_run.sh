@@ -3,6 +3,7 @@ set -e
 
 declare -r override_env='override.env'
 declare -r env_file='.env'
+declare -r base_env_file='base.env'
 bin_dir="$(dirname "$(realpath --relative-to "$(pwd)" "$0")")"
 declare -r bin_dir
 declare -r compose_cmd="${bin_dir}/sb-compose.sh"
@@ -24,7 +25,7 @@ Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
   --no-image-pull\tDo not pull newer images from registry
   --no-progress\t\tHide progress bars, good for CI
   --no-root\t\tDo not use sudo, run by current user
-  --only-env\t\tOnly merge base.env and override.env and exit
+  --only-env\t\tOnly merge ${base_env_file} and override.env and exit
   --only-update\t\tOnly merge .env file and update images
   -w|--watch\t\tEnable Docker Compose watch for developement
 
@@ -95,14 +96,20 @@ function git_pull_required() {
     return
   fi
 
+  if [ ! -f "$env_file" ]; then
+    warn "No '${env_file}' file, skipping 'git pull'"
+    echo 0
+    return
+  fi
+
   if ! branch=$(git branch --show-current 2> /dev/null); then
-    warn Error on running git branch subcommand, skipping git pull
+    warn "Error on running git branch subcommand, skipping 'git pull'"
     echo 0
     return
   fi
 
   if [ -z "$branch" ]; then
-    warn No current Git branch, skipping git pull
+    warn 'No current Git branch, skipping git pull'
     echo 0
     return
   fi
@@ -196,7 +203,7 @@ if [ -f "$env_file" ]; then
     if [[ $REPLY =~ ^[Yy]$ ]]; then
       rm "$env_file"
     else
-      warn "Using existing '$env_file'"
+      warn "Using existed '${env_file}'"
     fi
   else
     rm "$env_file"
@@ -204,16 +211,16 @@ if [ -f "$env_file" ]; then
 fi
 
 if [ ! -f "$env_file" ]; then
-  cat base.env > "$env_file"
+  cat "$base_env_file" > "$env_file"
 
   if [ -f "$override_env" ]; then
     cat "$override_env" >> "$env_file"
   else
-    warn "No $override_env file, using defaults"
+    warn "No '${override_env}' file, using defaults"
   fi
 
   chown "$(stat -c %u:%g .)" "$env_file"
-  echo "New $env_file has been created"
+  echo "New '$env_file' file has been created"
 fi
 
 
