@@ -292,5 +292,4 @@ kc_assign_user_to_group() {
     --no-merge 2>/dev/null || echo "User already in group"
 
   echo -e "The '${group_name}' group has been successfully assigned to the '${username}' user\n"
-  fi
 }
