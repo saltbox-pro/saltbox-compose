@@ -40,6 +40,10 @@ flag.
 - `./bin/update_and_run.sh`: fix `git_pull_dev_repos.py` call with error when
   `.env` file does not exist.
 
+### Removed
+
+- Stale `compose-frontend-dev.yaml` override.
+
 ## [0.1.2] - 2025-12-22
 
 ### Added
