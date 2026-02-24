@@ -18,12 +18,6 @@ services:
       KEYCLOAK_BASE_URL: "${KEYCLOAK_BASE_URL}"
     volumes:
       - 'sshfs_manager_db:/home/filebrowser'
-      - 'saltbox_salt_extmod:/srv/salt_extmod:ro'
-      - 'saltbox_salt_local:/srv/salt_local'
-      - 'saltbox_salt_master_local:/srv/salt_master_local'
-      - 'saltbox_saltbox_salt:/srv/saltbox_salt'
-      - '${SALT_MASTER_STORAGE_PATH}:/srv/salt'
-      - '${SSHFS_STORAGE_PATH}:/srv/sshfs'
     secrets:
       - keycloak_client_saltbox_core_password
     depends_on:
