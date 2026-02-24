@@ -4,6 +4,7 @@
 
 # Local generic does not override original
 x-default-service: &default
+  pull_policy: never
   restart: 'on-failure'
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
@@ -15,7 +16,7 @@ services:
     build:
       context: '${SALT_BUILD_DIR}'
       target: salt-master-dev
-    image: 'salt-master:dev'
+    image: '${LOCAL_IMAGE_NAMESPACE}/salt-master-clean-keys:dev'
     entrypoint: "salt-key --yes --delete 'mock-minion-*'"
     profiles:
       - salt-master
@@ -26,7 +27,7 @@ services:
     build:
       context: '${SALT_BUILD_DIR}'
       target: salt-mock-minion
-    image: 'salt-minion:dev'
+    image: '${LOCAL_IMAGE_NAMESPACE}/salt-minion:dev'
     environment:
       SALT_MOCK_MINION_LOG_LEVEL: '${SALT_MOCK_MINION_LOG_LEVEL:-${SALT_MOC_MINION_LOG_LEVEL:-warning}}'  # TODO deprecated SALT_MOC_*
 
@@ -34,7 +35,7 @@ services:
 
     deploy:
       mode: replicated
-      replicas: '${SALT_MOCK_MINION_REPLICAS:-${SALT_MOC_MINION_REPLICAS:-}}'  # TODO deprecated SALT_MOC_*
+      replicas: '${SALT_MOCK_MINION_REPLICAS:-${SALT_MOC_MINION_REPLICAS:-}}'
     profiles:
       - salt-master
     depends_on:

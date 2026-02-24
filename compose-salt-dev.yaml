@@ -6,10 +6,11 @@
 # Override
 services:
   salt-master:
+    pull_policy: never
     build:
       context: '${SALT_BUILD_DIR}'
       target: salt-master-dev
-    image: 'salt-master:dev'
+    image: '${LOCAL_IMAGE_NAMESPACE}/salt-master:dev'
     develop:
       watch:
         - path: '${SALT_BUILD_DIR}/master/templates/'

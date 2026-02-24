@@ -2,10 +2,26 @@
 
 ## Salt.Box Compose backend override file for dev-mode.
 
-x-redis-based: &redis
-  build:
-    context: redis/
-  image: 'redis-saltbox:dev'
+x-redis-service: &redis
+  pull_policy: never
+  image: '${LOCAL_IMAGE_NAMESPACE}/redis-saltbox:dev'
+
+x-core-service: &core
+    pull_policy: never
+    environment:
+      - DISCOVERY_LOG_LEVEL=DEBUG
+    tty: true  # colorize logs
+    image: '${LOCAL_IMAGE_NAMESPACE}/saltbox-core:dev'
+    volumes:
+      - '${CORE_BUILD_DIR}:/mnt/saltbox-core'
+      - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages:ro'
+      - '${SDK_DIR}:/mnt/saltbox-sdk'
+    tmpfs:
+      - '/mnt/saltbox-bridge-messages/build/'
+      - '/mnt/saltbox-bridge-messages/saltbox_bridge_messages.egg-info/'
+      - '/mnt/saltbox-sdk/build/'
+      - '/mnt/saltbox-sdk/saltbox_sdk.egg-info/'
+
 
 services:
   keycloak-init:
@@ -19,7 +35,7 @@ services:
     environment:
       - LOG_LEVEL=DEBUG
     tty: true  # colorize logs
-    image: 'saltbox-gateway:dev'
+    image: '${LOCAL_IMAGE_NAMESPACE}/saltbox-gateway:dev'
     volumes:
       - '${GATEWAY_BUILD_DIR}:/mnt/saltbox-gateway:ro'
       - '${SDK_DIR}:/mnt/saltbox-sdk:ro'
@@ -28,23 +44,11 @@ services:
       - '/mnt/saltbox-sdk/saltbox_sdk.egg-info/'
       - '/mnt/saltbox-gateway/saltbox_gateway.egg-info/'
 
-  saltbox-core: &core
+  saltbox-core:
+    <<: *core
     build:
       context: $CORE_BUILD_DIR
       target: dev
-    environment:
-      - DISCOVERY_LOG_LEVEL=DEBUG
-    tty: true  # colorize logs
-    image: 'saltbox-core:dev'
-    volumes:
-      - '${CORE_BUILD_DIR}:/mnt/saltbox-core'
-      - '${BRIDGE_MESSAGES_DIR}:/mnt/saltbox-bridge-messages:ro'
-      - '${SDK_DIR}:/mnt/saltbox-sdk'
-    tmpfs:
-      - '/mnt/saltbox-bridge-messages/build/'
-      - '/mnt/saltbox-bridge-messages/saltbox_bridge_messages.egg-info/'
-      - '/mnt/saltbox-sdk/build/'
-      - '/mnt/saltbox-sdk/saltbox_sdk.egg-info/'
 
   saltbox-core-init:
     <<: *core
@@ -69,6 +73,9 @@ services:
 
   redis-salt:
     <<: *redis
+    build:
+      context: redis/
+
 
   redis-taskiq:
     <<: *redis
@@ -88,4 +95,4 @@ services:
   proxy:
     build:
       context: proxy/
-    image: 'saltbox-proxy:dev'
+    image: '${LOCAL_IMAGE_NAMESPACE}/saltbox-proxy:dev'

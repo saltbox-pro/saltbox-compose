@@ -5,9 +5,10 @@ x-default-service: &default
 services:
   sshfs_manager:
     <<: *default
+    pull_policy: never
     build:
       context: ./sshfs_manager
-    image: sshfs_manager:${SSHFS_IMAGE_TAG}
+    image: '${LOCAL_IMAGE_NAMESPACE}/sshfs_manager:${SSHFS_IMAGE_TAG}'
     extra_hosts: [ "localhost:host-gateway" ]
     user: '0'
     environment:
