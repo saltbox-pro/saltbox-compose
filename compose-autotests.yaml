@@ -40,7 +40,7 @@ services:
       GET_TOKEN_ENDPOINT: 'http://proxy/${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token'
     secrets:
       - redis_salt_password
-      - salt_boxadmin_password
+      - saltbox_admin_password
       - keycloak_client_saltbox_core_password
     depends_on:
       proxy:
