@@ -21,7 +21,7 @@ if possible and purge browser redirects.
 - `update_and_run.sh` flag `--no-progress` to hide dynamic progress-bars.
 - Check for `REDIS_SALT_OUTER_SOCKET` deprecated var.
 - `get_ca.sh` script to obtain `ca.crt` and optionally inject into Firefox.
-- `sshfs_manager/config.yaml.tmpl`: mount `/srv/salt`, `/srv/sshfs`, `/srv/master/salt` volumes
+- `sshfs_manager/config.yaml.tmpl`: mount `/srv/salt`, `/srv/sshfs`, `/srv/master/salt` volumes.
 
 ### Changed
 
@@ -32,16 +32,16 @@ and on missing `docker` command.
   compability.
 - `git_pull_dev_repos.py`: more precise Git repositories detection in
   `service[].volumes.source` values.
-- Disable default admin rights for SSHFS-manager users
+- Disable default admin rights for SSHFS-manager users.
 
 ### Fixed
 
 - `./bin/update_and_run.sh` does not ask for `sudo` password with `--no-root`
 flag.
-- Unmatch `fi` in `kc_assign_user_to_group` function in `create-realm-common.sh`
+- Unmatch `fi` in `kc_assign_user_to_group` function in `create-realm-common.sh`.
 - `./bin/update_and_run.sh`: fix `git_pull_dev_repos.py` call with error when
   `.env` file does not exist.
-- OIDC scopes in `sshfs_manager/config.yaml.tmpl`
+- OIDC scopes in `sshfs_manager/config.yaml.tmpl`.
 
 ### Removed
 
