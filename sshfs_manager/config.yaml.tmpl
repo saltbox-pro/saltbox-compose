@@ -12,12 +12,18 @@ server:
     - path: /srv/saltbox_salt
       config:
         defaultEnabled: true
-    - path: /srv/salt_local
-      config:
-        defaultEnabled: true
-    - path: /srv/salt_master_local
-      config:
-        defaultEnabled: true
+  logging:
+    # Terminal
+    - output: stdout
+      levels: "info|warning|error"
+      apiLevels: disabled
+    # API logs
+    - output: "api-events.log"
+      levels: disabled
+    # Errors
+    - output: "errors.log"
+      levels: "error|warning"
+      apiLevels: disabled
 auth:
   methods:
     password:
@@ -27,7 +33,7 @@ auth:
       clientId: "${KEYCLOAK_CLIENT}"
       clientSecret: "${OIDC_CLIENT_SECRET}"
       issuerUrl: "https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}"
-      scopes: "email openid profile groups"
+      scopes: "email openid profile"
       userIdentifier: "preferred_username"
       createUser: true
       groupsClaim: "groups"
@@ -55,10 +61,18 @@ userDefaults:
     folder: true
   permissions:
     api: false
-    admin: true
-    modify: true
-    share: true
-    realtime: true
-    delete: true
-    create: true
+    admin: false
+    modify: false
+    share: false
+    realtime: false
+    delete: false
+    create: false
     download: true
+frontend:
+  name: "Salt.Box"
+  description: "Salt.Box SSHFS manager"
+  # favicon: "/path/to/favicon.jpg"  #NOTE: maybe worth adding
+  externalLinks:
+    - text: "Documentation"
+      title: "View documentation"      # Hover tooltip
+      url: "https://saltbox.pro/docs/next/intro"
