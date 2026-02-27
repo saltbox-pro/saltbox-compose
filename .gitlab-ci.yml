@@ -3,6 +3,8 @@
 include:
   - project: 'saltbox/ci-lib'
     file: 'build-image.yml'
+  - project: 'saltbox/ci-lib'
+    file: 'def-branch-merge-guard.yml'
 
 
 .default:
