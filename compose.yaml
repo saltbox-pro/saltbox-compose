@@ -427,10 +427,27 @@ services:
         condition: service_completed_successfully
         restart: false
 
+  saltbox-core-jobs-watcher:
+    <<: *core
+    command: 'shell saltbox-jobs-watcher'
+    expose: []
+    depends_on:
+      redis-salt:
+        condition: service_started
+        restart: false
+      rabbitmq:
+        condition: service_healthy
+        restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
+        restart: false
+
   saltbox-core-salt-buffer-manager:
     <<: *core
     command: 'shell saltbox-salt-buffer-manager'
     expose: []
+    deploy:
+      replicas: '${CORE_TASKIQ_WORKERS_COUNT:-1}'
     depends_on:
       redis-salt:
         condition: service_started
