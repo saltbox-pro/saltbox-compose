@@ -3,15 +3,54 @@ server:
   port: 80
   database: /home/filebrowser/database.db
   sources:
-    - path: /srv/sshfs
+    - path: "/srv/sshfs"
+      name: "sshfs"
       config:
+        denyByDefault: false
+        private: false
+        disabled: false
+        indexingIntervalMinutes: 0
+        disableIndexing: false
+        conditionals:
+          hidden: false
+          ignoreHidden: false
+          ignoreZeroSizeFolders: false
+          rules:
+        defaultUserScope: "/"
         defaultEnabled: true
-    - path: /srv/salt
+        createUserDir: false
+    - path: "/srv/salt"
+      name: "salt"
       config:
+        denyByDefault: false
+        private: false
+        disabled: false
+        indexingIntervalMinutes: 0
+        disableIndexing: false
+        conditionals:
+          hidden: false
+          ignoreHidden: false
+          ignoreZeroSizeFolders: false
+          rules:
+        defaultUserScope: "/"
         defaultEnabled: true
-    - path: /srv/saltbox_salt
+        createUserDir: false
+    - path: "/srv/saltbox_salt"
+      name: "saltbox_salt"
       config:
+        denyByDefault: false
+        private: false
+        disabled: false
+        indexingIntervalMinutes: 0
+        disableIndexing: false
+        conditionals:
+          hidden: false
+          ignoreHidden: false
+          ignoreZeroSizeFolders: false
+          rules:
+        defaultUserScope: "/"
         defaultEnabled: true
+        createUserDir: false
   logging:
     # Terminal
     - output: stdout
@@ -33,11 +72,11 @@ auth:
       clientId: "${KEYCLOAK_CLIENT}"
       clientSecret: "${OIDC_CLIENT_SECRET}"
       issuerUrl: "https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}"
-      scopes: "email openid profile"
+      scopes: "email openid profile groups"
       userIdentifier: "preferred_username"
       createUser: true
       groupsClaim: "groups"
-      adminGroup: "filebrowser-admins"
+      adminGroup: "/filebrowser-admins"
       disableVerifyTLS: true
 userDefaults:
   editorQuickSave: true
@@ -64,7 +103,7 @@ userDefaults:
     admin: false
     modify: false
     share: false
-    realtime: false
+    realtime: true
     delete: false
     create: false
     download: true

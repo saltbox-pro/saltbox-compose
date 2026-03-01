@@ -22,6 +22,7 @@ if possible and purge browser redirects.
 - Check for `REDIS_SALT_OUTER_SOCKET` deprecated var.
 - `get_ca.sh` script to obtain `ca.crt` and optionally inject into Firefox.
 - `sshfs_manager/config.yaml.tmpl`: mount `/srv/salt`, `/srv/sshfs`, `/srv/master/salt` volumes.
+- `sshfs-manager`: inject proxy container IP into `/etc/hosts` to bypass Basic Auth for OIDC requests.
 
 ### Changed
 
@@ -33,6 +34,7 @@ and on missing `docker` command.
 - `git_pull_dev_repos.py`: more precise Git repositories detection in
   `service[].volumes.source` values.
 - Disable default admin rights for SSHFS-manager users.
+- Rename Docker service from `sshfs_manager` to `sshfs-manager` for consistency.
 
 ### Fixed
 
@@ -42,6 +44,7 @@ flag.
 - `./bin/update_and_run.sh`: fix `git_pull_dev_repos.py` call with error when
   `.env` file does not exist.
 - OIDC scopes in `sshfs_manager/config.yaml.tmpl`.
+- Assign Keycloak group membership mapper to `sshfs-manager` client scope.
 
 ### Removed
 

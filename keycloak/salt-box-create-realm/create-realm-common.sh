@@ -224,15 +224,15 @@ kc_assign_client_to_scope() {
 
   scope_id=$(kcadm.sh get client-scopes \
     -r "${KEYCLOAK_REALM}" \
-    -q name="${scope_name}" \
     --format csv \
-    --fields id \
-    --noquotes)
+    --fields id,name \
+    --noquotes \
+    | awk -F',' '$2 == "'"${scope_name}"'" {print $1}')
 
   if [ -n "${scope_id}" ]; then
     echo "Scope '${scope_name}' already exists with id: '${scope_id}'"
   else
-    echo "Creating scope '${scope_name}' for client id: '${client_id}'"
+    echo -e "\nCreating scope '${scope_name}' for client id: '${client_id}'"
 
     scope_id="$(kcadm.sh create client-scopes \
       -r "${KEYCLOAK_REALM}" \
@@ -240,15 +240,19 @@ kc_assign_client_to_scope() {
       -i)"
 
     echo "Created client scope id: ${scope_id}"
+    echo -e "\nCreating Group Membership Mapper by config file: ${path_to_mapper_conf}"
 
     kcadm.sh create "client-scopes/${scope_id}/protocol-mappers/models" \
       -r "${KEYCLOAK_REALM}" \
       --file "${path_to_mapper_conf}"
+
+    echo "Group Membership Mapper has been created"
   fi
 
   echo "Assigning scope '${scope_name}' to client id: '${client_id}'"
   kcadm.sh update "clients/${client_id}/default-client-scopes/${scope_id}" \
-    -r "${KEYCLOAK_REALM}" 2>/dev/null || echo "Scope already assigned to client"
+    -r "${KEYCLOAK_REALM}" 2>/dev/null \
+    || echo "Scope already assigned to client"
 }
 
 

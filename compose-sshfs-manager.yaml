@@ -3,7 +3,7 @@ x-default-service: &default
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
 services:
-  sshfs_manager:
+  sshfs-manager:
     <<: *default
     pull_policy: never
     build:
@@ -17,6 +17,8 @@ services:
       KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
       KEYCLOAK_CLIENT: ${KEYCLOAK_CLIENT}
       KEYCLOAK_BASE_URL: "${KEYCLOAK_BASE_URL}"
+      BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME:-}'
+      BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD:-}'
     volumes:
       - 'sshfs_manager_db:/home/filebrowser'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt'
