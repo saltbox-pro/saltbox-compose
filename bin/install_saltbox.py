@@ -25,6 +25,7 @@ The script is a part of Salt.Box Compose
 # TODO Offline mode with images
 
 import argparse
+import contextlib
 import functools
 import ipaddress
 import itertools
@@ -42,7 +43,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional, Type, TypeVar
 
-
 ENC='UTF-8'
 HTTP_CHUNK_BYTE = 8192
 HTTP_TIMEOUT_SEC = 30
@@ -51,11 +51,13 @@ LOCAL_PATH = Path('./saltbox-compose/')
 BIN_DIR = LOCAL_PATH / 'bin'
 ENV_OVERRIDE = LOCAL_PATH / 'override.env'
 SCRIPT_SUFFIXES = ('*.sh', '*.py',)
+PREMAKE_SECRETS_CMD = ['bin/make_secrets.py']
 # Uses after changind CWD
 ENTRYPOINT = ['bin/update_and_run.sh', '--no-root', '--force', '--detach', '--no-git-pull']  # TODO Parametric flags
 MIN_DOCKER_VERSION = '25.0.0'
 MIN_COMPOSE_VERSION = '2.20.2'
 MIN_PYTHON_VERSION = '3.7.3'
+ADMIN_SECRET_NAME = 'saltbox_admin_password'
 
 URLS = {
     'saltbox-compose': 'https://dev.saltbox.pro/saltbox/saltbox-compose',
@@ -66,6 +68,16 @@ cache = functools.lru_cache(maxsize=None)
 
 class InstallerError(RuntimeError): ...
 class HttpNotFoundError(InstallerError): ...
+
+
+@contextlib.contextmanager
+def cd(path: Path):
+    orig = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(orig)
 
 
 def print_out(*args, verbose: bool=False) -> None:
@@ -105,6 +117,10 @@ class Interactions:
 
         return val
 
+    def ask_optional(self, prompt: str) -> Optional[str]:
+        prompt = f'{prompt}: '
+        val = input(prompt).strip()
+        return val or None
 
     def ask_int(self, prompt: str, default: Optional[int] = None) -> int:
         val = self.ask(prompt, default=str(default))
@@ -200,6 +216,15 @@ def get_args() -> argparse.Namespace:
             '`RELEASE` to search fo latest release tag, '
             f'`{Config.compose_ref}` by default'
         )
+    )
+    parser.add_argument(
+        '--explicit-secret',
+        nargs='*',
+        default=[],
+        help=(
+            'Set a secret value explicitly in form of `NAME=VALUE`, '
+            f'use `{ADMIN_SECRET_NAME}=VALUE` to set the system administrator password'
+        ),
     )
     parser.add_argument(
         '--host',
@@ -403,6 +428,10 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
     if conf.compose_ref == 'RELEASE':
         conf.compose_ref = COMPOSE_REPO.get_latest_version_tag()
 
+    if not any(x.startswith(f'{ADMIN_SECRET_NAME}=') for x in args.explicit_secret):
+        admin_pass = interactions.ask_optional('Salt.Box amdin password (leave empty to generate)')
+        args.explicit_secret.append(f'{ADMIN_SECRET_NAME}={admin_pass}')
+
     try:
         conf.validate()
     except ValueError as err:
@@ -515,14 +544,21 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
 
 
 def run(args: argparse.Namespace) -> None:
-    cmd = ' '.join(ENTRYPOINT)
-    print_out(f'Running {cmd}', '')
+    if args.explicit_secret:
+        cmd_str = PREMAKE_SECRETS_CMD + ['--explicit'] + args.explicit_secret
+        print_out(f'Running {cmd_str}', '')
+        print(Path.cwd())
+        try:
+            subprocess.run(cmd_str, check=True)
+        except subprocess.CalledProcessError as err:
+            raise InstallerError(err) from None
+    cmd_str = ' '.join(ENTRYPOINT)
+    print_out(f'Running {cmd_str}', '')
     sys.stdout.flush()
     sys.stderr.flush()
     if args.skip_run:
         print_out('Skipping run!', '')
         return
-    os.chdir(LOCAL_PATH)
     os.execv(ENTRYPOINT[0], ENTRYPOINT)
 
 
@@ -540,7 +576,8 @@ def main() -> None:
         conf = configure_script(args, interactions=interactions)
         download(args, config=conf)
         configure_system(args, config=conf)
-        run(args)
+        with cd(LOCAL_PATH):
+            run(args)
     except InstallerError as papa:
         print_err('', papa, '', 'Exit on error', '')
         sys.exit(1)
