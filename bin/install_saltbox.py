@@ -157,6 +157,7 @@ class Config:
     port: int = 443
     compose_ref = 'RELEASE'
     force_host_as_name: bool = False
+    admin_name: str = 'master'
 
     def validate(self) -> None:
         if not self.MIN_PORT <= self.port <= self.MAX_PORT:
@@ -195,6 +196,8 @@ class Config:
             wut = 'a DNS name' if self.force_host_as_name else 'an IP address'
             data[0] += f' (Host part is treated as {wut})'
         data.append(f'Salt.Box Compose reference is: `{self.compose_ref}`')
+        data.append(f'Salt.Box Administrator\'s login is: `{self.admin_name}`')
+        data.append('Salt.Box Administrator\'s password is: [ SEARCH IN FURTHER OUTPUT ]')
         return '\n'.join(data)
 
 
@@ -207,6 +210,11 @@ def get_args() -> argparse.Namespace:
         nargs='*',
         type=str,
         help="Extra values to include into dotenv in form of NAME='VAL'",
+    )
+    parser.add_argument(
+        '--admin',
+        type=str,
+        help='The Salt.Box Administrator\'s login',
     )
     parser.add_argument(
         '--compose-ref',
@@ -223,7 +231,7 @@ def get_args() -> argparse.Namespace:
         default=[],
         help=(
             'Set a secret value explicitly in form of `NAME=VALUE`, '
-            f'use `{ADMIN_SECRET_NAME}=VALUE` to set the system administrator password'
+            f'use `{ADMIN_SECRET_NAME}=VALUE` to set the Salt.Box Administrator\'s password'
         ),
     )
     parser.add_argument(
@@ -428,8 +436,14 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
     if conf.compose_ref == 'RELEASE':
         conf.compose_ref = COMPOSE_REPO.get_latest_version_tag()
 
+    if args.admin is not None:
+        conf.admin_name = args.admin
+    else:
+        conf.admin_name = interactions.ask('Salt.Box Administrator\'s login', conf.admin_name)
+
     if not any(x.startswith(f'{ADMIN_SECRET_NAME}=') for x in args.explicit_secret):
-        admin_pass = interactions.ask_optional('Salt.Box amdin password (leave empty to generate)')
+        admin_pass = interactions.ask_optional(
+            'Salt.Box Administartor\'s password (leave empty to generate)')
         args.explicit_secret.append(f'{ADMIN_SECRET_NAME}={admin_pass}')
 
     try:
@@ -529,7 +543,10 @@ def download(args: argparse.Namespace, config: Config) -> None:
 
 
 def configure_system(args: argparse.Namespace, config: Config) -> None:
-    override = [f"WEB_SERVER_OUTER_SOCKET='{config.host}:{config.port}'"]
+    override = [
+        f"SALTBOX_ADMIN_USERNAME='{config.admin_name}'",
+        f"WEB_SERVER_OUTER_SOCKET='{config.host}:{config.port}'"
+    ]
     if config.is_host_seems_ip and not config.force_host_as_name:
         override.append(f"WEB_SERVER_SSL_ALT_NAMES_IP='127.0.0.1,{config.host}'")
     else:
