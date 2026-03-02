@@ -23,6 +23,8 @@ if possible and purge browser redirects.
 - `get_ca.sh` script to obtain `ca.crt` and optionally inject into Firefox.
 - `sshfs_manager/config.yaml.tmpl`: mount `/srv/salt`, `/srv/sshfs`, `/srv/master/salt` volumes.
 - `sshfs-manager`: inject proxy container IP into `/etc/hosts` to bypass Basic Auth for OIDC requests.
+- `./bin/make_secrets.py` has now `--explicit VAL=NAME` arg to set a secret value from
+  cmdline.
 
 ### Changed
 

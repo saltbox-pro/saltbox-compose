@@ -21,7 +21,7 @@ import sys
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 SECRET_ALPHABET = string.ascii_letters + string.digits
 
@@ -47,27 +47,6 @@ def random(length, alphabet=SECRET_ALPHABET) -> str:
     return ''.join(secrets.choice(alphabet) for i in range(length))
 
 
-def make_secret(path: Path, secret_length: int, overwrite=False) -> None:
-    is_existing = path.exists()
-    if is_existing and not overwrite:
-        print(f'Skip existing {path}', file=sys.stderr)
-        return
-    with open(path, 'w') as f:
-        if is_existing:
-            print(f'Overwriting {path}')
-        else:
-            print(f'Creating {path}')
-        f.write(random(length=secret_length))
-
-
-def prune(secrets: List[Secret], secrets_dir: Path) -> None:
-    good_files = {path_of_secret(secrets_dir, sec.name) for sec in secrets}
-    for path in secrets_dir.iterdir():
-        if path not in good_files and path and not path.name.startswith('.'):
-            print(f'Delete {path}')
-            rm(path)
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='make_secrets',
@@ -76,8 +55,7 @@ def parse_args() -> argparse.Namespace:
         'file',
         nargs='*',
         default=['secrets.json'],
-        help='Files with',
-    )
+        help='Files with',)
     parser.add_argument(
         '-w',
         '--overwrite',
@@ -87,7 +65,39 @@ def parse_args() -> argparse.Namespace:
         '--prune',
         help='Delete files, which are not related to specified secrets',
         action='store_true',)
+    parser.add_argument(
+        '--explicit',
+        nargs='*',
+        default=[],
+        help='Set a secret value explicitly in form of `NAME=VALUE`',)
     return parser.parse_args()
+
+
+def make_secret(
+    path: Path,
+    secret_length: int,
+    explicit_value: Optional[str] = None,
+    overwrite=False
+) -> None:
+    is_existing = path.exists()
+    if is_existing and not overwrite:
+        print(f'Skip existing `{path}`', file=sys.stderr)
+        return
+    with open(path, 'w') as f:
+        if is_existing:
+            print(f'Overwriting `{path}`')
+        else:
+            print(f'Creating `{path}`')
+        val = random(length=secret_length) if explicit_value is None else explicit_value
+        f.write(val)
+
+
+def prune(secrets: List[Secret], secrets_dir: Path) -> None:
+    good_files = {path_of_secret(secrets_dir, sec.name) for sec in secrets}
+    for path in secrets_dir.iterdir():
+        if path not in good_files and path and not path.name.startswith('.'):
+            print(f'Delete {path}')
+            rm(path)
 
 
 def validate_conf(data: Any) -> List[Secret]:
@@ -138,20 +148,50 @@ def get_secrets_dir() -> Path:
     return secrets_dir
 
 
+def parse_explicits(explicits: List[str]) -> Dict[str, str]:
+    result = {}
+    for x in explicits:
+        spl = x.split('=', maxsplit=1)
+        if len(spl) != 2 or not spl[1]:
+            raise ValueError(f'Incorrect explicit secret arg: `{x}`')
+        result[spl[0]] = spl[1]
+    return result
+
+
 def main() -> None:
     args = parse_args()
+    try:
+        explicits = parse_explicits(args.explicit)
+    except (ValueError) as err:
+        print(f'ERROR {err}', file=sys.stderr)
+        sys.exit(1)
     secrets_dir = get_secrets_dir()
+
     try:
         secrets = parse_configs(args.file)
     except (ValueError, OSError) as err:
         print(f'ERROR {err}', file=sys.stderr)
         sys.exit(1)
     print(f'Found {len(secrets)} secret entries in {len(args.file)} config files')
+
+    for x in explicits:
+        if x not in {s.name for s in secrets}:
+            err = f'Explicit secret `{x}` is given, but no such secret in configs'
+            print(f'ERROR {err}', file=sys.stderr)
+            sys.exit(1)
+
     if args.prune:
         prune(secrets=secrets, secrets_dir=secrets_dir)
     for sec in secrets:
         path = path_of_secret(secrets_dir, sec.name)
-        make_secret(path=path, secret_length=sec.length, overwrite=args.overwrite)
+        explicit_val = explicits.get(sec.name)
+        try:
+            make_secret(
+                path=path, secret_length=sec.length,
+                explicit_value=explicit_val, overwrite=args.overwrite)
+        except OSError as err:
+            print(f'ERROR {err}', file=sys.stderr)
+            sys.exit(1)
 
 
 if __name__ == '__main__':
