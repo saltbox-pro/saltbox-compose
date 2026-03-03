@@ -640,7 +640,9 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
 
 def run(args: argparse.Namespace) -> None:
     if args.explicit_secret:
-        cmd = PREMAKE_SECRETS_CMD.copy() + ['--explicit'] + args.explicit_secret
+        cmd = PREMAKE_SECRETS_CMD.copy()
+        for val in args.explicit_secret:
+            cmd += ['--explicit', val]
         cmd_str = ' '.join(cmd)
         print_out(f'Running `{cmd_str}`', '')
         try:

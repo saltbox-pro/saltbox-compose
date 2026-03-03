@@ -67,9 +67,12 @@ def parse_args() -> argparse.Namespace:
         action='store_true',)
     parser.add_argument(
         '--explicit',
-        nargs='*',
+        action='append',
         default=[],
-        help='Set a secret value explicitly in form of `NAME=VALUE`',)
+        help=(
+            'Set a secret value explicitly in form of `NAME=VALUE`. '
+            'Can be specified multiple times.'
+        ),)
     return parser.parse_args()
 
 
