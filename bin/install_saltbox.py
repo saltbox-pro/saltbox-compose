@@ -52,23 +52,122 @@ LOCAL_PATH = Path('./saltbox-compose/')
 BIN_DIR = LOCAL_PATH / 'bin'
 ENV_OVERRIDE = LOCAL_PATH / 'override.env'
 SCRIPT_SUFFIXES = ('*.sh', '*.py',)
-PREMAKE_SECRETS_CMD = ['bin/make_secrets.py']
+ADMIN_SECRET_NAME = 'saltbox_admin_password'
+
 # Uses after changind CWD
-ENTRYPOINT = ['bin/update_and_run.sh', '--no-root', '--force', '--detach', '--no-git-pull']  # TODO Parametric flags
+PREMAKE_SECRETS_CMD = ['bin/make_secrets.py']
+ENTRYPOINT = ['bin/update_and_run.sh', '--no-root', '--force', '--detach', '--no-git-pull']
+
 MIN_DOCKER_VERSION = '25.0.0'
 MIN_COMPOSE_VERSION = '2.20.2'
 MIN_PYTHON_VERSION = '3.7.3'
-ADMIN_SECRET_NAME = 'saltbox_admin_password'
 
 URLS = {
     'saltbox-compose': 'https://dev.saltbox.pro/saltbox/saltbox-compose',
 }
+
+SWITCHABLE_IMAGE_TAGS = [
+    'FRONTEND_IMAGE_TAG',
+    'GATEWAY_IMAGE_TAG',
+    'KEYCLOAK_IMAGE_TAG',
+    'MAKE_CERTS_IMAGE_TAG',
+    'MONGODB_IMAGE_TAG',
+    'NGINX_IMAGE_TAG',
+    'OPA_IMAGE_TAG',
+    'PROXY_IMAGE_TAG',
+    'REDIS_IMAGE_TAG',
+    'SALT_MASTER_IMAGE_TAG',
+    'SSHFS_IMAGE_TAG',
+]
 
 cache = functools.lru_cache(maxsize=None)
 
 
 class InstallerError(RuntimeError): ...
 class HttpNotFoundError(InstallerError): ...
+
+
+def get_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=('Run Salt.Box Docker Compose based instance from scratch'),
+    )
+    parser.add_argument(
+        'OVERRIDE',
+        nargs='*',
+        type=str,
+        help="Extra values to include into dotenv in form of NAME='VAL'",
+    )
+    parser.add_argument(
+        '--admin',
+        type=str,
+        help='The Salt.Box Administrator\'s login',
+    )
+    parser.add_argument(
+        '--compose-ref',
+        type=str,
+        help=(
+            'Salt.Box Compose Git reference to obtain, '
+            '`RELEASE` to search fo latest release tag, '
+            f'`{Config.compose_ref}` by default'
+        )
+    )
+    parser.add_argument(
+        '--explicit-secret',
+        nargs='*',
+        default=[],
+        help=(
+            'Set a secret value explicitly in form of `NAME=VALUE`, '
+            f'use `{ADMIN_SECRET_NAME}=VALUE` to set the Salt.Box Administrator\'s password'
+        ),
+    )
+    parser.add_argument(
+        '--host',
+        type=str,
+        help=f'Hostname or real address to serve on, `{Config.host}` by default',
+    )
+    parser.add_argument(
+        '--host-is-name',
+        action='store_true',
+        help='Force SSL cert for DNS name even if `host` looks like IP address'
+    )
+    parser.add_argument(
+        '--keep-image-tags',
+        action='store_true',
+        help=f'Do not switch image tags for {Config.DEV_BRANCH}',
+    )
+    parser.add_argument(
+        '--port',
+        type=int,
+        help=f'Port to serve HTTPS, `{Config.port}` by default',
+    )
+    parser.add_argument(
+        '-n', '--non-interactive',
+        action='store_true',
+        help='Do not ask to input, use defaults',
+    )
+    parser.add_argument(
+        '--no-progress',
+        action='store_true',
+        help='Do not show downloading progress, CI-friendly',
+    )
+    parser.add_argument(
+        '-s', '--skip-check',
+        action='store_true',
+        help='Do not check Docker install before run',
+    )
+    parser.add_argument(
+        '-u', '--skip-run',
+        action='store_true',
+        help='Prepare but not run',
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='Print more info',
+    )
+    return parser.parse_args()
+
+VERBOSE=False
 
 
 @contextlib.contextmanager
@@ -156,11 +255,16 @@ class Config:
     MAX_PORT = 2**16 - 1
     HOSTNAME_LABEL_PATTERN = re.compile(r'^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$')
 
+    STABLE_BRANCH = 'master'
+    DEV_BRANCH = 'dev'
+    RELEASE_REF = 'RELEASE'
+
     host: str = 'saltbox.local'
     port: int = 443
-    compose_ref = 'RELEASE'
+    compose_ref = RELEASE_REF
     force_host_as_name: bool = False
     admin_name: str = 'master'
+    set_image_tags: bool = False
 
     def validate(self) -> None:
         if not self.MIN_PORT <= self.port <= self.MAX_PORT:
@@ -203,83 +307,6 @@ class Config:
         data.append('Salt.Box Administrator\'s password is: [ SEARCH IN FURTHER OUTPUT ]')
         return '\n'.join(data)
 
-
-def get_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description=('Run Salt.Box Docker Compose based instance from scratch'),
-    )
-    parser.add_argument(
-        'OVERRIDE',
-        nargs='*',
-        type=str,
-        help="Extra values to include into dotenv in form of NAME='VAL'",
-    )
-    parser.add_argument(
-        '--admin',
-        type=str,
-        help='The Salt.Box Administrator\'s login',
-    )
-    parser.add_argument(
-        '--compose-ref',
-        type=str,
-        help=(
-            'Salt.Box Compose Git reference to obtain, '
-            '`RELEASE` to search fo latest release tag, '
-            f'`{Config.compose_ref}` by default'
-        )
-    )
-    parser.add_argument(
-        '--explicit-secret',
-        nargs='*',
-        default=[],
-        help=(
-            'Set a secret value explicitly in form of `NAME=VALUE`, '
-            f'use `{ADMIN_SECRET_NAME}=VALUE` to set the Salt.Box Administrator\'s password'
-        ),
-    )
-    parser.add_argument(
-        '--host',
-        type=str,
-        help=f'Hostname or real address to serve on, `{Config.host}` by default',
-    )
-    parser.add_argument(
-        '--host-is-name',
-        action='store_true',
-        help='Force SSL cert for DNS name even if `host` looks like IP address'
-    )
-    parser.add_argument(
-        '--port',
-        type=int,
-        help=f'Port to serve HTTPS, `{Config.port}` by default',
-    )
-    parser.add_argument(
-        '-n', '--non-interactive',
-        action='store_true',
-        help='Do not ask to input, use defaults',
-    )
-    parser.add_argument(
-        '--no-progress',
-        action='store_true',
-        help='Do not show downloading progress, CI-friendly',
-    )
-    parser.add_argument(
-        '-s', '--skip-check',
-        action='store_true',
-        help='Do not check Docker install before run',
-    )
-    parser.add_argument(
-        '-u', '--skip-run',
-        action='store_true',
-        help='Prepare but not run',
-    )
-    parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='Print more info',
-    )
-    return parser.parse_args()
-
-VERBOSE=False
 
 VersionSelf = TypeVar('VersionSelf', bound='Version')
 class Version:
@@ -391,12 +418,13 @@ class GitLabRepo:
         self.project = path.name
         self.progress = progress
 
+    @property
+    def api_url(self) -> str:
+        return f'{self.scheme}://{self.server}/api/v4'
+
     @cache
     def get_tags(self) -> List[str]:
-        url = (
-            f'{self.scheme}://{self.server}/api/v4/projects/'
-            f'{self.owner}%2F{self.project}/repository/tags'
-        )
+        url = f'{self.api_url}/projects/{self.owner}%2F{self.project}/repository/tags'
         try:
             resp = urllib.request.urlopen(url)
         except urllib.error.URLError as papa:
@@ -454,7 +482,7 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
     else:
         conf.compose_ref = interactions.ask('Salt.Box reference', conf.compose_ref)
 
-    if conf.compose_ref == 'RELEASE':
+    if conf.compose_ref == Config.RELEASE_REF:
         conf.compose_ref = COMPOSE_REPO.get_latest_version_tag()
 
     if args.admin is not None:
@@ -467,6 +495,10 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
             'Salt.Box Administartor\'s password (leave empty to generate)')
         if admin_pass is not None:
             args.explicit_secret.append(f'{ADMIN_SECRET_NAME}={admin_pass}')
+
+    if not args.keep_image_tags and conf.compose_ref == Config.DEV_BRANCH:
+        conf.set_image_tags = interactions.ask_confirm(
+            f'Select tag `{args.compose_ref}` for main images?')
 
     try:
         conf.validate()
@@ -565,7 +597,13 @@ def download(args: argparse.Namespace, config: Config) -> None:
 
 
 def configure_system(args: argparse.Namespace, config: Config) -> None:
-    override = [
+    override = []
+
+    if config.set_image_tags:
+        for img_tag in SWITCHABLE_IMAGE_TAGS:
+            override.append(f"{img_tag}='{config.compose_ref}'")
+
+    override += [
         f"SALTBOX_ADMIN_USERNAME='{config.admin_name}'",
         f"WEB_SERVER_OUTER_SOCKET='{config.host}:{config.port}'"
     ]
