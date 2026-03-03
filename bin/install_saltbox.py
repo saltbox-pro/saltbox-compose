@@ -18,7 +18,6 @@
 The script is a part of Salt.Box Compose
 """
 
-
 # TODO Extra modules
 # TODO Alternative obtaining with Git
 # TODO Should it deal with upgrades?
@@ -37,6 +36,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.parse
 import urllib.request
 import zipfile
@@ -640,21 +640,24 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
 
 def run(args: argparse.Namespace) -> None:
     if args.explicit_secret:
-        cmd_str = PREMAKE_SECRETS_CMD + ['--explicit'] + args.explicit_secret
-        print_out(f'Running {cmd_str}', '')
-        print(Path.cwd())
+        cmd = PREMAKE_SECRETS_CMD.copy() + ['--explicit'] + args.explicit_secret
+        cmd_str = ' '.join(cmd)
+        print_out(f'Running `{cmd_str}`', '')
         try:
-            subprocess.run(cmd_str, check=True)
+            subprocess.run(cmd, check=True)
         except subprocess.CalledProcessError as err:
             raise InstallerError(err) from None
-    cmd_str = ' '.join(ENTRYPOINT)
-    print_out(f'Running {cmd_str}', '')
+    cmd = ENTRYPOINT.copy()
+    if args.no_progress:
+        cmd.append('--no-progress')
+    cmd_str = ' '.join(cmd)
+    print_out(f'Running `{cmd_str}`', '')
     sys.stdout.flush()
     sys.stderr.flush()
     if args.skip_run:
         print_out('Skipping run!', '')
         return
-    os.execv(ENTRYPOINT[0], ENTRYPOINT)
+    os.execv(cmd[0], cmd)
 
 
 def main() -> None:
@@ -673,6 +676,7 @@ def main() -> None:
         download(args, config=conf)
         configure_system(args, config=conf)
         with cd(LOCAL_PATH):
+            time.sleep(0.04)  # To avoid missing executables in `./bin/`
             run(args)
     except InstallerError as papa:
         print_err('', papa, '', 'Exit on error', '')
