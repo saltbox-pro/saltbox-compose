@@ -113,11 +113,12 @@ def get_args() -> argparse.Namespace:
     )
     parser.add_argument(
         '--explicit-secret',
-        nargs='*',
+        action='append',
         default=[],
         help=(
             'Set a secret value explicitly in form of `NAME=VALUE`, '
-            f'use `{ADMIN_SECRET_NAME}=VALUE` to set the Salt.Box Administrator\'s password'
+            f'use `{ADMIN_SECRET_NAME}=VALUE` to set the Salt.Box Administrator\'s password. '
+            'Can be specified multiple times.'
         ),
     )
     parser.add_argument(
@@ -466,21 +467,29 @@ COMPOSE_REPO = GitLabRepo(URLS['saltbox-compose'])
 
 def configure_script(args: argparse.Namespace, interactions: Interactions) -> Config:
     conf = Config(force_host_as_name=args.host_is_name)
+    cmd: List[str] = ['./install_saltbox.py']
+    if not args.non_interactive:
+        cmd.append('--non-interactive')
+    cmd += sys.argv[1:]
 
     if args.host is not None:
         conf.host = args.host
     else:
-        conf.host = interactions.ask('Real address or name)', conf.host)
+        conf.host = interactions.ask('Real address or name', conf.host)
+        cmd += ['--host', conf.host]
 
     if args.port is not None:
         conf.port = args.port
     else:
         conf.port = interactions.ask_int('Port to serve HTTPS', conf.port)
+        print(f"\n    Related CLI flag: `--port '{conf.port}'`\n")
+        cmd += ['--port', str(conf.port)]
 
     if args.compose_ref is not None:
         conf.compose_ref = args.compose_ref
     else:
         conf.compose_ref = interactions.ask('Salt.Box reference', conf.compose_ref)
+        cmd += ['--compose-ref', conf.compose_ref]
 
     if conf.compose_ref == Config.RELEASE_REF:
         conf.compose_ref = COMPOSE_REPO.get_latest_version_tag()
@@ -489,16 +498,21 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
         conf.admin_name = args.admin
     else:
         conf.admin_name = interactions.ask('Salt.Box Administrator\'s login', conf.admin_name)
+        cmd += ['--admin', conf.admin_name]
 
     if not any(x.startswith(f'{ADMIN_SECRET_NAME}=') for x in args.explicit_secret):
         admin_pass = interactions.ask_optional(
             'Salt.Box Administartor\'s password (leave empty to generate)')
         if admin_pass is not None:
-            args.explicit_secret.append(f'{ADMIN_SECRET_NAME}={admin_pass}')
+            admin_secret=f'{ADMIN_SECRET_NAME}={admin_pass}'
+            args.explicit_secret.append(admin_secret)
+            cmd += ['--explicit-secret', admin_secret]
 
     if not args.keep_image_tags and conf.compose_ref == Config.DEV_BRANCH:
         conf.set_image_tags = interactions.ask_confirm(
             f'Select tag `{args.compose_ref}` for main images?')
+        if not conf.set_image_tags:
+            cmd.append('--keep-image-tags')
 
     try:
         conf.validate()
@@ -506,6 +520,10 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
         raise InstallerError(err) from err
 
     print_out('', conf, '')
+
+    cmd_str = ' '.join(cmd)
+    print(f'Command to repeat with no dialog:\n\n  $ {cmd_str}\n')
+
     if not interactions.ask_confirm('Continue?'):
         raise InstallerError('Cancelled by user')
 
