@@ -55,6 +55,7 @@ SCRIPT_SUFFIXES = ('*.sh', '*.py',)
 ADMIN_SECRET_NAME = 'saltbox_admin_password'
 
 # Uses after changind CWD
+CLEANUP_CMD = ['./bin/sb-compose.sh', 'down', '--volumes', '--remove-orphans']
 PREMAKE_SECRETS_CMD = ['bin/make_secrets.py']
 ENTRYPOINT = ['bin/update_and_run.sh', '--no-root', '--force', '--detach', '--no-git-pull']
 
@@ -110,6 +111,15 @@ def get_args() -> argparse.Namespace:
             '`RELEASE` to search fo latest release tag, '
             f'`{Config.compose_ref}` by default'
         )
+    )
+    parser.add_argument(
+        '--cleanup',
+        action='store_true',
+        help=(
+            'Cleanup possibly existing Salt.Box instance '
+            'with the same COMPOSE_PROJECT_NAME. '
+            'BEWARE DATA LOST!'
+        ),
     )
     parser.add_argument(
         '--explicit-secret',
@@ -179,6 +189,15 @@ def cd(path: Path):
         yield
     finally:
         os.chdir(orig)
+
+
+def run_cmd(cmd: List[str]) -> None:
+    cmd_str = ' '.join(cmd)
+    print_out(f'Running `{cmd_str}`', '')
+    try:
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as err:
+        raise InstallerError(err) from None
 
 
 def print_out(*args, verbose: bool=False) -> None:
@@ -260,6 +279,7 @@ class Config:
     DEV_BRANCH = 'dev'
     RELEASE_REF = 'RELEASE'
 
+    cleanup: bool = False
     host: str = 'saltbox.local'
     port: int = 443
     compose_ref = RELEASE_REF
@@ -306,6 +326,7 @@ class Config:
         data.append(f'Salt.Box Compose reference is: `{self.compose_ref}`')
         data.append(f'Salt.Box Administrator\'s login is: `{self.admin_name}`')
         data.append('Salt.Box Administrator\'s password is: [ SEARCH IN FURTHER OUTPUT ]')
+        data.append(f'Cleanup: {"YES!!! " if self.cleanup else "no"}')
         return '\n'.join(data)
 
 
@@ -482,7 +503,6 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
         conf.port = args.port
     else:
         conf.port = interactions.ask_int('Port to serve HTTPS', conf.port)
-        print(f"\n    Related CLI flag: `--port '{conf.port}'`\n")
         cmd += ['--port', str(conf.port)]
 
     if args.compose_ref is not None:
@@ -513,6 +533,14 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
             f'Select tag `{args.compose_ref}` for main images?')
         if not conf.set_image_tags:
             cmd.append('--keep-image-tags')
+
+    if not args.cleanup:
+        conf.cleanup = interactions.ask_confirm(
+            'Cleanup possibly existing instance? (DATA LOST!)', default=False)
+        if conf.cleanup:
+            cmd.append('--cleanup')
+    else:
+        conf.cleanup = args.cleanup
 
     try:
         conf.validate()
@@ -638,28 +666,30 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
     print_out(f'Override file `{ENV_OVERRIDE}` has been saved', '')
 
 
-def run(args: argparse.Namespace) -> None:
+def run(args: argparse.Namespace, config: Config) -> None:
+    ep_cmd = ENTRYPOINT.copy()
+    if args.no_progress:
+        ep_cmd.append('--no-progress')
+
+    if config.cleanup:
+        env_cmd = ep_cmd.copy()
+        env_cmd.append('--only-env')
+        run_cmd(env_cmd)
+        run_cmd(CLEANUP_CMD)
+
     if args.explicit_secret:
         cmd = PREMAKE_SECRETS_CMD.copy()
         for val in args.explicit_secret:
             cmd += ['--explicit', val]
-        cmd_str = ' '.join(cmd)
-        print_out(f'Running `{cmd_str}`', '')
-        try:
-            subprocess.run(cmd, check=True)
-        except subprocess.CalledProcessError as err:
-            raise InstallerError(err) from None
-    cmd = ENTRYPOINT.copy()
-    if args.no_progress:
-        cmd.append('--no-progress')
-    cmd_str = ' '.join(cmd)
-    print_out(f'Running `{cmd_str}`', '')
+        run_cmd(cmd)
+    ep_cmd_str = ' '.join(ep_cmd)
+    print_out(f'Running `{ep_cmd_str}`', '')
     sys.stdout.flush()
     sys.stderr.flush()
     if args.skip_run:
         print_out('Skipping run!', '')
         return
-    os.execv(cmd[0], cmd)
+    os.execv(ep_cmd[0], ep_cmd)
 
 
 def main() -> None:
@@ -679,7 +709,7 @@ def main() -> None:
         configure_system(args, config=conf)
         with cd(LOCAL_PATH):
             time.sleep(0.04)  # To avoid missing executables in `./bin/`
-            run(args)
+            run(args, config=conf)
     except InstallerError as papa:
         print_err('', papa, '', 'Exit on error', '')
         sys.exit(1)
