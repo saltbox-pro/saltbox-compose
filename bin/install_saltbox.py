@@ -27,6 +27,7 @@ The script is a part of Salt.Box Compose
 import argparse
 import contextlib
 import functools
+import http
 import ipaddress
 import itertools
 import json
@@ -118,6 +119,8 @@ class Interactions:
         return val
 
     def ask_optional(self, prompt: str) -> Optional[str]:
+        if self.non_interactive:
+            return None
         prompt = f'{prompt}: '
         val = input(prompt).strip()
         return val or None
@@ -255,6 +258,11 @@ def get_args() -> argparse.Namespace:
         help='Do not ask to input, use defaults',
     )
     parser.add_argument(
+        '--no-progress',
+        action='store_true',
+        help='Do not show downloading progress, CI-friendly',
+    )
+    parser.add_argument(
         '-s', '--skip-check',
         action='store_true',
         help='Do not check Docker install before run',
@@ -327,27 +335,39 @@ class Version:
         return False
 
 
-def download_file(url: str, output: Path) -> None:
+def _download_file(resp: http.client.HTTPResponse, output: Path, progress: bool) -> None:
+    def print_progress():
+        if total:
+            pct = downloaded * 100 / total
+            sys.stdout.write(f'\r{downloaded}/{total} bytes ({pct:.1f}%)')
+        else:
+            sys.stdout.write(f'\r{downloaded} bytes')
+        sys.stdout.flush()
+
+    cont_len = resp.getheader('Content-Length')
+    if cont_len and cont_len.isdigit():
+        total = int(cont_len)
+    else:
+        total = None
+    downloaded = 0
+    with output.open('wb') as file:
+        while True:
+            data = resp.read(HTTP_CHUNK_BYTE)
+            if not data:
+                print_progress()
+                break
+            file.write(data)
+            downloaded += len(data)
+            if progress:
+                print_progress()
+    sys.stdout.write('\n')
+
+
+def download_file(url: str, output: Path, progress: bool) -> None:
     req = urllib.request.Request(url)
     try:
         with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as resp:
-            total = resp.getheader('Content-Length')
-            total = int(total) if total and total.isdigit() else None
-            downloaded = 0
-            with output.open('wb') as file:
-                while True:
-                    data = resp.read(HTTP_CHUNK_BYTE)
-                    if not data:
-                        break
-                    file.write(data)
-                    downloaded += len(data)
-                    if total:
-                        pct = downloaded * 100 / total
-                        sys.stdout.write(f'\r{downloaded}/{total} bytes ({pct:.1f}%)')
-                    else:
-                        sys.stdout.write(f'\r{downloaded} bytes')
-                    sys.stdout.flush()
-            sys.stdout.write('\n')
+            _download_file(resp=resp, output=output, progress=progress)
     except urllib.error.HTTPError as papa:
         if papa.code == 404:
             dosa = 'Not found: {url}'
@@ -362,13 +382,14 @@ def download_file(url: str, output: Path) -> None:
 class GitLabRepo:
     ARCHIVE_SUFFIX = 'zip'  # Supposed to be better on error detection
 
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, progress: bool = True) -> None:
         url_obj = urllib.parse.urlparse(url)
         path = Path(url_obj.path)
         self.scheme = url_obj.scheme
         self.server = url_obj.netloc
         self.owner = str(path.parent).lstrip('/')
         self.project = path.name
+        self.progress = progress
 
     @cache
     def get_tags(self) -> List[str]:
@@ -408,7 +429,7 @@ class GitLabRepo:
         filename = self.filename_for_ref(ref)
         full_path = output_dir / filename
         url = self.url_for_ref(ref)
-        download_file(url, output=full_path)
+        download_file(url, output=full_path, progress=self.progress)
         return full_path
 
 
@@ -444,7 +465,8 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
     if not any(x.startswith(f'{ADMIN_SECRET_NAME}=') for x in args.explicit_secret):
         admin_pass = interactions.ask_optional(
             'Salt.Box Administartor\'s password (leave empty to generate)')
-        args.explicit_secret.append(f'{ADMIN_SECRET_NAME}={admin_pass}')
+        if admin_pass is not None:
+            args.explicit_secret.append(f'{ADMIN_SECRET_NAME}={admin_pass}')
 
     try:
         conf.validate()
@@ -584,6 +606,7 @@ def main() -> None:
     args = get_args()
     VERBOSE = args.verbose
     interactions = Interactions(non_interactive=args.non_interactive)
+    COMPOSE_REPO.progress = not args.no_progress
 
     msg = '\nNon-interactive mode, no confirmations will be asked!' if interactions.non_interactive else ''
     print_out(msg)
