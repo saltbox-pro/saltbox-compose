@@ -53,6 +53,7 @@ BIN_DIR = LOCAL_PATH / 'bin'
 ENV_OVERRIDE = LOCAL_PATH / 'override.env'
 SCRIPT_SUFFIXES = ('*.sh', '*.py',)
 ADMIN_SECRET_NAME = 'saltbox_admin_password'
+RELEASE_REF = 'RELEASE'
 
 # Uses after changind CWD
 CLEANUP_CMD = ['./bin/sb-compose.sh', 'down', '--volumes', '--remove-orphans']
@@ -277,7 +278,6 @@ class Config:
 
     STABLE_BRANCH = 'master'
     DEV_BRANCH = 'dev'
-    RELEASE_REF = 'RELEASE'
 
     cleanup: bool = False
     host: str = 'saltbox.local'
@@ -412,26 +412,30 @@ def _download_file(resp: http.client.HTTPResponse, output: Path, progress: bool)
     sys.stdout.write('\n')
 
 
-def download_file(url: str, output: Path, progress: bool) -> None:
-    req = urllib.request.Request(url)
+def download_file(request: urllib.request.Request, output: Path, progress: bool) -> None:
     try:
-        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as resp:
+        with urllib.request.urlopen(url=request, timeout=HTTP_TIMEOUT_SEC) as resp:
             _download_file(resp=resp, output=output, progress=progress)
     except urllib.error.HTTPError as papa:
         if papa.code == 404:
             dosa = 'Not found: {url}'
             raise HttpNotFoundError(dosa) from None
-        dosa = f'HTTP error on `GET {url}`: {papa}'
+        dosa = f'HTTP error on `GET {request.full_url}`: {papa}'
         raise InstallerError(dosa) from None
     except urllib.error.URLError as papa:
-        dosa = f'Network error on `GET {url}`: {papa}'
+        dosa = f'Network error on `GET {request.full_url}`: {papa}'
         raise InstallerError(dosa) from None
 
 
 class GitLabRepo:
     ARCHIVE_SUFFIX = 'zip'  # Supposed to be better on error detection
 
-    def __init__(self, url: str, progress: bool = True) -> None:
+    def __init__(self, url: str, token: Optional[str] = None, progress: bool = True) -> None:
+        self.token = token
+
+        # FIXME
+        self.token = os.environ.get('TOKEN')
+
         url_obj = urllib.parse.urlparse(url)
         path = Path(url_obj.path)
         self.scheme = url_obj.scheme
@@ -447,8 +451,11 @@ class GitLabRepo:
     @cache
     def get_tags(self) -> List[str]:
         url = f'{self.api_url}/projects/{self.owner}%2F{self.project}/repository/tags'
+        request = urllib.request.Request(url=url)
+        if self.token:
+            request.headers['PRIVATE-TOKEN'] = self.token
         try:
-            resp = urllib.request.urlopen(url)
+            resp = urllib.request.urlopen(url=request)
         except urllib.error.URLError as papa:
             dosa = f'Error on requesting URL {url}: {papa}'
             raise InstallerError(dosa) from None
@@ -479,17 +486,24 @@ class GitLabRepo:
         :raises InstallerError: on HTTP or network errors
         """
         url = self.url_for_ref(ref)
+        request = urllib.request.Request(url)
+        if self.token:
+            request.headers['PRIVATE-TOKEN'] = self.token
 
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             tmp_path = Path(tmp_dir_name)
             arch_path = tmp_path / self.filename_for_ref(ref)
             try:
-                download_file(url, output=arch_path, progress=self.progress)
+                download_file(request=request, output=arch_path, progress=self.progress)
             except HttpNotFoundError:
                 dosa = f'Server returns `Not found` for Compose ref `{ref}`'
                 raise InstallerError(dosa) from None
             arch = zipfile.ZipFile(arch_path)
             dir_name = arch.namelist()[0]
+            destination_full = output_dir / dir_name
+            if destination_full.exists():
+                dosa = f'Already exists: `{destination_full}`'
+                raise InstallerError(dosa)
             arch.extractall(path=tmp_path)
             shutil.move(src=str(tmp_path / dir_name), dst=output_dir)
 
@@ -505,10 +519,14 @@ class AddonModule:
     license: str
     compose_files: List[str]
     env_file: str
-    is_token_required: bool
+    is_token_required: bool  # TODO read_repository, read_registry, read_api
     switchable_image_tags: List[str]
     secret_configs: List[str] = field(default_factory=list)
-    ref: str = Config.RELEASE_REF
+    ref: str = RELEASE_REF
+
+    def __post_init__(self) -> None:
+        if self.ref == RELEASE_REF:
+            self.ref = self.repo.get_latest_version_tag()
 
 
 ADDON_MODULES = [
@@ -572,7 +590,7 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
         conf.compose_ref = interactions.ask('Salt.Box reference', conf.compose_ref)
         cmd += ['--compose-ref', conf.compose_ref]
 
-    if conf.compose_ref == Config.RELEASE_REF:
+    if conf.compose_ref == RELEASE_REF:
         conf.compose_ref = COMPOSE_REPO.get_latest_version_tag()
 
     if args.admin is not None:
@@ -619,10 +637,6 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
     return conf
 
 def check(args: argparse.Namespace) -> None:
-    if LOCAL_PATH.exists():
-        dosa = f'Already exists: {LOCAL_PATH}'
-        raise InstallerError(dosa)
-
     if args.skip_check:
         print_out('Skipping requirements checkup!', '')
         return
@@ -691,6 +705,12 @@ def download(args: argparse.Namespace, config: Config) -> None:
         print_out(f'  - {script}')
         script.chmod(0o755)
     print_out()
+
+    for addon in ADDON_MODULES:
+        print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{addon.ref}`')
+        print_out(f'URL: {addon.repo.url_for_ref(addon.ref)}', verbose=True)
+        addon.repo.download_ref(addon.ref)
+        print_out()
 
 
 def configure_system(args: argparse.Namespace, config: Config) -> None:
