@@ -81,5 +81,8 @@ query := conds_with_owner[0] if {
 is_action_list if {
     utils.base.is_collections_resource
     input.action.name == "list"
-    count(input.resource.path) == 1
+    count(input.resource.path) == 2
+    some path in ["tree", "list"]
+    input.resource.path[1] == path
+    # input.resource.path[1] in ["tree", "list"]
 }
