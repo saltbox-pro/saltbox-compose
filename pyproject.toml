@@ -28,6 +28,9 @@ line-length = 120
 target-version = "py37"
 
 [tool.ruff.lint]
+select=[
+    'ASYNC', 'DTZ', 'E', 'F', 'G', 'I', 'LOG', 'N', 'RUF', 'SIM', 'UP', 'W',
+]
 ignore = [
     "B019",
     "SIM108",  # Annoying ternary op suggestion

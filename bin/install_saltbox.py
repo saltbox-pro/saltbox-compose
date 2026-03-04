@@ -40,7 +40,7 @@ import time
 import urllib.parse
 import urllib.request
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, List, Optional, Type, TypeVar
 
@@ -471,19 +471,80 @@ class GitLabRepo:
         url = f'{self.scheme}://{self.server}/{self.owner}/{self.project}/-/archive/{ref}/{filename}'
         return url
 
-    def download_ref(self, ref: str, output_dir: Path = Path()) -> Path:
+    def download_ref(self, ref: str, output_dir: Path = Path()) -> None:
         """
+        Get code of ref version with no Git
+
         :raises HttpNotFoundError: on 404
         :raises InstallerError: on HTTP or network errors
         """
-        filename = self.filename_for_ref(ref)
-        full_path = output_dir / filename
         url = self.url_for_ref(ref)
-        download_file(url, output=full_path, progress=self.progress)
-        return full_path
+
+        with tempfile.TemporaryDirectory() as tmp_dir_name:
+            tmp_path = Path(tmp_dir_name)
+            arch_path = tmp_path / self.filename_for_ref(ref)
+            try:
+                download_file(url, output=arch_path, progress=self.progress)
+            except HttpNotFoundError:
+                dosa = f'Server returns `Not found` for Compose ref `{ref}`'
+                raise InstallerError(dosa) from None
+            arch = zipfile.ZipFile(arch_path)
+            dir_name = arch.namelist()[0]
+            arch.extractall(path=tmp_path)
+            shutil.move(src=str(tmp_path / dir_name), dst=output_dir)
 
 
 COMPOSE_REPO = GitLabRepo(URLS['saltbox-compose'])
+
+
+@dataclass
+class AddonModule:
+    name: str
+    repo: GitLabRepo
+    base_dir: str
+    license: str
+    compose_files: List[str]
+    env_file: str
+    is_token_required: bool
+    switchable_image_tags: List[str]
+    secret_configs: List[str] = field(default_factory=list)
+    ref: str = Config.RELEASE_REF
+
+
+ADDON_MODULES = [
+    AddonModule(
+        name='Inventory',
+        repo=GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-inventory-compose'),
+        base_dir='saltbox-inventory-compose',
+        switchable_image_tags=['INVENTORY_IMAGE_TAG'],
+        compose_files=['compose.yaml'],
+        env_file='.env',
+        secret_configs=['secrets.json'],
+        license='EULA',  # =(
+        is_token_required=True,
+    ),
+    AddonModule(
+        name='Metric',
+        repo=GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-metric-compose'),
+        base_dir='saltbox-inventory-compose',
+        switchable_image_tags=['METRIC_IMAGE_TAG'],
+        compose_files=['compose.yaml'],
+        env_file='.env',
+        license='EULA',  # =(
+        is_token_required=True,
+    ),
+    AddonModule(
+        name='Scheduler',
+        repo=GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-scheduler-compose'),
+        base_dir='saltbox-scheduler-compose',
+        switchable_image_tags=['SCHEDULER_IMAGE_TAG'],
+        compose_files=['compose.yaml'],
+        env_file='.env',
+        secret_configs=['secrets.json'],
+        license='EULA',  # =(
+        is_token_required=True,
+    ),
+]
 
 
 def configure_script(args: argparse.Namespace, interactions: Interactions) -> Config:
@@ -621,17 +682,7 @@ def check(args: argparse.Namespace) -> None:
 def download(args: argparse.Namespace, config: Config) -> None:
     print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}`...')
     print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
-    with tempfile.TemporaryDirectory() as tmp_dir_name:
-        tmp_path = Path(tmp_dir_name)
-        try:
-            arch_path = COMPOSE_REPO.download_ref(config.compose_ref, output_dir=tmp_path)
-        except HttpNotFoundError:
-            dosa = f'Server returns `Not found` for Compose ref `{config.compose_ref}`'
-            raise InstallerError(dosa) from None
-        arch = zipfile.ZipFile(arch_path)
-        dir_name = arch.namelist()[0]
-        arch.extractall(path=tmp_path)
-        shutil.move(src=str(tmp_path / dir_name), dst=LOCAL_PATH)
+    COMPOSE_REPO.download_ref(config.compose_ref, output_dir=LOCAL_PATH)
     print_out()
 
     glob_iters = [BIN_DIR.glob(ptrn) for ptrn in SCRIPT_SUFFIXES]
