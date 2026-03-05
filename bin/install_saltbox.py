@@ -20,7 +20,6 @@ The script is a part of Salt.Box Compose
 
 # TODO Extra modules
 # TODO Alternative obtaining with Git
-# TODO Should it deal with upgrades?
 # TODO Offline mode with images
 
 import argparse
@@ -100,6 +99,14 @@ def get_args() -> argparse.Namespace:
         help="Extra values to include into dotenv in form of NAME='VAL'",
     )
     parser.add_argument(
+        '--addons',
+        action='store_true',
+        help=(
+            f'Install also official Salt.Box Addons: {", ".join(a.name for a in ADDON_MODULES)}. '
+            'ADDONS ARE PROPRIETARY, TOKEN REQUIRED.'  # =(
+        )
+    )
+    parser.add_argument(
         '--admin',
         type=str,
         help='The Salt.Box Administrator\'s login',
@@ -119,7 +126,7 @@ def get_args() -> argparse.Namespace:
         help=(
             'Cleanup possibly existing Salt.Box instance '
             'with the same COMPOSE_PROJECT_NAME. '
-            'BEWARE DATA LOST!'
+            'BEWARE OF DATA LOST!'
         ),
     )
     parser.add_argument(
@@ -511,6 +518,14 @@ class GitLabRepo:
 COMPOSE_REPO = GitLabRepo(URLS['saltbox-compose'])
 
 
+@cache
+def resolve_ref(ref: str, repo: GitLabRepo) -> str:
+    """ Resolves RELEASE_REF special value """
+    if ref == RELEASE_REF:
+        return repo.get_latest_version_tag()
+    return ref
+
+
 @dataclass
 class AddonModule:
     name: str
@@ -523,10 +538,6 @@ class AddonModule:
     switchable_image_tags: List[str]
     secrets_configs: List[str] = field(default_factory=list)
     ref: str = RELEASE_REF
-
-    def __post_init__(self) -> None:
-        if self.ref == RELEASE_REF:
-            self.ref = self.repo.get_latest_version_tag()
 
 
 ADDON_MODULES = [
@@ -541,6 +552,7 @@ ADDON_MODULES = [
         license='EULA',  # =(
         is_token_required=True,
     ),
+    # TODO Check DOCKER_HOST
     AddonModule(
         name='Metric',
         repo=GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-metric-compose'),
@@ -590,8 +602,7 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
         conf.compose_ref = interactions.ask('Salt.Box reference', conf.compose_ref)
         cmd += ['--compose-ref', conf.compose_ref]
 
-    if conf.compose_ref == RELEASE_REF:
-        conf.compose_ref = COMPOSE_REPO.get_latest_version_tag()
+    conf.compose_ref = resolve_ref(ref=conf.compose_ref, repo=COMPOSE_REPO)
 
     if args.admin is not None:
         conf.admin_name = args.admin
@@ -693,6 +704,15 @@ def check(args: argparse.Namespace) -> None:
     print_out()
 
 
+def _download_addons() -> None:
+    for addon in ADDON_MODULES:
+        ref = resolve_ref(ref=addon.ref, repo=addon.repo)
+        print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{ref}`')
+        print_out(f'URL: {addon.repo.url_for_ref(ref)}', verbose=True)
+        addon.repo.download_ref(ref=ref, output_dir=Path(addon.base_dir))
+        print_out()
+
+
 def download(args: argparse.Namespace, config: Config) -> None:
     print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}`...')
     print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
@@ -706,33 +726,12 @@ def download(args: argparse.Namespace, config: Config) -> None:
         script.chmod(0o755)
     print_out()
 
-    # TODO Conditional
-    for addon in ADDON_MODULES:
-        print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{addon.ref}`')
-        print_out(f'URL: {addon.repo.url_for_ref(addon.ref)}', verbose=True)
-        addon.repo.download_ref(ref=addon.ref, output_dir=Path(addon.base_dir))
-        print_out()
+    if args.addons:
+        _download_addons()
 
 
-def configure_system(args: argparse.Namespace, config: Config) -> None:
+def _configure_system_addons(config: Config) -> List[str]:
     override = []
-
-    if config.set_image_tags:
-        for img_tag in SWITCHABLE_IMAGE_TAGS:
-            override.append(f"{img_tag}='{config.compose_ref}'")
-
-    override += [
-        f"SALTBOX_ADMIN_USERNAME='{config.admin_name}'",
-        f"WEB_SERVER_OUTER_SOCKET='{config.host}:{config.port}'"
-    ]
-    if config.is_host_seems_ip and not config.force_host_as_name:
-        override.append(f"WEB_SERVER_SSL_ALT_NAMES_IP='127.0.0.1,{config.host}'")
-    else:
-        override.append(f"WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,{config.host}'")
-
-    override.extend(args.OVERRIDE)
-
-    # TODO Conditional
     env_files = []
     secr_confs = []
     for addon in ADDON_MODULES:
@@ -750,6 +749,30 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
     if secr_confs:
         val = ','.join(secr_confs)
         override.append(f"_UPDATE_AND_RUN_EXTRA_SECRETS_CONFS='{val}'")
+
+    return override
+
+
+def configure_system(args: argparse.Namespace, config: Config) -> None:
+    override = []
+
+    if config.set_image_tags:
+        for img_tag in SWITCHABLE_IMAGE_TAGS:
+            override.append(f"{img_tag}='{config.compose_ref}'")
+
+    override.extend([
+        f"SALTBOX_ADMIN_USERNAME='{config.admin_name}'",
+        f"WEB_SERVER_OUTER_SOCKET='{config.host}:{config.port}'"
+    ])
+    if config.is_host_seems_ip and not config.force_host_as_name:
+        override.append(f"WEB_SERVER_SSL_ALT_NAMES_IP='127.0.0.1,{config.host}'")
+    else:
+        override.append(f"WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,{config.host}'")
+
+    override.extend(args.OVERRIDE)
+
+    if args.addons:
+        override.extend(_configure_system_addons(config=config))
 
     with ENV_OVERRIDE.open('w', encoding=ENC) as fstream:
         fstream.write('\n'.join(override) + '\n')
