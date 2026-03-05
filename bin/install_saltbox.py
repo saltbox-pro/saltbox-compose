@@ -521,7 +521,7 @@ class AddonModule:
     env_file: str
     is_token_required: bool  # TODO read_repository, read_registry, read_api
     switchable_image_tags: List[str]
-    secret_configs: List[str] = field(default_factory=list)
+    secrets_configs: List[str] = field(default_factory=list)
     ref: str = RELEASE_REF
 
     def __post_init__(self) -> None:
@@ -537,14 +537,14 @@ ADDON_MODULES = [
         switchable_image_tags=['INVENTORY_IMAGE_TAG'],
         compose_files=['compose.yaml'],
         env_file='.env',
-        secret_configs=['secrets.json'],
+        secrets_configs=['secrets.json'],
         license='EULA',  # =(
         is_token_required=True,
     ),
     AddonModule(
         name='Metric',
         repo=GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-metric-compose'),
-        base_dir='saltbox-inventory-compose',
+        base_dir='saltbox-metric-compose',
         switchable_image_tags=['METRIC_IMAGE_TAG'],
         compose_files=['compose.yaml'],
         env_file='.env',
@@ -558,7 +558,7 @@ ADDON_MODULES = [
         switchable_image_tags=['SCHEDULER_IMAGE_TAG'],
         compose_files=['compose.yaml'],
         env_file='.env',
-        secret_configs=['secrets.json'],
+        secrets_configs=['secrets.json'],
         license='EULA',  # =(
         is_token_required=True,
     ),
@@ -696,7 +696,7 @@ def check(args: argparse.Namespace) -> None:
 def download(args: argparse.Namespace, config: Config) -> None:
     print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}`...')
     print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
-    COMPOSE_REPO.download_ref(config.compose_ref, output_dir=LOCAL_PATH)
+    COMPOSE_REPO.download_ref(ref=config.compose_ref, output_dir=LOCAL_PATH)
     print_out()
 
     glob_iters = [BIN_DIR.glob(ptrn) for ptrn in SCRIPT_SUFFIXES]
@@ -706,10 +706,11 @@ def download(args: argparse.Namespace, config: Config) -> None:
         script.chmod(0o755)
     print_out()
 
+    # TODO Conditional
     for addon in ADDON_MODULES:
         print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{addon.ref}`')
         print_out(f'URL: {addon.repo.url_for_ref(addon.ref)}', verbose=True)
-        addon.repo.download_ref(addon.ref)
+        addon.repo.download_ref(ref=addon.ref, output_dir=Path(addon.base_dir))
         print_out()
 
 
@@ -730,6 +731,25 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
         override.append(f"WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,{config.host}'")
 
     override.extend(args.OVERRIDE)
+
+    # TODO Conditional
+    env_files = []
+    secr_confs = []
+    for addon in ADDON_MODULES:
+        addon_dir = Path('..') / addon.base_dir
+        override += [
+            f'COMPOSE_FILE="${{COMPOSE_FILE}}:{addon_dir / cmp_f}"'
+            for cmp_f in addon.compose_files
+        ]
+        env_files.append(f'{addon_dir / addon.env_file}')
+        secr_confs += [f'{addon_dir / scr_conf}' for scr_conf in addon.secrets_configs]
+
+    if env_files:
+        val = ','.join(env_files)
+        override.append(f"_UPDATE_AND_RUN_EXTRA_ENV_FILES='{val}'")
+    if secr_confs:
+        val = ','.join(secr_confs)
+        override.append(f"_UPDATE_AND_RUN_EXTRA_SECRETS_CONFS='{val}'")
 
     with ENV_OVERRIDE.open('w', encoding=ENC) as fstream:
         fstream.write('\n'.join(override) + '\n')
