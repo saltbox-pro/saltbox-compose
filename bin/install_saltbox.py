@@ -18,7 +18,6 @@
 The script is a part of Salt.Box Compose
 """
 
-# TODO Extra modules
 # TODO Alternative obtaining with Git
 # TODO Offline mode with images
 
@@ -54,6 +53,7 @@ SCRIPT_SUFFIXES = ('*.sh', '*.py',)
 ADMIN_SECRET_NAME = 'saltbox_admin_password'
 RELEASE_REF = 'RELEASE'
 REGISTRY_DOTENV_VAR='IMAGE_REGISTRY'
+METRIC_DOCKER_VAR='METRIC_DOCKER_SOCKET'
 
 # Uses after changind CWD
 CLEANUP_CMD = ['./bin/sb-compose.sh', 'down', '--volumes', '--remove-orphans']
@@ -81,6 +81,7 @@ SWITCHABLE_IMAGE_TAGS = [
 cache = functools.lru_cache(maxsize=None)
 
 TOKEN_NAME = 'SALTBOX_INSTALL_TOKEN'
+# GitLab group token MUST have scopes: read_repository, read_registry, read_api
 TOKEN = os.environ.get(TOKEN_NAME)
 
 class InstallerError(RuntimeError): ...
@@ -160,6 +161,11 @@ def get_args() -> argparse.Namespace:
         '--keep-image-tags',
         action='store_true',
         help=f'Do not switch image tags to `{Config.DEV_BRANCH}`',
+    )
+    parser.add_argument(
+        '--keep-metric-addon-docker-socket',
+        action='store_true',
+        help=f'Do not set {METRIC_DOCKER_VAR} to DOCKER_HOST value',
     )
     parser.add_argument(
         '--port',
@@ -313,6 +319,7 @@ class Config:
     compose_ref = RELEASE_REF
     force_host_as_name: bool = False
     admin_name: str = 'master'
+    extra_override: List['str'] = dataclasses.field(default_factory=list)
     set_image_tags: bool = False
     selected_addons: List['AddonModule'] = dataclasses.field(default_factory=list)
     registry_user: str = 'install_saltbox'
@@ -564,7 +571,7 @@ class AddonModule:
     license: str
     compose_files: List[str]
     env_file: str
-    is_token_required: bool  # TODO read_repository, read_registry, read_api
+    is_token_required: bool
     switchable_image_tags: List[str]
     secrets_configs: List[str] = dataclasses.field(default_factory=list)
     ref: str = RELEASE_REF
@@ -585,7 +592,6 @@ ADDON_MODULES = [
         license='EULA',  # =(
         is_token_required=True,
     ),
-    # TODO Check DOCKER_HOST
     AddonModule(
         name='Metric',
         repo=GitLabRepo(
@@ -685,9 +691,23 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
         if not conf.set_image_tags:
             cmd.append('--keep-image-tags')
 
+    if 'Metric' in {a.name for a in conf.selected_addons} and not args.keep_metric_addon_docker_socket:
+        docker_host = os.environ.get('DOCKER_HOST')
+        if docker_host:
+            print_out(
+                '',
+                f"Env variable `DOCKER_HOST='{docker_host}'` exists.")
+            if interactions.ask_confirm(
+                    f'Set {METRIC_DOCKER_VAR} to DOCKER_HOST value? (Recommended)'):
+                ovrd = f"{METRIC_DOCKER_VAR}='{docker_host}'"
+                conf.extra_override.insert(0, ovrd)
+            else:
+                cmd.append('--keep-metric-addon-docker-socket')
+
     if not args.cleanup:
         conf.cleanup = interactions.ask_confirm(
-            'Cleanup possibly existing instance? (DATA LOST!)', default=False)
+            'Cleanup possibly existing instance? (Recommended, DATA LOST!)',
+            default=False)
         if conf.cleanup:
             cmd.append('--cleanup')
     else:
@@ -814,7 +834,7 @@ def _configure_system_addons(config: Config) -> List[str]:
     return override
 
 
-def configure_system(args: argparse.Namespace, config: Config) -> None:
+def configure_system(config: Config) -> None:
     override = []
 
     if config.set_image_tags:
@@ -836,7 +856,7 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
 
     override.extend(_configure_system_addons(config=config))
 
-    override.extend(args.OVERRIDE)
+    override.extend(config.extra_override)
 
     with ENV_OVERRIDE.open('w', encoding=ENC) as fstream:
         fstream.write('\n'.join(override) + '\n')
@@ -891,10 +911,10 @@ def main() -> None:
     print_out(msg)
 
     try:
-        check(args)
-        conf = configure_script(args, interactions=interactions)
-        download(args, config=conf)
-        configure_system(args, config=conf)
+        check(args=args)
+        conf = configure_script(args=args, interactions=interactions)
+        download(args=args, config=conf)
+        configure_system(config=conf)
         with cd(LOCAL_PATH):
             run(args, config=conf)
     except InstallerError as papa:
