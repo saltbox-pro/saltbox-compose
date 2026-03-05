@@ -24,6 +24,7 @@ The script is a part of Salt.Box Compose
 
 import argparse
 import contextlib
+import dataclasses
 import functools
 import http
 import ipaddress
@@ -39,7 +40,6 @@ import time
 import urllib.parse
 import urllib.request
 import zipfile
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, List, Optional, Type, TypeVar
 
@@ -53,6 +53,7 @@ ENV_OVERRIDE = LOCAL_PATH / 'override.env'
 SCRIPT_SUFFIXES = ('*.sh', '*.py',)
 ADMIN_SECRET_NAME = 'saltbox_admin_password'
 RELEASE_REF = 'RELEASE'
+REGISTRY_DOTENV_VAR='IMAGE_REGISTRY'
 
 # Uses after changind CWD
 CLEANUP_CMD = ['./bin/sb-compose.sh', 'down', '--volumes', '--remove-orphans']
@@ -62,10 +63,6 @@ ENTRYPOINT = ['bin/update_and_run.sh', '--no-root', '--force', '--detach', '--no
 MIN_DOCKER_VERSION = '25.0.0'
 MIN_COMPOSE_VERSION = '2.20.2'
 MIN_PYTHON_VERSION = '3.7.3'
-
-URLS = {
-    'saltbox-compose': 'https://dev.saltbox.pro/saltbox/saltbox-compose',
-}
 
 SWITCHABLE_IMAGE_TAGS = [
     'FRONTEND_IMAGE_TAG',
@@ -83,6 +80,8 @@ SWITCHABLE_IMAGE_TAGS = [
 
 cache = functools.lru_cache(maxsize=None)
 
+TOKEN_NAME = 'SALTBOX_INSTALL_TOKEN'
+TOKEN = os.environ.get(TOKEN_NAME)
 
 class InstallerError(RuntimeError): ...
 class HttpNotFoundError(InstallerError): ...
@@ -90,7 +89,8 @@ class HttpNotFoundError(InstallerError): ...
 
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description=('Run Salt.Box Docker Compose based instance from scratch'),
+        description='Run Salt.Box Docker Compose based instance from scratch',
+        epilog=f'Set `{TOKEN_NAME}` environment variable to use access token for proprietary modules',
     )
     parser.add_argument(
         'OVERRIDE',
@@ -190,20 +190,24 @@ VERBOSE=False
 
 
 @contextlib.contextmanager
-def cd(path: Path):
+def cd(path: Optional[Path]):
+    if path is None:
+        yield
+        return
     orig = Path.cwd()
     os.chdir(path)
+    time.sleep(0.04)  # To workaround unupdated CWD
     try:
         yield
     finally:
         os.chdir(orig)
 
 
-def run_cmd(cmd: List[str]) -> None:
+def run_cmd(cmd: List[str], input: Optional[str] = None) -> None:
     cmd_str = ' '.join(cmd)
     print_out(f'Running `{cmd_str}`', '')
     try:
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, input=input, check=True, text=True)
     except subprocess.CalledProcessError as err:
         raise InstallerError(err) from None
 
@@ -218,6 +222,15 @@ def print_err(*args, verbose: bool=False) -> None:
     if verbose and not VERBOSE:
         return
     print(*args, file=sys.stderr, sep='\n')
+
+
+def get_dotenv_var(name: str, dotenv: Path=Path('.env')) -> str:
+    """ Read str value from env-file """
+    cmd = ['sh', '-c', f'. \'{dotenv.absolute()}\' && printf \'%s\' "${name}"']
+    proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    val = proc.stdout
+    print_out(f'Got dotenv var `{name}`: `{val}`', verbose=True)
+    return val
 
 
 class Interactions:
@@ -277,7 +290,7 @@ class Interactions:
             print_err('Unexpected input')
 
 
-@dataclass
+@dataclasses.dataclass
 class Config:
     MIN_PORT = 1
     MAX_PORT = 2**16 - 1
@@ -293,11 +306,21 @@ class Config:
     force_host_as_name: bool = False
     admin_name: str = 'master'
     set_image_tags: bool = False
+    selected_addons: List['AddonModule'] = dataclasses.field(default_factory=list)
+    registry_user: str = 'install_saltbox'
 
     def validate(self) -> None:
         if not self.MIN_PORT <= self.port <= self.MAX_PORT:
-            raise ValueError(f'Port {self.port} is out of range {self.MIN_PORT}-{self.MAX_PORT}')
+            dosa = f'Port {self.port} is out of range {self.MIN_PORT}-{self.MAX_PORT}'
+            raise ValueError(dosa)
         self._validate_host()
+        if TOKEN is None and self.is_token_required:
+            dosa = f'Missing required `{TOKEN_NAME}` env variable'
+            raise ValueError(dosa)
+
+    @property
+    def is_token_required(self) -> bool:
+        return any(a.is_token_required for a in self.selected_addons)
 
     @property
     def is_host_seems_ip(self) -> bool:
@@ -334,6 +357,9 @@ class Config:
         data.append(f'Salt.Box Administrator\'s login is: `{self.admin_name}`')
         data.append('Salt.Box Administrator\'s password is: [ SEARCH IN FURTHER OUTPUT ]')
         data.append(f'Cleanup: {"YES!!! " if self.cleanup else "no"}')
+        if self.selected_addons:
+            addons_str = ', '.join(a.name for a in self.selected_addons)
+            data.append(f'Add-on modules: {addons_str}')
         return '\n'.join(data)
 
 
@@ -439,10 +465,6 @@ class GitLabRepo:
 
     def __init__(self, url: str, token: Optional[str] = None, progress: bool = True) -> None:
         self.token = token
-
-        # FIXME
-        self.token = os.environ.get('TOKEN')
-
         url_obj = urllib.parse.urlparse(url)
         path = Path(url_obj.path)
         self.scheme = url_obj.scheme
@@ -515,7 +537,7 @@ class GitLabRepo:
             shutil.move(src=str(tmp_path / dir_name), dst=output_dir)
 
 
-COMPOSE_REPO = GitLabRepo(URLS['saltbox-compose'])
+COMPOSE_REPO = GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-compose', token=TOKEN)
 
 
 @cache
@@ -526,7 +548,7 @@ def resolve_ref(ref: str, repo: GitLabRepo) -> str:
     return ref
 
 
-@dataclass
+@dataclasses.dataclass
 class AddonModule:
     name: str
     repo: GitLabRepo
@@ -536,14 +558,17 @@ class AddonModule:
     env_file: str
     is_token_required: bool  # TODO read_repository, read_registry, read_api
     switchable_image_tags: List[str]
-    secrets_configs: List[str] = field(default_factory=list)
+    secrets_configs: List[str] = dataclasses.field(default_factory=list)
     ref: str = RELEASE_REF
 
 
 ADDON_MODULES = [
     AddonModule(
         name='Inventory',
-        repo=GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-inventory-compose'),
+        repo=GitLabRepo(
+            url='https://dev.saltbox.pro/saltbox/saltbox-inventory-compose',
+            token=TOKEN,
+        ),
         base_dir='saltbox-inventory-compose',
         switchable_image_tags=['INVENTORY_IMAGE_TAG'],
         compose_files=['compose.yaml'],
@@ -555,7 +580,10 @@ ADDON_MODULES = [
     # TODO Check DOCKER_HOST
     AddonModule(
         name='Metric',
-        repo=GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-metric-compose'),
+        repo=GitLabRepo(
+            url='https://dev.saltbox.pro/saltbox/saltbox-metric-compose',
+            token=TOKEN,
+        ),
         base_dir='saltbox-metric-compose',
         switchable_image_tags=['METRIC_IMAGE_TAG'],
         compose_files=['compose.yaml'],
@@ -565,7 +593,10 @@ ADDON_MODULES = [
     ),
     AddonModule(
         name='Scheduler',
-        repo=GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-scheduler-compose'),
+        repo=GitLabRepo(
+            url='https://dev.saltbox.pro/saltbox/saltbox-scheduler-compose',
+            token=TOKEN,
+        ),
         base_dir='saltbox-scheduler-compose',
         switchable_image_tags=['SCHEDULER_IMAGE_TAG'],
         compose_files=['compose.yaml'],
@@ -632,6 +663,9 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
     else:
         conf.cleanup = args.cleanup
 
+    if args.addons:
+        conf.selected_addons = ADDON_MODULES.copy()
+
     try:
         conf.validate()
     except ValueError as err:
@@ -644,6 +678,11 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
 
     if not interactions.ask_confirm('Continue?'):
         raise InstallerError('Cancelled by user')
+
+    if conf.is_token_required:
+        print_out('', f'Secret `{TOKEN_NAME}` will be saved by Docker for the registry!')
+        if not interactions.ask_confirm('Continue?'):
+            raise InstallerError('Cancelled by user')
 
     return conf
 
@@ -704,15 +743,6 @@ def check(args: argparse.Namespace) -> None:
     print_out()
 
 
-def _download_addons() -> None:
-    for addon in ADDON_MODULES:
-        ref = resolve_ref(ref=addon.ref, repo=addon.repo)
-        print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{ref}`')
-        print_out(f'URL: {addon.repo.url_for_ref(ref)}', verbose=True)
-        addon.repo.download_ref(ref=ref, output_dir=Path(addon.base_dir))
-        print_out()
-
-
 def download(args: argparse.Namespace, config: Config) -> None:
     print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}`...')
     print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
@@ -726,15 +756,19 @@ def download(args: argparse.Namespace, config: Config) -> None:
         script.chmod(0o755)
     print_out()
 
-    if args.addons:
-        _download_addons()
+    for addon in config.selected_addons:
+        ref = resolve_ref(ref=addon.ref, repo=addon.repo)
+        print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{ref}`')
+        print_out(f'URL: {addon.repo.url_for_ref(ref)}', verbose=True)
+        addon.repo.download_ref(ref=ref, output_dir=Path(addon.base_dir))
+        print_out()
 
 
 def _configure_system_addons(config: Config) -> List[str]:
     override = []
     env_files = []
     secr_confs = []
-    for addon in ADDON_MODULES:
+    for addon in config.selected_addons:
         addon_dir = Path('..') / addon.base_dir
         override += [
             f'COMPOSE_FILE="${{COMPOSE_FILE}}:{addon_dir / cmp_f}"'
@@ -769,15 +803,15 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
     else:
         override.append(f"WEB_SERVER_SSL_ALT_NAMES_DNS='localhost,{config.host}'")
 
-    override.extend(args.OVERRIDE)
+    override.extend(_configure_system_addons(config=config))
 
-    if args.addons:
-        override.extend(_configure_system_addons(config=config))
+    override.extend(args.OVERRIDE)
 
     with ENV_OVERRIDE.open('w', encoding=ENC) as fstream:
         fstream.write('\n'.join(override) + '\n')
 
     print_out(f'Override file `{ENV_OVERRIDE}` has been saved', '')
+
 
 
 def run(args: argparse.Namespace, config: Config) -> None:
@@ -790,6 +824,16 @@ def run(args: argparse.Namespace, config: Config) -> None:
         env_cmd.append('--only-env')
         run_cmd(env_cmd)
         run_cmd(CLEANUP_CMD)
+
+    if config.is_token_required:
+        run_cmd([*ENTRYPOINT, '--only-env'])
+        registry = get_dotenv_var(name = REGISTRY_DOTENV_VAR, dotenv=Path('.env'))
+        if not registry:
+            dosa = f'Failed to obtain `{REGISTRY_DOTENV_VAR}`'
+            raise InstallerError(dosa)
+        docker_srv = Path(registry).parts[0]
+        cmd = ['docker', 'login', '--username', config.registry_user, '--password-stdin', docker_srv]
+        run_cmd(cmd=cmd, input=TOKEN)
 
     if args.explicit_secret:
         cmd = PREMAKE_SECRETS_CMD.copy()
@@ -822,7 +866,6 @@ def main() -> None:
         download(args, config=conf)
         configure_system(args, config=conf)
         with cd(LOCAL_PATH):
-            time.sleep(0.04)  # To avoid missing executables in `./bin/`
             run(args, config=conf)
     except InstallerError as papa:
         print_err('', papa, '', 'Exit on error', '')
