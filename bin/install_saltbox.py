@@ -41,7 +41,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Any, List, Optional, Type, TypeVar
+from typing import Any, ClassVar, List, Optional, Type, TypeVar
 
 ENC='UTF-8'
 HTTP_CHUNK_BYTE = 8192
@@ -116,8 +116,10 @@ def get_args() -> argparse.Namespace:
         type=str,
         help=(
             'Salt.Box Compose Git reference to obtain, '
-            '`RELEASE` to search fo latest release tag, '
-            f'`{Config.compose_ref}` by default'
+            f'`{RELEASE_REF}` to search fo latest release tag, '
+            f'`{Config.STABLE_BRANCH}` and `{Config.DEV_BRANCH}` '
+            'for main dev-branches. '
+            f'`{Config.compose_ref}` by default.'
         )
     )
     parser.add_argument(
@@ -150,9 +152,14 @@ def get_args() -> argparse.Namespace:
         help='Force SSL cert for DNS name even if `host` looks like IP address'
     )
     parser.add_argument(
+        '--keep-addon-tags',
+        action='store_true',
+        help='Do not switch addon tags to branches',
+    )
+    parser.add_argument(
         '--keep-image-tags',
         action='store_true',
-        help=f'Do not switch image tags for {Config.DEV_BRANCH}',
+        help=f'Do not switch image tags to `{Config.DEV_BRANCH}`',
     )
     parser.add_argument(
         '--port',
@@ -298,6 +305,7 @@ class Config:
 
     STABLE_BRANCH = 'master'
     DEV_BRANCH = 'dev'
+    SUPPORTED_REFS: ClassVar = [RELEASE_REF, STABLE_BRANCH, DEV_BRANCH]
 
     cleanup: bool = False
     host: str = 'saltbox.local'
@@ -356,10 +364,10 @@ class Config:
         data.append(f'Salt.Box Compose reference is: `{self.compose_ref}`')
         data.append(f'Salt.Box Administrator\'s login is: `{self.admin_name}`')
         data.append('Salt.Box Administrator\'s password is: [ SEARCH IN FURTHER OUTPUT ]')
-        data.append(f'Cleanup: {"YES!!! " if self.cleanup else "no"}')
         if self.selected_addons:
-            addons_str = ', '.join(a.name for a in self.selected_addons)
+            addons_str = ', '.join(f'{a.name} ({a.license})' for a in self.selected_addons)
             data.append(f'Add-on modules: {addons_str}')
+        data.append(f'Cleanup: {"YES!!! " if self.cleanup else "no"}')
         return '\n'.join(data)
 
 
@@ -610,6 +618,12 @@ ADDON_MODULES = [
 
 def configure_script(args: argparse.Namespace, interactions: Interactions) -> Config:
     conf = Config(force_host_as_name=args.host_is_name)
+
+    if args.addons:
+        conf.selected_addons = ADDON_MODULES.copy()
+        for addon in conf.selected_addons:
+            addon.ref = conf.compose_ref
+
     cmd: List[str] = ['./install_saltbox.py']
     if not args.non_interactive:
         cmd.append('--non-interactive')
@@ -630,8 +644,17 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
     if args.compose_ref is not None:
         conf.compose_ref = args.compose_ref
     else:
-        conf.compose_ref = interactions.ask('Salt.Box reference', conf.compose_ref)
+        conf.compose_ref = interactions.ask('Salt.Box Compose reference', conf.compose_ref)
         cmd += ['--compose-ref', conf.compose_ref]
+
+    if conf.compose_ref not in Config.SUPPORTED_REFS:
+        supported_refs = ', '.join(Config.SUPPORTED_REFS)
+        print_out(
+            '',
+            f'Supported Compose references are: {supported_refs}, but '
+            f'reference `{conf.compose_ref}` is selected. ')
+        if not interactions.ask_confirm('Continue as advanced user?'):
+            raise InstallerError('Cancelled by user')
 
     conf.compose_ref = resolve_ref(ref=conf.compose_ref, repo=COMPOSE_REPO)
 
@@ -649,6 +672,13 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
             args.explicit_secret.append(admin_secret)
             cmd += ['--explicit-secret', admin_secret]
 
+    if not args.keep_addon_tags and conf.compose_ref in {Config.STABLE_BRANCH, Config.DEV_BRANCH}:
+        msg = f'Select tag `{args.compose_ref}` for add-on modules?'
+        if interactions.ask_confirm(msg):
+            for addon in conf.selected_addons:
+                addon.ref = args.compose_ref
+        else:
+            cmd.append('--keep-addon-tags')
     if not args.keep_image_tags and conf.compose_ref == Config.DEV_BRANCH:
         conf.set_image_tags = interactions.ask_confirm(
             f'Select tag `{args.compose_ref}` for main images?')
@@ -662,9 +692,6 @@ def configure_script(args: argparse.Namespace, interactions: Interactions) -> Co
             cmd.append('--cleanup')
     else:
         conf.cleanup = args.cleanup
-
-    if args.addons:
-        conf.selected_addons = ADDON_MODULES.copy()
 
     try:
         conf.validate()
@@ -791,8 +818,12 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
     override = []
 
     if config.set_image_tags:
-        for img_tag in SWITCHABLE_IMAGE_TAGS:
-            override.append(f"{img_tag}='{config.compose_ref}'")
+        for tag_var in SWITCHABLE_IMAGE_TAGS:
+            override.append(f"{tag_var}='{config.compose_ref}'")
+        for addon in config.selected_addons:
+            override.extend(
+                f"{tag_var}='{config.compose_ref}'"
+                for tag_var in addon.switchable_image_tags)
 
     override.extend([
         f"SALTBOX_ADMIN_USERNAME='{config.admin_name}'",
@@ -811,7 +842,6 @@ def configure_system(args: argparse.Namespace, config: Config) -> None:
         fstream.write('\n'.join(override) + '\n')
 
     print_out(f'Override file `{ENV_OVERRIDE}` has been saved', '')
-
 
 
 def run(args: argparse.Namespace, config: Config) -> None:
