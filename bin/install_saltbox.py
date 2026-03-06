@@ -35,6 +35,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import time
 import urllib.parse
 import urllib.request
@@ -42,7 +43,8 @@ import zipfile
 from pathlib import Path
 from typing import Any, ClassVar, List, Optional, Type, TypeVar
 
-ENC='UTF-8'
+ENC = 'UTF-8'
+INDENT = 2 * ' '
 HTTP_CHUNK_BYTE = 8192
 HTTP_TIMEOUT_SEC = 30
 VERSION_TAG_PATTERN = re.compile(r'^v\d+\.\d+\.\d+.*$')
@@ -53,7 +55,6 @@ SCRIPT_SUFFIXES = ('*.sh', '*.py',)
 ADMIN_SECRET_NAME = 'saltbox_admin_password'
 RELEASE_REF = 'RELEASE'
 REGISTRY_DOTENV_VAR='IMAGE_REGISTRY'
-METRIC_DOCKER_VAR='METRIC_DOCKER_SOCKET'
 
 # Uses after changind CWD
 CLEANUP_CMD = ['./bin/sb-compose.sh', 'down', '--volumes', '--remove-orphans']
@@ -163,11 +164,6 @@ def get_args() -> argparse.Namespace:
         help=f'Do not switch image tags to `{Config.DEV_BRANCH}`',
     )
     parser.add_argument(
-        '--keep-metric-addon-docker-socket',
-        action='store_true',
-        help=f'Do not set {METRIC_DOCKER_VAR} to DOCKER_HOST value',
-    )
-    parser.add_argument(
         '--port',
         type=int,
         help=f'Port to serve HTTPS, `{Config.port}` by default',
@@ -251,16 +247,17 @@ class Interactions:
         self.non_interactive = non_interactive
 
     def ask(self, prompt: str, default: Optional[str] = None) -> str:
-        if self.non_interactive:
-            if default is None:
-                dosa = f'No data for prompt `{prompt}`'
-                raise InstallerError(dosa)
-            return default
-
         if default is None:
             prompt = f'{prompt}: '
         else:
             prompt = f'{prompt} [{default}]: '
+        if self.non_interactive:
+            if default is None:
+                dosa = f'No data for prompt `{prompt}`'
+                raise InstallerError(dosa)
+            print_out(f'{prompt}{default}')
+            return default
+
         val = input(prompt).strip()
 
         if not val:
@@ -272,13 +269,14 @@ class Interactions:
         return val
 
     def ask_optional(self, prompt: str) -> Optional[str]:
-        if self.non_interactive:
-            return None
         prompt = f'{prompt}: '
+        if self.non_interactive:
+            print_out(prompt)
+            return None
         val = input(prompt).strip()
         return val or None
 
-    def ask_int(self, prompt: str, default: Optional[int] = None) -> int:
+    def ask_int(self, prompt: str, default: int) -> int:
         val = self.ask(prompt, default=str(default))
         try:
             return int(val)
@@ -287,13 +285,15 @@ class Interactions:
 
 
     def ask_confirm(self, prompt: str, default: bool = True) -> bool:
-        if self.non_interactive:
-            return True
-
         yn = 'Y/n' if default else 'y/N'
+        prompt = f'{prompt} [{yn}]: '
+        if self.non_interactive:
+            val = 'Y' if default else 'N'
+            print_out(f'{prompt}{val}')
+            return default
 
         while True:
-            resp = input(f'{prompt} [{yn}]: ').strip().lower()
+            resp = input().strip().lower()
             if not resp:
                 return default
             elif resp in ('y', 'yes',):
@@ -622,116 +622,173 @@ ADDON_MODULES = [
 ]
 
 
-def configure_script(args: argparse.Namespace, interactions: Interactions) -> Config:
-    conf = Config(force_host_as_name=args.host_is_name)
+class ScriptConfigurator:
+    METRIC_DOCKER_SOCK_VAR='METRIC_DOCKER_SOCKET'
+    METRIC_DOCKER_CONT_VAR='METRIC_DOCKER_CONTAINERS_PATH'
+    DEFAULT_DOCKER_HOST='unix:///var/run/docker.sock'
 
-    if args.addons:
-        conf.selected_addons = ADDON_MODULES.copy()
-        for addon in conf.selected_addons:
-            addon.ref = conf.compose_ref
+    def __init__(self, args: argparse.Namespace, interactions: Interactions) -> None:
+        self.args = args
+        self.interactions = interactions
+        self.conf = Config(force_host_as_name=args.host_is_name)
+        self.cmd: List[str] = ['./install_saltbox.py']
 
-    cmd: List[str] = ['./install_saltbox.py']
-    if not args.non_interactive:
-        cmd.append('--non-interactive')
-    cmd += sys.argv[1:]
+    def _metric_docker_hook(self) -> None:
+        addon_nama = 'Metric'
+        if addon_nama not in {a.name for a in self.conf.selected_addons}:
+            return
 
-    if args.host is not None:
-        conf.host = args.host
-    else:
-        conf.host = interactions.ask('Real address or name', conf.host)
-        cmd += ['--host', conf.host]
+        dckr_host_cmd = ['docker', 'context', 'inspect', '--format', '{{.Endpoints.docker.Host}}']
+        dckr_host = os.environ.get('DOCKER_HOST')
+        proc = subprocess.run(dckr_host_cmd, check=True, capture_output=True, text=True)
+        dckr_host = proc.stdout.strip()
+        if dckr_host== self.DEFAULT_DOCKER_HOST:
+            print_out('Docker uses default socket', verbose=True)
+            return
+        dckr_host_parsed = urllib.parse.urlparse(proc.stdout.strip())
+        if dckr_host_parsed.scheme != 'unix':
+            dosa = (
+                f'Docker uses `{dckr_host_parsed.scheme}` to connect the socket, '
+                f'but Salt.Box {addon_nama} Compose supports `unix` only (file socket)')
+            raise InstallerError(dosa)
+        dckr_sock_path = dckr_host_parsed.path
 
-    if args.port is not None:
-        conf.port = args.port
-    else:
-        conf.port = interactions.ask_int('Port to serve HTTPS', conf.port)
-        cmd += ['--port', str(conf.port)]
-
-    if args.compose_ref is not None:
-        conf.compose_ref = args.compose_ref
-    else:
-        conf.compose_ref = interactions.ask('Salt.Box Compose reference', conf.compose_ref)
-        cmd += ['--compose-ref', conf.compose_ref]
-
-    if conf.compose_ref not in Config.SUPPORTED_REFS:
-        supported_refs = ', '.join(Config.SUPPORTED_REFS)
+        dckr_root_cmd = ['docker', 'info', '--format', '{{ .DockerRootDir }}']
+        proc = subprocess.run(dckr_root_cmd, check=True, capture_output=True, text=True)
+        dckr_root_path = proc.stdout.strip()
+        dckr_cont_path = Path(dckr_root_path) / 'containers'
         print_out(
             '',
-            f'Supported Compose references are: {supported_refs}, but '
-            f'reference `{conf.compose_ref}` is selected. ')
-        if not interactions.ask_confirm('Continue as advanced user?'):
+            f'Follwing Docker config detected and will be applied to Salt.Box {addon_nama} config:',
+            INDENT + f'Socket path: `{dckr_sock_path}`',
+            INDENT + f'Containers path: `{dckr_cont_path}`',
+        )
+        if self.interactions.ask_confirm('Continue with detected options?'):
+            self.conf.extra_override = [
+                f"{self.METRIC_DOCKER_SOCK_VAR}='{dckr_sock_path}'",
+                f"{self.METRIC_DOCKER_CONT_VAR}='{dckr_cont_path}'",
+                *self.conf.extra_override,
+            ]
+        else:
             raise InstallerError('Cancelled by user')
 
-    conf.compose_ref = resolve_ref(ref=conf.compose_ref, repo=COMPOSE_REPO)
+    def configure(self) -> Config:
+        if self.args.addons:
+            self.conf.selected_addons = ADDON_MODULES.copy()
+            for addon in self.conf.selected_addons:
+                addon.ref = self.conf.compose_ref
 
-    if args.admin is not None:
-        conf.admin_name = args.admin
-    else:
-        conf.admin_name = interactions.ask('Salt.Box Administrator\'s login', conf.admin_name)
-        cmd += ['--admin', conf.admin_name]
+        if not self.args.non_interactive:
+            self.cmd.append('--non-interactive')
+        self.cmd += sys.argv[1:]
 
-    if not any(x.startswith(f'{ADMIN_SECRET_NAME}=') for x in args.explicit_secret):
-        admin_pass = interactions.ask_optional(
-            'Salt.Box Administartor\'s password (leave empty to generate)')
-        if admin_pass is not None:
-            admin_secret=f'{ADMIN_SECRET_NAME}={admin_pass}'
-            args.explicit_secret.append(admin_secret)
-            cmd += ['--explicit-secret', admin_secret]
-
-    if not args.keep_addon_tags and conf.compose_ref in {Config.STABLE_BRANCH, Config.DEV_BRANCH}:
-        msg = f'Select tag `{args.compose_ref}` for add-on modules?'
-        if interactions.ask_confirm(msg):
-            for addon in conf.selected_addons:
-                addon.ref = args.compose_ref
+        if self.args.host is not None:
+            self.conf.host = self.args.host
         else:
-            cmd.append('--keep-addon-tags')
-    if not args.keep_image_tags and conf.compose_ref == Config.DEV_BRANCH:
-        conf.set_image_tags = interactions.ask_confirm(
-            f'Select tag `{args.compose_ref}` for main images?')
-        if not conf.set_image_tags:
-            cmd.append('--keep-image-tags')
+            self.conf.host = self.interactions.ask('Real address or name', self.conf.host)
+            self.cmd += ['--host', self.conf.host]
 
-    if 'Metric' in {a.name for a in conf.selected_addons} and not args.keep_metric_addon_docker_socket:
-        docker_host = os.environ.get('DOCKER_HOST')
-        if docker_host:
+        if self.args.port is not None:
+            self.conf.port = self.args.port
+        else:
+            self.conf.port = self.interactions.ask_int('Port to serve HTTPS', self.conf.port)
+            self.cmd += ['--port', str(self.conf.port)]
+
+        if self.args.compose_ref is not None:
+            self.conf.compose_ref = self.args.compose_ref
+        else:
+            self.conf.compose_ref = self.interactions.ask('Salt.Box Compose reference', self.conf.compose_ref)
+            self.cmd += ['--compose-ref', self.conf.compose_ref]
+
+        if self.conf.compose_ref not in Config.SUPPORTED_REFS:
+            supported_refs = ', '.join(Config.SUPPORTED_REFS)
             print_out(
                 '',
-                f"Env variable `DOCKER_HOST='{docker_host}'` exists.")
-            if interactions.ask_confirm(
-                    f'Set {METRIC_DOCKER_VAR} to DOCKER_HOST value? (Recommended)'):
-                ovrd = f"{METRIC_DOCKER_VAR}='{docker_host}'"
-                conf.extra_override.insert(0, ovrd)
+                f'Supported Compose references are: {supported_refs}, but '
+                f'reference `{self.conf.compose_ref}` is selected. ')
+            if not self.interactions.ask_confirm('Continue as advanced user?'):
+                raise InstallerError('Cancelled by user')
+
+        self.conf.compose_ref = resolve_ref(ref=self.conf.compose_ref, repo=COMPOSE_REPO)
+
+        if self.args.admin is not None:
+            self.conf.admin_name = self.args.admin
+        else:
+            self.conf.admin_name = self.interactions.ask(
+                'Salt.Box Administrator\'s login', self.conf.admin_name)
+            self.cmd += ['--admin', self.conf.admin_name]
+
+        if not any(x.startswith(f'{ADMIN_SECRET_NAME}=') for x in self.args.explicit_secret):
+            admin_pass = self.interactions.ask_optional(
+                'Salt.Box Administartor\'s password (leave empty to generate)')
+            if admin_pass is not None:
+                admin_secret=f'{ADMIN_SECRET_NAME}={admin_pass}'
+                self.args.explicit_secret.append(admin_secret)
+                self.cmd += ['--explicit-secret', admin_secret]
+
+        if not self.args.keep_addon_tags and self.conf.compose_ref in {Config.STABLE_BRANCH, Config.DEV_BRANCH}:
+            msg = f'Select tag `{self.args.compose_ref}` for add-on modules?'
+            if self.interactions.ask_confirm(msg):
+                for addon in self.conf.selected_addons:
+                    addon.ref = self.args.compose_ref
             else:
-                cmd.append('--keep-metric-addon-docker-socket')
+                self.cmd.append('--keep-addon-tags')
+        if not self.args.keep_image_tags and self.conf.compose_ref == Config.DEV_BRANCH:
+            self.conf.set_image_tags = self.interactions.ask_confirm(
+                f'Select tag `{self.args.compose_ref}` for main images?')
+            if not self.conf.set_image_tags:
+                self.cmd.append('--keep-image-tags')
 
-    if not args.cleanup:
-        conf.cleanup = interactions.ask_confirm(
-            'Cleanup possibly existing instance? (Recommended, DATA LOST!)',
-            default=False)
-        if conf.cleanup:
-            cmd.append('--cleanup')
-    else:
-        conf.cleanup = args.cleanup
+        self._metric_docker_hook()
 
-    try:
-        conf.validate()
-    except ValueError as err:
-        raise InstallerError(err) from err
+        if not self.args.cleanup:
+            self.conf.cleanup = self.interactions.ask_confirm(
+                'Cleanup possibly existing instance? (Recommended, DATA LOST!)',
+                default=False)
+            if self.conf.cleanup:
+                self.cmd.append('--cleanup')
+            print_out('')
+        else:
+            self.conf.cleanup = self.args.cleanup
 
-    print_out('', conf, '')
+        try:
+            self.conf.validate()
+        except ValueError as err:
+            raise InstallerError(err) from err
 
-    cmd_str = ' '.join(cmd)
-    print(f'Command to repeat with no dialog:\n\n  $ {cmd_str}\n')
+        print_out(
+            'Selected options:',
+            textwrap.indent(str(self.conf), INDENT),
+            '',
+        )
 
-    if not interactions.ask_confirm('Continue?'):
-        raise InstallerError('Cancelled by user')
+        cmd_str = ' '.join(self.cmd)
+        print_out(
+            'Command to repeat with no dialog:',
+            '',
+            INDENT + f'$ {cmd_str}',
+            '',
+        )
 
-    if conf.is_token_required:
-        print_out('', f'Secret `{TOKEN_NAME}` will be saved by Docker for the registry!')
-        if not interactions.ask_confirm('Continue?'):
+        if not self.interactions.ask_confirm('Continue?'):
             raise InstallerError('Cancelled by user')
+        else:
+            print_out('')
 
-    return conf
+        if self.conf.is_token_required:
+            print_out(f'Secret `{TOKEN_NAME}` will be saved by Docker for the registry!')
+            if not self.interactions.ask_confirm('Continue?'):
+                raise InstallerError('Cancelled by user')
+            else:
+                print_out('')
+
+        print_out(
+            30 * '#',
+            '###  QUESTIONS ARE END NOW ###',
+            30 * '#',
+            ''
+        )
+        return self.conf
 
 def check(args: argparse.Namespace) -> None:
     if args.skip_check:
@@ -748,7 +805,7 @@ def check(args: argparse.Namespace) -> None:
     if py_ver < min_py_ver:
         raise InstallerError(f'Minimal required Python version is v{MIN_PYTHON_VERSION}')
 
-    docker_cmd = ['docker', 'version', '--format', '{{.Server.Version}}']
+    docker_cmd = ['docker', 'version', '--format', '{{ .Server.Version }}']
     compose_cmd = ['docker', 'compose', 'version', '--short']
 
     try:
@@ -912,7 +969,7 @@ def main() -> None:
 
     try:
         check(args=args)
-        conf = configure_script(args=args, interactions=interactions)
+        conf = ScriptConfigurator(args=args, interactions=interactions).configure()
         download(args=args, config=conf)
         configure_system(config=conf)
         with cd(LOCAL_PATH):
