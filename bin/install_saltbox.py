@@ -518,9 +518,11 @@ class GitLabRepo:
         return f'{self.project}-{ref}.{self.ARCHIVE_SUFFIX}'
 
     def url_for_ref(self, ref: str) -> str:
-        filename = self.filename_for_ref(ref)
-        url = f'{self.scheme}://{self.server}/{self.owner}/{self.project}/-/archive/{ref}/{filename}'
-        return url
+        params = urllib.parse.urlencode({'sha': ref})
+        return (
+            f'{self.api_url}/projects/{self.owner}%2F{self.project}/repository/'
+            f'archive.{self.ARCHIVE_SUFFIX}?{params}'
+        )
 
     def download_ref(self, ref: str, output_dir: Path = Path()) -> None:
         """
@@ -542,6 +544,11 @@ class GitLabRepo:
             except HttpNotFoundError:
                 dosa = f'Server returns `Not found` for Compose ref `{ref}`'
                 raise InstallerError(dosa) from None
+            if not zipfile.is_zipfile(arch_path):
+                data = arch_path.read_text(encoding=ENC)
+                print_err(f'Content of `{arch_path}`:', data)
+                dosa = f'Downloaded code archive is not a {self.ARCHIVE_SUFFIX} file'
+                raise InstallerError(dosa)
             arch = zipfile.ZipFile(arch_path)
             dir_name = arch.namelist()[0]
             destination_full = output_dir / dir_name
