@@ -20,6 +20,7 @@ The script is a part of Salt.Box Compose
 
 # TODO Alternative obtaining with Git
 # TODO Offline mode with images
+# TODO Check 'vm.overcommit_memory=1'
 
 import argparse
 import contextlib

@@ -214,6 +214,7 @@ if [ ! -f "$env_file" ]; then
   cat "$base_env_file" > "$env_file"
 
   if [ -f "$override_env" ]; then
+    echo >> $env_file
     cat "$override_env" >> "$env_file"
   else
     warn "No '${override_env}' file, using defaults"
