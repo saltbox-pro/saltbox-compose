@@ -41,7 +41,6 @@ def get_conf() -> dict:
 lru_cache(maxsize=None)
 def get_repo_root(repo: Path) -> Path | None:
     """ Get Git repo root or None if path is not a repo """
-    ...
     cmd = ['git', '-C', str(repo), 'rev-parse', '--show-toplevel']
     res = subprocess.run(cmd, stderr=subprocess.DEVNULL, stdout=subprocess.PIPE)
     if res.returncode != 0:
@@ -50,7 +49,6 @@ def get_repo_root(repo: Path) -> Path | None:
 
 
 def get_context_repos(config: dict[str, Any]) -> list[Path]:
-    return []  # FIXME
     paths = set()
     for service in config.get('services', {}).values():
         build = service.get('build')
@@ -70,7 +68,13 @@ def get_volume_repos(config: dict[str, Any]) -> list[Path]:
         sources.extend(Path(vol['source']) for vol in service.get('volumes', []))
 
     for path in sources:
-        if path.is_absolute() and path.is_dir() and cwd not in path.parents:
+        try:
+            is_dir = path.is_dir()
+        except PermissionError:
+            warn = f'Skipping volume source `{path}` due to permission error'
+            print(warn, file=sys.stderr)
+            continue
+        if path.is_absolute() and is_dir and cwd not in path.parents:
             repo_root = get_repo_root(path)
             if repo_root is not None:
                 repos.add(repo_root)

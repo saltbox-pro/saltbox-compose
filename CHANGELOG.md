@@ -47,6 +47,8 @@ flag.
   `.env` file does not exist.
 - OIDC scopes in `sshfs_manager/config.yaml.tmpl`.
 - Assign Keycloak group membership mapper to `sshfs-manager` client scope.
+- `git_pull_dev_repos.py`: ignore possible `PermissionError` on volume sources
+  for Python<3.14.
 
 ### Removed
 
