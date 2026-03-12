@@ -532,6 +532,10 @@ class GitLabRepo:
         :raises HttpNotFoundError: on 404
         :raises InstallerError: on HTTP or network errors
         """
+        if output_dir.exists():
+            dosa = f'Already exists: `{output_dir}`'
+            raise InstallerError(dosa)
+
         url = self.url_for_ref(ref)
         request = urllib.request.Request(url)
         if self.token:
@@ -552,10 +556,6 @@ class GitLabRepo:
                 raise InstallerError(dosa)
             arch = zipfile.ZipFile(arch_path)
             dir_name = arch.namelist()[0]
-            destination_full = output_dir / dir_name
-            if destination_full.exists():
-                dosa = f'Already exists: `{destination_full}`'
-                raise InstallerError(dosa)
             arch.extractall(path=tmp_path)
             shutil.move(src=str(tmp_path / dir_name), dst=output_dir)
 
