@@ -42,7 +42,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Any, ClassVar, List, Optional, Type, TypeVar
+from typing import Any, ClassVar, List, Optional, TextIO, Type, TypeVar, Union
 
 ENC = 'UTF-8'
 INDENT = 2 * ' '
@@ -86,7 +86,12 @@ TOKEN_NAME = 'SALTBOX_INSTALL_TOKEN'
 # GitLab group token MUST have scopes: read_repository, read_registry, read_api
 TOKEN = os.environ.get(TOKEN_NAME)
 
-class InstallerError(RuntimeError): ...
+class InstallerError(RuntimeError):
+    def __init__(self, message: Union[str, BaseException], details: Optional[str] = None) -> None:
+        super().__init__(message)
+        self.details = details
+
+class CheckError(InstallerError): ...
 class HttpNotFoundError(InstallerError): ...
 
 
@@ -222,16 +227,18 @@ def run_cmd(cmd: List[str], input: Optional[str] = None) -> None:
         raise InstallerError(err) from None
 
 
-def print_out(*args, verbose: bool=False) -> None:
+def _print(*args, file: TextIO, verbose: bool=False) -> None:
     if verbose and not VERBOSE:
         return
-    print(*args, file=sys.stdout, sep='\n')
+    print(*args, file=file, sep='\n')
+
+
+def print_out(*args, verbose: bool=False) -> None:
+    _print(*args, verbose=verbose, file=sys.stdout)
 
 
 def print_err(*args, verbose: bool=False) -> None:
-    if verbose and not VERBOSE:
-        return
-    print(*args, file=sys.stderr, sep='\n')
+    _print(*args, verbose=verbose, file=sys.stderr)
 
 
 def get_dotenv_var(name: str, dotenv: Path=Path('.env')) -> str:
@@ -478,6 +485,7 @@ def download_file(request: urllib.request.Request, output: Path, progress: bool)
 
 class GitLabRepo:
     ARCHIVE_SUFFIX = 'zip'  # Supposed to be better on error detection
+    MAX_CONENT_LEN_PRINT = 2000
 
     def __init__(self, url: str, token: Optional[str] = None, progress: bool = True) -> None:
         self.token = token
@@ -551,9 +559,11 @@ class GitLabRepo:
                 raise InstallerError(dosa) from None
             if not zipfile.is_zipfile(arch_path):
                 data = arch_path.read_text(encoding=ENC)
-                print_err(f'Content of `{arch_path}`:', data)
+                if len(data) > self.MAX_CONENT_LEN_PRINT:
+                    data = data[:self.MAX_CONENT_LEN_PRINT] + '...'
                 dosa = f'Downloaded code archive is not a {self.ARCHIVE_SUFFIX} file'
-                raise InstallerError(dosa)
+                details = f'Content of `{arch_path}`:\n' + data
+                raise InstallerError(dosa, details=details)
             arch = zipfile.ZipFile(arch_path)
             dir_name = arch.namelist()[0]
             arch.extractall(path=tmp_path)
@@ -798,61 +808,82 @@ class ScriptConfigurator:
         )
         return self.conf
 
-def check(args: argparse.Namespace) -> None:
-    if args.skip_check:
-        print_out('Skipping requirements checkup!', '')
-        return
 
-    py_ver = Version(
-        major=sys.version_info.major,
-        minor=sys.version_info.minor,
-        patch=sys.version_info.micro,
-    )
-    min_py_ver = Version.from_str(MIN_PYTHON_VERSION)
-    print_out(f'Running on Python version `{py_ver}`')
-    if py_ver < min_py_ver:
-        raise InstallerError(f'Minimal required Python version is v{MIN_PYTHON_VERSION}')
+class Checker:
+    def __init__(self, args: argparse.Namespace) -> None:
+        self.args = args
 
-    docker_cmd = ['docker', 'version', '--format', '{{ .Server.Version }}']
-    compose_cmd = ['docker', 'compose', 'version', '--short']
+    def _check_cwd(self) -> None:
+        atta = Path(__file__).name
+        content = {i.name for i in Path.cwd().iterdir()}
+        print_out('CWD content: ' + ', '.join(content), verbose=True)
+        content -= {atta}
+        if content:
+            dosa = f'Current working directory contains files other than `{atta}`'
+            details = (
+                'Script creates one or more directories in the current working directory.\n'
+                'This check ensures no 3rd part file in the CWD to avoid conflicts.\n'
+                'Please decide to run the script in a clean directory.'
+            )
+            raise CheckError(dosa, details=details)
 
-    try:
-        proc = subprocess.run(docker_cmd, capture_output=True, text=True)
-    except FileNotFoundError:
-        dosa = 'Not found `docker` command. Not installed or not in PATH?'
-        raise InstallerError(dosa) from None
-    except OSError as err:
-        raise InstallerError(err) from None
-    if proc.returncode != 0:
-        print_err(proc.stderr)
-        dosa = f'Command `{" ".join(docker_cmd)}` failed. May be use `sudo` to run as root?'
-        raise InstallerError(dosa)
+    def _check_python(self) -> None:
+        py_ver = Version(
+            major=sys.version_info.major,
+            minor=sys.version_info.minor,
+            patch=sys.version_info.micro,
+        )
+        min_py_ver = Version.from_str(MIN_PYTHON_VERSION)
+        print_out(f'Running on Python version `{py_ver}`')
+        if py_ver < min_py_ver:
+            raise CheckError(f'Minimal required Python version is v{MIN_PYTHON_VERSION}')
 
-    docker_ver_str = proc.stdout.strip()
-    print_out(f'Docker version string is `{docker_ver_str}`')
-    docker_ver = Version.from_str(docker_ver_str)
-    min_docker_ver = Version.from_str(MIN_DOCKER_VERSION)
-    if docker_ver < min_docker_ver:
-        raise InstallerError(f'At least Docker v{MIN_DOCKER_VERSION} required')
+    def _check_docker(self) -> None:
+        docker_cmd = ['docker', 'version', '--format', '{{ .Server.Version }}']
+        try:
+            proc = subprocess.run(docker_cmd, capture_output=True, text=True)
+        except FileNotFoundError:
+            dosa = 'Not found `docker` command. Not installed or not in PATH?'
+            raise CheckError(dosa) from None
+        except OSError as err:
+            raise CheckError(err) from None
+        if proc.returncode != 0:
+            dosa = f'Command `{" ".join(docker_cmd)}` failed. May be use `sudo` to run as root?'
+            dtl = 'Process stderr:\n' +  proc.stderr
+            raise CheckError(dosa, details=dtl)
+        docker_ver_str = proc.stdout.strip()
+        print_out(f'Docker version string is `{docker_ver_str}`')
+        docker_ver = Version.from_str(docker_ver_str)
+        min_docker_ver = Version.from_str(MIN_DOCKER_VERSION)
+        if docker_ver < min_docker_ver:
+            raise CheckError(f'At least Docker v{MIN_DOCKER_VERSION} required')
 
-    try:
-        proc = subprocess.run(compose_cmd, capture_output=True, text=True)
-    except OSError as err:
-        raise InstallerError(err) from None
-    if proc.returncode != 0:
-        print_err(proc.stderr)
-        dosa = f'Command `{" ".join(compose_cmd)}` failed. Is Docker Compose installed?'
-        raise InstallerError(dosa)
+    def _check_compose(self) -> None:
+        compose_cmd = ['docker', 'compose', 'version', '--short']
+        try:
+            proc = subprocess.run(compose_cmd, capture_output=True, text=True)
+        except OSError as err:
+            raise CheckError(err) from None
+        if proc.returncode != 0:
+            dosa = f'Command `{" ".join(compose_cmd)}` failed. Is Docker Compose installed?'
+            dtl = 'Process stderr:\n' +  proc.stderr
+            raise CheckError(dosa, details=dtl)
+        compose_ver_str = proc.stdout.strip()
+        compose_ver = Version.from_str(compose_ver_str)
+        min_compose_ver = Version.from_str(MIN_COMPOSE_VERSION)
+        if compose_ver < min_compose_ver:
+            raise CheckError(f'At least Docker Compose v{MIN_COMPOSE_VERSION} required')
+        print_out(f'Docker Compose version string is `{compose_ver_str}`')
 
-    compose_ver_str = proc.stdout.strip()
-    print_out(f'Docker Compose version string is `{compose_ver_str}`')
-    compose_ver = Version.from_str(compose_ver_str)
-    min_compose_ver = Version.from_str(MIN_COMPOSE_VERSION)
-    min_docker_ver = Version.from_str(MIN_DOCKER_VERSION)
-    if compose_ver < min_compose_ver:
-        raise InstallerError(f'At least Docker Compose v{MIN_COMPOSE_VERSION} required')
-
-    print_out()
+    def check(self) -> None:
+        if self.args.skip_check:
+            print_out('Skipping requirements checkup!', '')
+            return
+        self._check_cwd()
+        self._check_python()
+        self._check_docker()
+        self._check_compose()
+        print_out()
 
 
 def download(args: argparse.Namespace, config: Config) -> None:
@@ -972,18 +1003,28 @@ def main() -> None:
     interactions = Interactions(non_interactive=args.non_interactive)
     COMPOSE_REPO.progress = not args.no_progress
 
-    msg = '\nNon-interactive mode, no confirmations will be asked!' if interactions.non_interactive else ''
-    print_out(msg)
+    if interactions.non_interactive:
+        print_out('', 'Non-interactive mode, no confirmations will be asked!', '')
 
     try:
-        check(args=args)
+        Checker(args=args).check()
         conf = ScriptConfigurator(args=args, interactions=interactions).configure()
         download(args=args, config=conf)
         configure_system(config=conf)
         with cd(LOCAL_PATH):
             run(args, config=conf)
     except InstallerError as papa:
-        print_err('', papa, '', 'Exit on error', '')
+        print_err(40 * '_', '', papa, '')
+        if papa.details:
+            print_err(textwrap.indent(str(papa.details), INDENT), '')
+        if isinstance(papa, CheckError):
+            print_err(
+                'Requiremens check failed',
+                'HINT: Checks can be omitted with `--skip-check` (NOT RECOMMENDED)',
+                ''
+            )
+            sys.exit(2)
+        print_err('Exit on error', '')
         sys.exit(1)
 
 
