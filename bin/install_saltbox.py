@@ -620,8 +620,8 @@ ADDON_MODULES = [
         switchable_image_tags=['METRIC_IMAGE_TAG'],
         compose_files=['compose.yaml'],
         env_file='.env',
-        license='EULA',  # =(
-        is_token_required=True,
+        license='Apache-2.0',
+        is_token_required=False,
     ),
     AddonModule(
         name='Scheduler',
