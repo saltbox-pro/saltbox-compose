@@ -875,6 +875,21 @@ class Checker:
             raise CheckError(f'At least Docker Compose v{MIN_COMPOSE_VERSION} required')
         print_out(f'Docker Compose version string is `{compose_ver_str}`')
 
+    def _check_sys(self) -> None:
+        try:
+            val = Path('/proc/sys/vm/overcommit_memory').read_text(encoding=ENC).strip()
+        except OSError as err:
+            InstallerError(err)
+        if val != '1':
+            dosa = 'Improper `vm.overcommit_memory` value'
+            dtls = (
+                'Redis requires host system option `vm.overcommit_memory=1` (always overcommit).\n'
+                'It can be done with the following commands:\n\n'
+                f'{INDENT}# echo \'vm.overcommit_memory=1\' > /etc/sysctl.d/saltbox.conf\n'
+                f'{INDENT}# sysctl vm.overcommit_memory=1'
+            )
+            raise CheckError(dosa, details=dtls)
+
     def check(self) -> None:
         if self.args.skip_check:
             print_out('Skipping requirements checkup!', '')
@@ -883,6 +898,7 @@ class Checker:
         self._check_python()
         self._check_docker()
         self._check_compose()
+        self._check_sys()
         print_out()
 
 
