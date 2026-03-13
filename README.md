@@ -48,7 +48,7 @@ manipulate a running instance.
 - `sb-images-export.sh` — dump current images to disk e.g. to use on an offline host.
 - `sb-images-import.sh` — load dumped with `./bin/sb-images-export.sh` images.
 - `update_and_run.sh` — the main startup script.
-- `validate_dotenv.sh` — check major issues in `.env` file.
+- `validate_dotenv.py` — check major issues in `.env` file.
 
 Helper scripts supposed to be executable. Some systems may drop executable
 flag due to security reasons. On troubles to start try to re-add the flag:
@@ -70,6 +70,37 @@ See `install_saltbox.py --help` for options.
 
 When the `install_saltbox.py` will finish downloading and configuring, the
 startup script `update_and_run.sh` will be executed.
+
+Simlified script calls hierarhy:
+```mermaid
+flowchart LR
+    subgraph install_saltbox.py
+    direction TB
+    check[Check requirements]
+        --> pull_repos["Pull Compose(s)"]
+        --> conf[Configure `override.env`]
+        --> update_and_run.sh
+        subgraph update_and_run.sh
+            direction TB
+            merge_env[Merge `.env`] --> validate_dotenv.py
+            subgraph validate_dotenv.py
+               validate_dotenv[Validate `.env`]
+            end
+            validate_dotenv.py --> make_secrets.py
+            subgraph make_secrets.py
+                make_secrets[Make secrets]
+            end
+            make_secrets.py --> sb-compose.sh-1
+            subgraph sb-compose.sh-1[sb-compose.sh]
+                pull_images[Pull images]
+            end
+            sb-compose.sh-1 --> sb-compose.sh-2
+            subgraph sb-compose.sh-2[sb-compose.sh]
+                up[Up Compose]
+            end
+        end
+    end
+```
 
 
 ## The startup script `update_and_run.sh`
