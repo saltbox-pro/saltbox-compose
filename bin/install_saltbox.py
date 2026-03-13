@@ -18,9 +18,8 @@
 The script is a part of Salt.Box Compose
 """
 
-# TODO Alternative obtaining with Git
-# TODO Offline mode with images
-# TODO Check 'vm.overcommit_memory=1'
+# TODO (a.karmanov): Alternative obtaining with Git
+# TODO (a.karmanov): Offline mode with images
 
 import argparse
 import contextlib
@@ -304,7 +303,7 @@ class Interactions:
             return default
 
         while True:
-            resp = input().strip().lower()
+            resp = input(prompt).strip().lower()
             if not resp:
                 return default
             elif resp in ('y', 'yes',):
