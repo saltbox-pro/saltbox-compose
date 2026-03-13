@@ -107,11 +107,14 @@ def get_args() -> argparse.Namespace:
         help="Extra values to include into dotenv in form of NAME='VAL'",
     )
     parser.add_argument(
-        '--addons',
-        action='store_true',
+        '--addon',
+        action='append',
+        default=None,
         help=(
-            f'Install also official Salt.Box Addons: {", ".join(a.name for a in ADDON_MODULES)}. '
-            'ADDONS ARE PROPRIETARY, TOKEN REQUIRED.'  # =(
+            f'Install also official Salt.Box Addons: {ADDONS_SEL_STR}. '
+            '`FREE` by default. '
+            'SOME ADDONS ARE PROPRIETARY, TOKEN REQUIRED. '  # =(
+            'Can be specified multiple times.'
         )
     )
     parser.add_argument(
@@ -595,7 +598,7 @@ class AddonModule:
     ref: str = RELEASE_REF
 
 
-ADDON_MODULES = [
+ADDONS_MODULES = [
     AddonModule(
         name='Inventory',
         repo=GitLabRepo(
@@ -638,7 +641,13 @@ ADDON_MODULES = [
         is_token_required=True,
     ),
 ]
-
+ADDONS_MAPPING = {a.name: a for a in ADDONS_MODULES}
+ADDONS_SELECTOR = {
+    **{i: [i] for i in ADDONS_MAPPING},
+    'FREE': [i.name for i in ADDONS_MAPPING.values() if i.license != 'EULA'],
+    'ALL': list(ADDONS_MAPPING.keys()),
+}
+ADDONS_SEL_STR = ", ".join(f'`{i}`' for i in ADDONS_SELECTOR)
 
 class ScriptConfigurator:
     METRIC_DOCKER_SOCK_VAR='METRIC_DOCKER_SOCKET'
@@ -681,6 +690,7 @@ class ScriptConfigurator:
             INDENT + f'Socket path: `{dckr_sock_path}`',
             INDENT + f'Containers path: `{dckr_cont_path}`',
         )
+        sys.stdout.flush()
         if self.interactions.ask_confirm('Continue with detected options?'):
             self.conf.extra_override = [
                 f"{self.METRIC_DOCKER_SOCK_VAR}='{dckr_sock_path}'",
@@ -690,11 +700,27 @@ class ScriptConfigurator:
         else:
             raise InstallerError('Cancelled by user')
 
-    def configure(self) -> Config:
-        if self.args.addons:
-            self.conf.selected_addons = ADDON_MODULES.copy()
+    def _select_addons(self) -> None:
+        # TODO (a.karmanov): Interactive select
+        if self.args.addon is None:
+            self.conf.selected_addons = [ADDONS_MAPPING[i] for i in ADDONS_SELECTOR['FREE']]
+        else:
+            try:
+                selected_addons_names = list({name for sel in self.args.addon for name in ADDONS_SELECTOR[sel]})
+            except KeyError as err:
+                bad_name = str(err).strip("'")
+                dosa = f'Unknown addon name `{bad_name}`'
+                dtls = (
+                    f'Allowed values for `--addon` are: {ADDONS_SEL_STR}\n'
+                    'Flag can be specified multiple times.'
+                )
+                raise InstallerError(message=dosa, details=dtls)
+            self.conf.selected_addons = [ADDONS_MAPPING[i] for i in selected_addons_names]
             for addon in self.conf.selected_addons:
                 addon.ref = self.conf.compose_ref
+
+    def configure(self) -> Config:
+        self._select_addons()
 
         if not self.args.non_interactive:
             self.cmd.append('--non-interactive')
