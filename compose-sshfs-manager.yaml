@@ -17,12 +17,14 @@ services:
       KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
       KEYCLOAK_CLIENT: ${KEYCLOAK_CLIENT}
       KEYCLOAK_BASE_URL: "${KEYCLOAK_BASE_URL}"
+      SALTBOX_MODULE_MIGRATION_ON: "${SALTBOX_MODULE_MIGRATION_ON:-false}"
       BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME:-}'
       BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD:-}'
     volumes:
       - 'sshfs_manager_db:/home/filebrowser'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt'
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs'
+      - '${SSHFS_MIGRATION_PATH}:/srv/migrator'
       - 'salt_repos:/srv/saltbox_salt'
     secrets:
       - keycloak_client_saltbox_core_password

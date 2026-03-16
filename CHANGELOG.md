@@ -21,10 +21,12 @@ if possible and purge browser redirects.
 - `update_and_run.sh` flag `--no-progress` to hide dynamic progress-bars.
 - Check for `REDIS_SALT_OUTER_SOCKET` deprecated var.
 - `get_ca.sh` script to obtain `ca.crt` and optionally inject into Firefox.
-- `sshfs_manager/config.yaml.tmpl`: mount `/srv/salt`, `/srv/sshfs`, `/srv/master/salt` volumes.
+- `sshfs_manager/config.yaml.tmpl`: mount `/srv/salt`, `/srv/master/salt`, `/srv/migrator` volumes.
 - `sshfs-manager`: inject proxy container IP into `/etc/hosts` to bypass Basic Auth for OIDC requests.
+- Optional `/srv/migrator` source, enabled via `SALTBOX_MODULE_MIGRATION_ON` flag.
 - `./bin/make_secrets.py` has now `--explicit VAL=NAME` arg to set a secret value from
   cmdline.
+- `base.env`: flags to enable/disable additional modules.
 
 ### Changed
 

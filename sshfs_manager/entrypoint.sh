@@ -20,8 +20,16 @@ function resolve_proxy() {
 }
 
 if [ -n "${BASIC_AUTH_USERNAME}" ] && [ -n "${BASIC_AUTH_PASSWORD}" ]; then
-  log_info "Basic auth is enabled. Setting up split-horizon DNS for '${WEB_SERVER_OUTER_SOCKET}' to route OIDC requests through proxy"
+  log_info "Basic auth is enabled. Setting up split-horizon DNS for `${WEB_SERVER_OUTER_SOCKET}` to route OIDC requests through proxy"
   resolve_proxy
+fi
+
+if [ -n "${SALTBOX_MODULE_MIGRATION_ON}" ]; then
+  log_info "Module migration is enabled. Configuring the '/srv/migrator' source"
+  export MIGRATOR_SOURCE_BLOCK="$(cat "${MIGRATOR_SOURCE_BLOCK_FILE}")"
+else
+  log_info "Module migration is disabled. Skipping '/srv/migrator' source configuration"
+  export MIGRATOR_SOURCE_BLOCK=""
 fi
 
 envsubst < "${CONFIG_TMPL_PATH}" > "${CONFIG_OUT_PATH}"

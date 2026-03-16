@@ -1,0 +1,16 @@
+    - path: "/srv/migrator"
+      name: "migrator"
+      config:
+        denyByDefault: true
+        private: true
+        disabled: false
+        indexingIntervalMinutes: 0
+        disableIndexing: false
+        conditionals:
+          hidden: false
+          ignoreHidden: false
+          ignoreZeroSizeFolders: false
+          rules:
+        defaultUserScope: "/"
+        defaultEnabled: true
+        createUserDir: false
