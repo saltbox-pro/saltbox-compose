@@ -106,7 +106,7 @@ def get_args() -> argparse.Namespace:
         help="Extra values to include into dotenv in form of NAME='VAL'",
     )
     parser.add_argument(
-        '--addon',
+        '--addons',
         action='append',
         default=None,
         help=(
@@ -164,7 +164,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument(
         '--keep-addon-tags',
         action='store_true',
-        help='Do not switch addon tags to branches',
+        help='Do not switch tags of addons to branches',
     )
     parser.add_argument(
         '--keep-image-tags',
@@ -701,16 +701,16 @@ class ScriptConfigurator:
 
     def _select_addons(self) -> None:
         # TODO (a.karmanov): Interactive select
-        if self.args.addon is None:
+        if self.args.addons is None:
             self.conf.selected_addons = [ADDONS_MAPPING[i] for i in ADDONS_SELECTOR['FREE']]
         else:
             try:
-                selected_addons_names = list({name for sel in self.args.addon for name in ADDONS_SELECTOR[sel]})
+                selected_addons_names = list({name for sel in self.args.addons for name in ADDONS_SELECTOR[sel]})
             except KeyError as err:
                 bad_name = str(err).strip("'")
                 dosa = f'Unknown addon name `{bad_name}`'
                 dtls = (
-                    f'Allowed values for `--addon` are: {ADDONS_SEL_STR}\n'
+                    f'Allowed values for `--addons` are: {ADDONS_SEL_STR}\n'
                     'Flag can be specified multiple times.'
                 )
                 raise InstallerError(message=dosa, details=dtls)
