@@ -915,6 +915,30 @@ class Checker:
             )
             raise CheckError(dosa, details=dtls)
 
+    def _check_cpuinfo(self) -> None:
+        cpuinfo_path = Path('/proc/cpuinfo/')
+        flags = None
+        with cpuinfo_path.open('r') as f:
+            for line in f.readlines():
+                line = line.strip()
+                if not line:
+                    # First core data ended
+                    break
+                spl = [i.strip() for i in line.split(':', maxsplit=1)]
+                if spl[0] == 'flags':  # Is OK for AMD64, but can be 'Features' for ARM
+                    flags = spl[1].split()
+                    break
+        if flags is None:
+            dosa = f'Not found `flags` field in `{cpuinfo_path}`'
+            raise CheckError(dosa)
+        print_out(f'Found CPU flags: {flags}', verbose=True)
+        if 'adx' not in flags or 'avx2' not in flags:
+            dosa = 'Missing required CPU flags'
+            dtl = (
+                'MongoDB depends on AVX, AVX2 CPU features.\n'
+                'Please review CPU configuration of the host.')
+            raise CheckError(message=dosa, details=dtl)
+
     def check(self) -> None:
         if self.args.skip_check:
             print_out('Skipping requirements checkup!', '')
@@ -923,6 +947,7 @@ class Checker:
         self._check_python()
         self._check_docker()
         self._check_compose()
+        self._check_cpuinfo()
         self._check_sys()
         print_out()
 

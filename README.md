@@ -65,9 +65,6 @@ directory where you prefer to have Salt.Box Compose related stuff.
 
 See `install_saltbox.py --help` for options.
 
-> **NOTE** the `install_saltbox.py` is not currently support extra modules.
-> Extra modules can be plugged after installation.
-
 When the `install_saltbox.py` will finish downloading and configuring, the
 startup script `update_and_run.sh` will be executed.
 
