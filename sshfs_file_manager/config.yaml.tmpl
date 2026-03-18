@@ -19,22 +19,6 @@ server:
         defaultUserScope: "/"
         defaultEnabled: true
         createUserDir: false
-    - path: "/srv/saltbox_salt"
-      name: "saltbox_salt"
-      config:
-        denyByDefault: false
-        private: false
-        disabled: false
-        indexingIntervalMinutes: 0
-        disableIndexing: false
-        conditionals:
-          hidden: false
-          ignoreHidden: false
-          ignoreZeroSizeFolders: false
-          rules:
-        defaultUserScope: "/"
-        defaultEnabled: true
-        createUserDir: false
 ${MIGRATOR_SOURCE_BLOCK}
   logging:
     # Terminal

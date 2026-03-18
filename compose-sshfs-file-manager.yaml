@@ -3,12 +3,12 @@ x-default-service: &default
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
 services:
-  sshfs-manager:
+  sshfs-file-manager:
     <<: *default
     pull_policy: never
     build:
-      context: ./sshfs_manager
-    image: '${LOCAL_IMAGE_NAMESPACE}/sshfs_manager:${SSHFS_IMAGE_TAG}'
+      context: ./sshfs_file_manager
+    image: '${LOCAL_IMAGE_NAMESPACE}/sshfs_file_manager:${SSHFS_IMAGE_TAG}'
     extra_hosts: [ "localhost:host-gateway" ]
     user: '0'
     environment:
@@ -17,11 +17,11 @@ services:
       KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
       KEYCLOAK_CLIENT: ${KEYCLOAK_CLIENT}
       KEYCLOAK_BASE_URL: "${KEYCLOAK_BASE_URL}"
-      SALTBOX_MODULE_MIGRATION_ON: "${SALTBOX_MODULE_MIGRATION_ON:-false}"
+      MIGRATION_SOURCE_ENABLED: "${SSHFS_FILE_MANAGER_MIGRATOR_SOURCE_ENABLED:-false}"
       BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME:-}'
       BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD:-}'
     volumes:
-      - 'sshfs_manager_db:/home/filebrowser'
+      - 'sshfs_file_manager_db:/home/filebrowser'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt'
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs'
       - '${SSHFS_MIGRATION_PATH}:/srv/migrator'
@@ -42,8 +42,8 @@ services:
 
   proxy:
     volumes:
-      - ./proxy/includes/sshfs-manager.enabled.conf:/etc/nginx/includes/sshfs-manager.conf:ro
+      - ./proxy/includes/sshfs-file-manager.enabled.conf:/etc/nginx/includes/sshfs-file-manager.conf:ro
 
 volumes:
-  sshfs_manager_db:
+  sshfs_file_manager_db:
     external: false

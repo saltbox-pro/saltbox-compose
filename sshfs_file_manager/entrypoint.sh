@@ -24,7 +24,7 @@ if [ -n "${BASIC_AUTH_USERNAME}" ] && [ -n "${BASIC_AUTH_PASSWORD}" ]; then
   resolve_proxy
 fi
 
-if [ -n "${SALTBOX_MODULE_MIGRATION_ON}" ]; then
+if [ -n "${MIGRATION_SOURCE_ENABLED}" ]; then
   log_info "Module migration is enabled. Configuring the '/srv/migrator' source"
   export MIGRATOR_SOURCE_BLOCK="$(cat "${MIGRATOR_SOURCE_BLOCK_FILE}")"
 else
