@@ -41,19 +41,6 @@ services:
       - 'proxy_certs:/etc/nginx/ssl/'
     secrets:
       - keycloak_client_saltbox_core_password
-    depends_on:
-      saltbox-core:
-        condition: service_started
-        restart: false
-      saltbox-frontend-root-config:
-        condition: service_started
-        restart: false
-      keycloak:
-        condition: service_started
-        restart: false
-      keycloak-init:
-        condition: service_completed_successfully
-        restart: false
 
   keycloak-db:
     <<: *default
@@ -89,8 +76,7 @@ services:
     command:
       - 'start'
       - '--optimized'
-      - '--hostname=https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
-      - '--hostname-backchannel-dynamic=true'
+      - '--proxy-headers=xforwarded'
     environment:
       KC_DB_URL: 'jdbc:postgresql://keycloak-db:5432/${KEYCLOAK_DATABASE}'
       KC_DB_USERNAME: ${KEYCLOAK_DATABASE_USER}
@@ -163,7 +149,7 @@ services:
     image: '${IMAGE_REGISTRY}/saltbox-compose/make-certs:${MAKE_CERTS_IMAGE_TAG}'
     environment:
       PROXY_CERT: '/mnt/proxy_certs/proxy.crt'
-      SSL_ALT_NAMES_DNS: '${WEB_SERVER_SSL_ALT_NAMES_DNS}'
+      SSL_ALT_NAMES_DNS: 'proxy,${WEB_SERVER_SSL_ALT_NAMES_DNS}'
       SSL_ALT_NAMES_IP: '${WEB_SERVER_SSL_ALT_NAMES_IP}'
       HIER_TEMPLATE: '/mnt/hier.yaml.jinja2'
       STATE_FILE: '/mnt/proxy_certs/.proxy_alt_names'
