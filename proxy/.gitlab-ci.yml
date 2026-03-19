@@ -7,14 +7,14 @@ stages:
   - proxy
 
 .build-nginx-image:
-  extends: .default
+  extends: .build-image
   stage: nginx
   variables:
     REGISTRY_ADDITIONAL_PATH: '/nginx'
     CONTEXT_PATH: 'nginx/'
 
 .build-proxy-image:
-  extends: .default
+  extends: .build-image
   stage: proxy
   variables:
     REGISTRY_ADDITIONAL_PATH: '/proxy'
