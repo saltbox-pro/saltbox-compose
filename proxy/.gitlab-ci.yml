@@ -19,7 +19,7 @@ stages:
   variables:
     REGISTRY_ADDITIONAL_PATH: '/proxy'
     CONTEXT_PATH: 'proxy/'
-    EXTRA_ARGS: --build-arg "BASE_IMAGE_TAG=${IMAGE_TAG}"
+    EXTRA_ARGS: --build-arg BASE_IMAGE_TAG=${IMAGE_TAG}
 
 
 Build Nginx image for tag:

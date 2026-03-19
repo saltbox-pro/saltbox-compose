@@ -7,41 +7,36 @@ include:
     file: 'def-branch-merge-guard.yml'
 
 
-.default:
-  extends: .build-image
-  dependencies: []
-
-
 .build-redis-image:
-  extends: .default
+  extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/redis'
     CONTEXT_PATH: 'redis/'
 
 
 .opa:
-  extends: .default
+  extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/opa'
     CONTEXT_PATH: 'opa/'
 
 
 .sshfs:
-  extends: .default
+  extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/sshfs'
     CONTEXT_PATH: 'sshfs/'
 
 
 .make-certs:
-  extends: .default
+  extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/make-certs'
     CONTEXT_PATH: 'make-certs/'
 
 
 .mongodb:
-  extends: .default
+  extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/mongodb'
     CONTEXT_PATH: 'mongodb/'
