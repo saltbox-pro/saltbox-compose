@@ -1,0 +1,51 @@
+include:
+  - project: 'saltbox/ci-lib'
+    file: 'build-image.yml'
+
+stages:
+  - nginx
+  - proxy
+
+.build-nginx-image:
+  extends: .default
+  stage: nginx
+  variables:
+    REGISTRY_ADDITIONAL_PATH: '/nginx'
+    CONTEXT_PATH: 'nginx/'
+
+.build-proxy-image:
+  extends: .default
+  stage: proxy
+  variables:
+    REGISTRY_ADDITIONAL_PATH: '/proxy'
+    CONTEXT_PATH: 'proxy/'
+    EXTRA_ARGS: --build-arg "BASE_IMAGE_TAG=${IMAGE_TAG}"
+
+
+Build Nginx image for tag:
+  extends: .build-nginx-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_TAG'
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+Build Nginx image for branch:
+  extends: .build-nginx-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
+
+Build Proxy image for tag:
+  extends: .build-proxy-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_TAG'
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+Build Proxy image for branch:
+  extends: .build-proxy-image
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+  rules:
+    - if: '$CI_COMMIT_BRANCH'
