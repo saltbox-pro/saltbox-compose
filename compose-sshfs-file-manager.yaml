@@ -12,14 +12,13 @@ services:
     extra_hosts: [ "localhost:host-gateway" ]
     user: '0'
     environment:
-      FILEBROWSER_CONFIG: "data/config.yaml"
-      WEB_SERVER_OUTER_SOCKET: "${WEB_SERVER_OUTER_SOCKET}"
-      KEYCLOAK_REALM: "${KEYCLOAK_REALM}"
-      KEYCLOAK_CLIENT: ${KEYCLOAK_CLIENT}
-      KEYCLOAK_BASE_URL: "${KEYCLOAK_BASE_URL}"
-      MIGRATION_SOURCE_ENABLED: "${SSHFS_FILE_MANAGER_MIGRATOR_SOURCE_ENABLED:-false}"
-      BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME:-}'
       BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD:-}'
+      BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME:-}'
+      FILEBROWSER_CONFIG: 'data/config.yaml'
+      # FIXME (a.karmanov): That is broken for most cases
+      ISSUER_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}'
+      KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
+      MIGRATION_SOURCE_ENABLED: '${SSHFS_FILE_MANAGER_MIGRATOR_SOURCE_ENABLED:-false}'
     volumes:
       - 'sshfs_file_manager_db:/home/filebrowser'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt'

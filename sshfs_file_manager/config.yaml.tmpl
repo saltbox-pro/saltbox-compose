@@ -40,12 +40,13 @@ auth:
       enabled: true
       clientId: "${KEYCLOAK_CLIENT}"
       clientSecret: "${OIDC_CLIENT_SECRET}"
-      issuerUrl: "https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}"
+      issuerUrl: "${ISSUER_URL}"
       scopes: "email openid profile groups"
       userIdentifier: "preferred_username"
       createUser: true
       groupsClaim: "groups"
       adminGroup: "/filebrowser-admins"
+      # FIXME (a.karmanov): Should not be used
       disableVerifyTLS: true
 userDefaults:
   editorQuickSave: true
