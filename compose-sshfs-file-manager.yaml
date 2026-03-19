@@ -41,7 +41,7 @@ services:
 
   proxy:
     volumes:
-      - ./proxy/includes/sshfs-file-manager.enabled.conf:/etc/nginx/includes/sshfs-file-manager.conf:ro
+      - './sshfs_file_manager/nginx_include.conf:${WEB_SERVER_SALTBOX_INCLUDES_DIR}/20-sshfs-file-manager.conf:ro'
 
 volumes:
   sshfs_file_manager_db:

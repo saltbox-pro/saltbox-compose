@@ -101,8 +101,7 @@ server {
         proxy_set_header X-Forwarded-Host $host;
     }
 
-    # FIXME Govno
-    include /etc/nginx/includes/*.conf;
+    include '${SALTBOX_INCLUDES_DIR}/*.conf';
 }
 
 server {

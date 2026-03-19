@@ -12,6 +12,7 @@ function log_info() {
   echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO ] ${@}"
 }
 
+# TODO (a.karmanov): Delete the workaround when auth on proxy will be implemented
 function resolve_proxy() {
   proxy_ip=$(ping -c1 proxy | head -n1 | grep -oE "${PING_IP_PATTERN}")
   if [ -n "${proxy_ip}" ] && [ -n "${WEB_SERVER_OUTER_SOCKET}" ]; then
@@ -19,6 +20,7 @@ function resolve_proxy() {
   fi
 }
 
+# TODO (a.karmanov): Delete the workaround when auth on proxy will be implemented
 if [ -n "${BASIC_AUTH_USERNAME}" ] && [ -n "${BASIC_AUTH_PASSWORD}" ]; then
   log_info "Basic auth is enabled. Setting up split-horizon DNS for `${WEB_SERVER_OUTER_SOCKET}` to route OIDC requests through proxy"
   resolve_proxy
