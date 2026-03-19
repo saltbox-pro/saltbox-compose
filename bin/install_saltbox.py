@@ -391,8 +391,11 @@ class Config:
 VersionSelf = TypeVar('VersionSelf', bound='Version')
 class Version:
     """ Represents simplified SemVer (3 main numbers only)"""
-    # Simplified official regex https://regex101.com/r/Ly7O1x/3/
-    PATTERN = re.compile(r'^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)([-+].*)?$')
+    # Simplified official regex (https://regex101.com/r/Ly7O1x/3)
+    # at https://regex101.com/r/Ly7O1x/3204
+    #
+    # Some distros uses non-standard version strings like '28.3.3.astra1'
+    PATTERN = re.compile(r'^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)([-+.].*)?$')
 
     def __init__(self, major: int, minor: int, patch: int) -> None:
         self._version = (major, minor, patch,)
