@@ -1,4 +1,14 @@
 ---
+{% macro make_list(var, name) %}
+{%- set val = env.get(var) %}
+{%- set lst = val.strip(' ,').split(',') if val else [] %}
+{%- if lst %}
+{{- name }}:
+{%- for i in lst %}
+  - '{{- i | trim }}'
+{%- endfor %}
+{%- endif %}
+{%- endmacro %}
 
 names:
   saltbox:
@@ -51,18 +61,8 @@ certs:
         basic_constraints:
           ca: false
           path_length: null
-        {%- if env.get('SSL_ALT_NAMES_IP') %}
-        alternative_names_ip:
-          {%- for i in env['SSL_ALT_NAMES_IP'].split(',') %}
-          - '{{- i | trim }}'
-          {%- endfor %}
-        {%- endif %}
-        {%- if env.get('SSL_ALT_NAMES_DNS') %}
-        alternative_names_dns:
-          {%- for i in env['SSL_ALT_NAMES_DNS'].split(',') %}
-          - '{{- i | trim }}'
-          {%- endfor %}
-        {%- endif %}
+        {{ make_list('SSL_ALT_NAMES_IP', 'alternative_names_ip') | indent(8) }}
+        {{ make_list('SSL_ALT_NAMES_DNS', 'alternative_names_dns') | indent(8) }}
         extended_key_usage:
           server: true
           client: false
