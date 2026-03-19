@@ -19,6 +19,7 @@ if possible and purge browser redirects.
   dotenv files.
 - `install_saltbox.py` script to simplify startup.
 - `update_and_run.sh` flag `--no-progress` to hide dynamic progress-bars.
+- `update_and_run.sh` on success writes Salt.Box URL also.
 - Check for `REDIS_SALT_OUTER_SOCKET` deprecated var.
 - `get_ca.sh` script to obtain `ca.crt` and optionally inject into Firefox.
 - `sshfs_file_manager/config.yaml.tmpl`: mount `/srv/salt`, `/srv/master/salt`, `/srv/migrator` volumes.
@@ -39,6 +40,7 @@ and on missing `docker` command.
   `service[].volumes.source` values.
 - Disable default admin rights for SSHFS-manager users.
 - Rename Docker service from `sshfs_manager` to `sshfs-file-manager` for consistency.
+- Service `proxy`: certificate has now `proxy` DNS alt name.
 
 ### Fixed
 
@@ -51,6 +53,8 @@ flag.
 - Assign Keycloak group membership mapper to `sshfs-file-manager` client scope.
 - `git_pull_dev_repos.py`: ignore possible `PermissionError` on volume sources
   for Python<3.14.
+- Nginx configuration: some potential problems has been eliminated.
+- `proxy` service now has not dependencies.
 
 ### Removed
 
