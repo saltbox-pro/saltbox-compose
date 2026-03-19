@@ -8,7 +8,7 @@ bin_dir="$(dirname "$(realpath --relative-to "$(pwd)" "$0")")"
 declare -r bin_dir
 declare -r compose_cmd="${bin_dir}/sb-compose.sh"
 declare -r admin_password_file='secrets/saltbox_admin_password'
-declare -ir msg_sleep=2
+declare -ir msg_sleep=4
 declare -ir image_pull_retries=3
 declare -r usage_str="
 Update images and run a Salt.Box Docker Compose based instance.
@@ -31,36 +31,39 @@ Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
 
 Last --only-* flag overrides preceding.
 "
-declare -r success_pre_msg_tpl='
- ####################################################
-######################################################
-##                                                  ##
-## Salt.Box Compose will be started now.            ##
-##                                                  ##
-## Basic administrator: %-27s ##
-## Password: %-38s ##
-##                                                  ##
-######################################################
- ####################################################
-  #####
-  ###
- #
+declare -r success_msg_tpl='
+   ####################################################
+ ########################################################
+##                                                      ##
+## Salt.Box Compose will start soon                     ##
+##                                                      ##
+## URL: %-47s ##
+## Basic administrator: %-31s ##
+## Password: %-42s ##
+##                                                      ##
+ ########################################################
+   ####################################################
 '
-declare -r success_post_msg_tpl='
- #
-  ###
-  #####
- ####################################################
-######################################################
-##                                                  ##
-## Salt.Box Compose has been started.               ##
-##                                                  ##
-## Basic administrator: %-27s ##
-## Password: %-38s ##
-##                                                  ##
-######################################################
- ####################################################
-'
+
+function success_msg() {
+  post=${1:-0}
+  # shellcheck source=/dev/null
+  admin_username=$(source "$env_file" && echo "$SALTBOX_ADMIN_USERNAME")
+  admin_password="$(cat "$admin_password_file")"
+  # shellcheck source=/dev/null
+  sb_url=$(source "$env_file" && echo "https://${WEB_SERVER_OUTER_SOCKET}")
+  if [ "$post" == 1 ]; then
+    printf '    #\n    ###\n    ####'
+  fi
+  # shellcheck disable=SC2059
+  printf "$success_msg_tpl" "$sb_url" "$admin_username" "$admin_password"
+  if [ "$post" != 1 ]; then
+    printf '    #####\n    ###\n    #\n'
+    sleep $msg_sleep
+  else
+    printf '\n'
+  fi
+}
 
 function warn() {
   1>&2 echo "$@"
@@ -287,19 +290,8 @@ fi
 
 echo_run as_root "$compose_cmd" down "${down_args[@]}"
 
-
-# shellcheck source=/dev/null
-admin_username=$(source "$env_file" && echo "$SALTBOX_ADMIN_USERNAME")
-admin_password="$(cat "$admin_password_file")"
-if [ $detach_flag = 0 ]; then
-  # shellcheck disable=SC2059
-  printf "$success_pre_msg_tpl" "${admin_username}" "$admin_password"
-  sleep $msg_sleep
-fi
+if [ $detach_flag = 0 ]; then success_msg; fi
 
 echo_run as_root "$compose_cmd" up "${up_args[@]}"
 
-if [ $detach_flag = 1 ]; then
-  # shellcheck disable=SC2059
-  printf "$success_post_msg_tpl" "${admin_username}" "$admin_password"
-fi
+if [ $detach_flag = 1 ]; then success_msg 1; fi
