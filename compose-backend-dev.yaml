@@ -94,8 +94,3 @@ services:
     image: openpolicyagent/opa:latest-istio-static
     volumes:
       - './opa/policies:/policies'
-
-  proxy:
-    build:
-      context: proxy/
-    image: '${LOCAL_IMAGE_NAMESPACE}/saltbox-proxy:dev'
