@@ -278,6 +278,9 @@ services:
       BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD:-}'
       BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME:-}'
 
+      ALL_PROXY: '${SALTBOX_CORE_ALL_PROXY}'
+      NO_PROXY: '${SALTBOX_CORE_NO_PROXY}'
+
       # Gateway environment variables
       DISCOVERY_DISCOVERY_URL: 'http://saltbox-gateway:${GATEWAY_HTTP_PORT}/api/discovery'
       DISCOVERY_FRONT_CONTAINER_NAME: '${CORE_FRONT_CONTAINER_NAME}'
