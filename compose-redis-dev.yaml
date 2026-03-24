@@ -1,0 +1,23 @@
+## Salt.Box Compose Redis instances override file for dev-mode
+##
+## !!! THIS OVERRIDE EXPOSES NON-TLS PORT !!!
+##
+
+x-redis-service: &redis
+  pull_policy: never
+  image: '${LOCAL_IMAGE_NAMESPACE}/redis-saltbox:dev'
+
+services:
+  redis-salt:
+    <<: *redis
+    build:
+      context: redis/
+    environment:
+      REDIS_PLAIN_PORT: 6378
+    ports:
+      - '${REDIS_SALT_EXPOSE_SOCKET}:6379'
+      - '${REDIS_SALT_EXPOSE_PLAIN_SOCKET:-6378}:6378'
+  redis-taskiq:
+    <<: *redis
+    ports:
+      - 6380:6379

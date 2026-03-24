@@ -16,8 +16,15 @@ conf_subdir='/etc/redis/redis.conf.d'
 acl_conf_file="${conf_subdir}/10-acl.conf"
 tls_conf_file="${conf_subdir}/10-tls.conf"
 password="$(cat "$REDIS_PASSWORD_SECRET_FILE")"
+plain_port="${REDIS_PLAIN_PORT:-0}"  # By defaul no-TLS port is disabled
 
 if [ -z "$REDIS_USERNAME" ]; then err 'Empty or missing REDIS_USERNAME'; fi
+
+if [ "$plain_port" != '0' ]; then
+  warn ''
+  warn "ATTENTION! Unencrypted Redis port ${plain_port} is enabled";
+  warn ''
+fi
 
 mkdir --parents "$conf_subdir"
 
@@ -33,7 +40,7 @@ write_tls_conf() {
   cat <<EOF > "$tls_conf_file"
 ## Encryption settings
 
-port 0
+port ${REDIS_PLAIN_PORT}
 tls-port 6379
 tls-cert-file /etc/redis/certs/redis.crt
 tls-key-file /etc/redis/certs/redis.key

@@ -1,10 +1,6 @@
 ---
 
-## Salt.Box Compose backend override file for dev-mode.
-
-x-redis-service: &redis
-  pull_policy: never
-  image: '${LOCAL_IMAGE_NAMESPACE}/redis-saltbox:dev'
+## Salt.Box Compose backend override file for dev-mode
 
 x-core-service: &core
     pull_policy: never
@@ -73,17 +69,6 @@ services:
 
   saltbox-core-taskiq-scheduler:
     <<: *core
-
-  redis-salt:
-    <<: *redis
-    build:
-      context: redis/
-
-
-  redis-taskiq:
-    <<: *redis
-    ports:
-      - 6380:6379
 
   rabbitmq:
     ports:
