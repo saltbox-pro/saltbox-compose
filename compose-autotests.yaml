@@ -6,14 +6,15 @@
 ##
 
 x-default-service: &default
-  restart: 'on-failure'
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
 services:
+  # Override
   keycloak-init:
     environment:
       KEYCLOAK_CLIENT_DIRECT_ACCESS: 'true'
 
+  # New one
   autotests:
     <<: *default
     profiles:

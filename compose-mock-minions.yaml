@@ -5,7 +5,7 @@
 # Local generic does not override original
 x-default-service: &default
   pull_policy: never
-  restart: 'on-failure'
+  restart: 'always'
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
 
@@ -13,6 +13,7 @@ x-default-service: &default
 services:
   clean-keys-cmd:
     <<: *default
+    restart: 'on-failure'
     build:
       context: '${SALT_BUILD_DIR}'
       target: salt-master-dev

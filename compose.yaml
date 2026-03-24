@@ -14,7 +14,7 @@
 
 
 x-default-service: &default
-  restart: 'on-failure'
+  restart: 'always'
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
 services:
@@ -93,6 +93,7 @@ services:
 
   keycloak-init:
     <<: *default
+    restart: 'on-failure'
     image: '${IMAGE_REGISTRY}/saltbox-compose/keycloak-init:${KEYCLOAK_IMAGE_TAG}'
     environment:
       KEYCLOAK_ADMIN_EMAIL: '${SALTBOX_ADMIN_EMAIL}'
@@ -147,6 +148,7 @@ services:
 
   make-certs:
     <<: *default
+    restart: 'on-failure'
     image: '${IMAGE_REGISTRY}/saltbox-compose/make-certs:${MAKE_CERTS_IMAGE_TAG}'
     environment:
       PROXY_CERT: '/mnt/proxy_certs/proxy.crt'
@@ -362,6 +364,7 @@ services:
 
   saltbox-core-init:
     <<: *core
+    restart: 'on-failure'
     command: 'shell saltbox-module-init'
     expose: []
     depends_on:

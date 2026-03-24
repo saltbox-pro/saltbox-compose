@@ -1,5 +1,5 @@
 x-default-service: &default
-  restart: 'on-failure'
+  restart: 'always'
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
 services:
@@ -35,6 +35,7 @@ services:
         condition: service_completed_successfully
         restart: false
 
+  # Overrides
   keycloak-init:
     environment:
       SSHFS_MANAGER_ENABLED: true
