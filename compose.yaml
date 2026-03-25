@@ -221,8 +221,6 @@ services:
   rabbitmq:
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-compose/rabbitmq:${RABBITMQ_IMAGE_TAG}'
-    build:
-      context: ./rabbitmq
     environment:
       LOG_LEVEL: "${RABBITMQ_LOG_LEVEL:-info}"
     ports:
