@@ -141,6 +141,7 @@ up_args=('--remove-orphans')
 pull_args=('--ignore-buildable')
 make_secrets_arg=('secrets.json')
 down_args=()
+down_drop_args=('--volumes' '--remove-orphans')
 detach_flag=0
 drop_data_flag=0
 force_flag=0
@@ -276,15 +277,15 @@ if [ $last_stage = 'build' ]; then exit 0; fi
 
 if [ $drop_data_flag = 1 ]; then
   if [ $force_flag = 1 ]; then
-    down_args+=('--volumes')
+      REPLY='y'
   else
     read -p "Delete volumes? IT MEANS SYSTEM DATA LOSS (y/n): " -n 1 -r
     echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-      down_args+=('--volumes')
-    else
+  fi
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+      down_args+=("${down_drop_args[@]}")
+  else
       warn "Skipping data deletion"
-    fi
   fi
 fi
 
@@ -295,3 +296,5 @@ if [ $detach_flag = 0 ]; then success_msg; fi
 echo_run as_root "$compose_cmd" up "${up_args[@]}"
 
 if [ $detach_flag = 1 ]; then success_msg 1; fi
+
+# vi: shiftwidth=2
