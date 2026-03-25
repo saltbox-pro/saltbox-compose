@@ -9,6 +9,7 @@ run_check() {
   shift
   log "Running: ${name}"
 
+  local exit_code=0
   output=$("${@}" 2>&1) || exit_code=$?
 
   while IFS= read -r line; do
