@@ -41,6 +41,9 @@ and on missing `docker` command.
 - Disable default admin rights for SSHFS-manager users.
 - Rename Docker service from `sshfs_manager` to `sshfs-file-manager` for consistency.
 - Service `proxy`: certificate has now `proxy` DNS alt name.
+- `./bin/update_and_run.sh`: flag `--drop-data` now invokes `--remove-orphans`
+  for better cleanup.
+- Keycloak: realm is disabled while initial setup is going.
 
 ### Fixed
 
@@ -54,7 +57,7 @@ flag.
 - `git_pull_dev_repos.py`: ignore possible `PermissionError` on volume sources
   for Python<3.14.
 - Nginx configuration: some potential problems has been eliminated.
-- `proxy` service now has not dependencies.
+- `proxy` service now has no dependencies.
 
 ### Removed
 
