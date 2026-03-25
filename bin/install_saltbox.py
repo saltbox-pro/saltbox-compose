@@ -57,7 +57,6 @@ RELEASE_REF = 'RELEASE'
 REGISTRY_DOTENV_VAR='IMAGE_REGISTRY'
 
 # Uses after changind CWD
-CLEANUP_CMD = ['./bin/sb-compose.sh', 'down', '--volumes', '--remove-orphans']
 PREMAKE_SECRETS_CMD = ['bin/make_secrets.py']
 ENTRYPOINT = ['bin/update_and_run.sh', '--no-root', '--force', '--detach', '--no-git-pull']
 
@@ -1035,14 +1034,8 @@ def run(args: argparse.Namespace, config: Config) -> None:
     if args.no_progress:
         ep_cmd.append('--no-progress')
 
-    if config.cleanup:
-        env_cmd = ep_cmd.copy()
-        env_cmd.append('--only-env')
-        run_cmd(env_cmd)
-        run_cmd(CLEANUP_CMD)
-
     if config.is_token_required:
-        run_cmd([*ENTRYPOINT, '--only-env'])
+        run_cmd([ep_cmd, '--only-env'])
         registry = get_dotenv_var(name = REGISTRY_DOTENV_VAR, dotenv=Path('.env'))
         if not registry:
             dosa = f'Failed to obtain `{REGISTRY_DOTENV_VAR}`'
@@ -1056,6 +1049,9 @@ def run(args: argparse.Namespace, config: Config) -> None:
         for val in args.explicit_secret:
             cmd += ['--explicit', val]
         run_cmd(cmd)
+
+    if config.cleanup:
+        ep_cmd.append('--drop-data')
     ep_cmd_str = ' '.join(ep_cmd)
     print_out(f'Running `{ep_cmd_str}`', '')
     sys.stdout.flush()
