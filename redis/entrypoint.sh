@@ -40,7 +40,7 @@ write_tls_conf() {
   cat <<EOF > "$tls_conf_file"
 ## Encryption settings
 
-port ${REDIS_PLAIN_PORT}
+port ${plain_port}
 tls-port 6379
 tls-cert-file /etc/redis/certs/redis.crt
 tls-key-file /etc/redis/certs/redis.key
