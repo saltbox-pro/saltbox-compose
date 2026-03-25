@@ -200,7 +200,8 @@ services:
       - redis_salt_password
       - redis_salt_private_key_password
     depends_on:
-      - make-certs
+      make-certs:
+        condition: service_completed_successfully
 
   redis-taskiq:
     <<: *default
