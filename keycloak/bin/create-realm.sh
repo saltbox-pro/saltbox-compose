@@ -16,7 +16,7 @@ trap '[ $? -eq 0 ] && exit 0 || echo "ERROR on $0 line ${LINENO}"' EXIT
 
 kcadm-init.sh
 
-aux_dir='/usr/local/lib/salt-box/create-realm.d/'
+aux_dir='/usr/local/lib/saltbox/create-realm.d/'
 
 find "$aux_dir" \( -type f -o -type l \) -iname '*.sh' | sort | while read -r file; do
   if [ -z "$file" ]; then continue; fi

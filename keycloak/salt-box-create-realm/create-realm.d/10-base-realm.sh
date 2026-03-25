@@ -7,15 +7,17 @@
 ## Create further sub-scripts to extend the realm.
 
 # shellcheck source=../create-realm-common.sh
-. '/usr/local/lib/salt-box/create-realm-common.sh'
+. '/usr/local/lib/saltbox/create-realm-common.sh'
 : "${SSHFS_MANAGER_ENABLED:=false}"
 
 if ! kcadm.sh get realms/"${KEYCLOAK_REALM}" --fields id >/dev/null 2>&1; then
   echo -e "\nRealm '${KEYCLOAK_REALM}' does not exist. Creating."
-  kcadm.sh create realms -s "realm=${KEYCLOAK_REALM}" -s enabled=true
+  kcadm.sh create realms -s "realm=${KEYCLOAK_REALM}" -s enabled=false
 else
-  echo -e "\nRealm '${KEYCLOAK_REALM}' exists. Checking assigned entites."
+echo -e "\nSetting realm '${KEYCLOAK_REALM}' disabled."
+  kcadm.sh update "realms/${KEYCLOAK_REALM}" -s enabled=false
 fi
+echo
 
 saltbox_client_uuid=$(kc_create_client \
   "${KEYCLOAK_CLIENT}" \
