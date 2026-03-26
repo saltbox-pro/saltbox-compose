@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 ## The sub-script creates very basic realm and may be used as example to extend
 ## the realm.
@@ -119,29 +119,14 @@ else
     "${KEYCLOAK_CLIENT}" \
     "${_scheduler_admin_role}"
 
-  if [ "${SSHFS_MANAGER_ENABLED}" = "true" ]; then
-    kc_assign_client_to_scope \
-      "${saltbox_client_uuid}" \
-      "groups" \
-      "./membership_mapper.json"
-
-    kc_assign_user_to_group \
-      "${KEYCLOAK_ADMIN_NAME}" \
-      "filebrowser-admins"
-
-    kc_assign_user_to_group \
-      "${KEYCLOAK_USER_NAME}" \
-      "filebrowser-users"
-  fi
-
   if [ -n "${_grafana_password}" ]; then
 
-    grafana_client_uuid=$(kc_create_client \
+    kc_create_client \
       "${KEYCLOAK_CLIENT_GRAFANA}" \
       "${_grafana_password}" \
       "${_grafana_admin_role}" \
       "./grafana_client.json" \
-      "Grafana admin role")
+      "Grafana admin role"
 
     kc_assign_client_role_to_user \
       "${KEYCLOAK_REALM}" \
