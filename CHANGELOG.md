@@ -22,9 +22,6 @@ if possible and purge browser redirects.
 - `update_and_run.sh` on success writes Salt.Box URL also.
 - Check for `REDIS_SALT_OUTER_SOCKET` deprecated var.
 - `get_ca.sh` script to obtain `ca.crt` and optionally inject into Firefox.
-- `sshfs_file_manager/config.yaml.tmpl`: mount `/srv/salt`, `/srv/master/salt`, `/srv/migrator` volumes.
-- `sshfs-file-manager`: inject proxy container IP into `/etc/hosts` to bypass Basic Auth for OIDC requests.
-- Optional `/srv/migrator` source, enabled via `SSHFS_FILE_MANAGER_MIGRATOR_SOURCE_ENABLED` flag.
 - `./bin/make_secrets.py` has now `--explicit VAL=NAME` arg to set a secret value from
   cmdline.
 - `base.env`: flags to enable/disable additional modules.
@@ -38,12 +35,11 @@ and on missing `docker` command.
   compability.
 - `git_pull_dev_repos.py`: more precise Git repositories detection in
   `service[].volumes.source` values.
-- Disable default admin rights for SSHFS-manager users.
-- Rename Docker service from `sshfs_manager` to `sshfs-file-manager` for consistency.
 - Service `proxy`: certificate has now `proxy` DNS alt name.
 - `./bin/update_and_run.sh`: flag `--drop-data` now invokes `--remove-orphans`
   for better cleanup.
 - Keycloak: realm is disabled while initial setup is going.
+- `sshfs_file_manager` moved to a dedicated `saltbox-filebrowser-compose` repository.
 
 ### Fixed
 
@@ -52,8 +48,6 @@ flag.
 - Unmatch `fi` in `kc_assign_user_to_group` function in `create-realm-common.sh`.
 - `./bin/update_and_run.sh`: fix `git_pull_dev_repos.py` call with error when
   `.env` file does not exist.
-- OIDC scopes in `sshfs_file_manager/config.yaml.tmpl`.
-- Assign Keycloak group membership mapper to `sshfs-file-manager` client scope.
 - `git_pull_dev_repos.py`: ignore possible `PermissionError` on volume sources
   for Python<3.14.
 - Nginx configuration: some potential problems has been eliminated.
