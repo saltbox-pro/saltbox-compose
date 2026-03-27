@@ -602,6 +602,19 @@ class AddonModule:
 
 ADDONS_MODULES = [
     AddonModule(
+        name='FileBrowser',
+        repo=GitLabRepo(
+            url='https://dev.saltbox.pro/saltbox/saltbox-filebrowser-compose',
+            token=TOKEN,
+        ),
+        base_dir='saltbox-filebrowser-compose',
+        switchable_image_tags=[],
+        compose_files=['compose.yaml'],
+        env_file='.env',
+        license='Apache-2.0',
+        is_token_required=False,
+    ),
+    AddonModule(
         name='Inventory',
         repo=GitLabRepo(
             url='https://dev.saltbox.pro/saltbox/saltbox-inventory-compose',
