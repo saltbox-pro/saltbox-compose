@@ -111,7 +111,7 @@
             "resource": "tasks/template",
             "action": "read",
             "object_conditions": {
-                "name": {"$in": ["states.test.random_with_timeout", "states.r7-office.license_added"]}
+                "name": {"$in": ["states.test.random_with_timeout", "states.r7-office.license_added", "test.random_result"]}
             },
             "subject_type": "user",
             "subject_conditions": {

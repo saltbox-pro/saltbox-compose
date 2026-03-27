@@ -59,5 +59,6 @@ query := conds[0] if {
 is_action_list if {
     utils.base.is_tasks_templates_resource
     input.action.name == "list"
-    count(input.resource.path) == 2
+    count(input.resource.path) == 3
+    input.resource.path[2] == "list"
 }

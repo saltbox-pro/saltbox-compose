@@ -114,6 +114,16 @@ is_masters_resource if {
     input.resource.path[0] == "masters"
 }
 
+is_pillars_resource if {
+    input.resource.service_name == "core"
+    input.resource.path[0] == "pillars"
+}
+
+is_pillars_admin if {
+    some role in input.subject.roles
+    role == "pillars_admin"
+}
+
 # ==========================================
 # Settings
 # GET /settings/sls-repos list

@@ -30,6 +30,7 @@ collection := col if {
     slug := input.resource.body.collection_slug
     resp := http.send({
         "method": "GET",
+        "headers": {"X-User-Id": input.subject.sub, "X-User-Email": input.subject.email},
         "url": sprintf("http://saltbox-core:8000/collections/%s", [slug]),
     })
     resp.status_code == 200
@@ -61,6 +62,7 @@ can_read_task_template if {
     tpl_id := input.resource.body.task_template_id
     task_template_response := http.send({
         "method": "GET",
+        "headers": {"X-User-Id": input.subject.sub, "X-User-Email": input.subject.email},
         "url": sprintf("http://saltbox-core:8000/tasks/template/%s", [tpl_id]),
     })
     task_template_response.status_code == 200

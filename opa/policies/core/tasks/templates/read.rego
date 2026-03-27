@@ -7,6 +7,8 @@ default is_admin := false
 default is_tasks_admin := false
 default can_read_task_template := false
 default is_action_read := false
+default task_template_response := {}
+default task_template_object := {}
 
 # List of conditions for allowing task template reading
 allow if is_admin
@@ -22,6 +24,7 @@ can_read_task_template if {
     task_id := input.resource.path[2]
     task_template_response := http.send({
         "method": "GET",
+        "headers": {"X-User-Id": input.subject.sub, "X-User-Email": input.subject.email},
         "url": sprintf("http://saltbox-core:8000/tasks/template/%s", [task_id]),
     })
     task_template_response.status_code == 200
@@ -41,4 +44,11 @@ is_action_read if {
     utils.base.is_tasks_templates_resource
     input.action.name == "read"
     count(input.resource.path) == 3
+}
+
+is_action_read if {
+    utils.base.is_tasks_templates_resource
+    input.action.name == "read"
+    count(input.resource.path) == 4
+    input.resource.path[3] == "with-defaults"
 }
