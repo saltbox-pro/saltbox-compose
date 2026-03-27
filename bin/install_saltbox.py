@@ -16,6 +16,8 @@
 
 """
 The script is a part of Salt.Box Compose
+
+Requires python>=3.7.3
 """
 
 # TODO (a.karmanov): Alternative obtaining with Git
@@ -589,7 +591,8 @@ def resolve_ref(ref: str, repo: GitLabRepo) -> str:
 @dataclasses.dataclass
 class AddonModule:
     name: str
-    repo: GitLabRepo
+    url: str
+    repo: GitLabRepo = dataclasses.field(init=False)
     base_dir: str
     license: str
     compose_files: List[str]
@@ -599,14 +602,17 @@ class AddonModule:
     secrets_configs: List[str] = dataclasses.field(default_factory=list)
     ref: str = RELEASE_REF
 
+    def __post_init__(self) -> None:
+        kwargs = {'url': self.url}
+        if self.is_token_required:
+            kwargs['token'] = TOKEN
+        self.repo = GitLabRepo(**kwargs)
+
 
 ADDONS_MODULES = [
     AddonModule(
         name='FileBrowser',
-        repo=GitLabRepo(
-            url='https://dev.saltbox.pro/saltbox/saltbox-filebrowser-compose',
-            token=TOKEN,
-        ),
+        url='https://dev.saltbox.pro/saltbox/saltbox-filebrowser-compose',
         base_dir='saltbox-filebrowser-compose',
         switchable_image_tags=[],
         compose_files=['compose.yaml'],
@@ -616,10 +622,7 @@ ADDONS_MODULES = [
     ),
     AddonModule(
         name='Inventory',
-        repo=GitLabRepo(
-            url='https://dev.saltbox.pro/saltbox/saltbox-inventory-compose',
-            token=TOKEN,
-        ),
+        url='https://dev.saltbox.pro/saltbox/saltbox-inventory-compose',
         base_dir='saltbox-inventory-compose',
         switchable_image_tags=['INVENTORY_IMAGE_TAG'],
         compose_files=['compose.yaml'],
@@ -630,10 +633,7 @@ ADDONS_MODULES = [
     ),
     AddonModule(
         name='Metric',
-        repo=GitLabRepo(
-            url='https://dev.saltbox.pro/saltbox/saltbox-metric-compose',
-            token=TOKEN,
-        ),
+        url='https://dev.saltbox.pro/saltbox/saltbox-metric-compose',
         base_dir='saltbox-metric-compose',
         switchable_image_tags=['METRIC_IMAGE_TAG'],
         compose_files=['compose.yaml'],
@@ -643,10 +643,7 @@ ADDONS_MODULES = [
     ),
     AddonModule(
         name='Scheduler',
-        repo=GitLabRepo(
-            url='https://dev.saltbox.pro/saltbox/saltbox-scheduler-compose',
-            token=TOKEN,
-        ),
+        url='https://dev.saltbox.pro/saltbox/saltbox-scheduler-compose',
         base_dir='saltbox-scheduler-compose',
         switchable_image_tags=['SCHEDULER_IMAGE_TAG'],
         compose_files=['compose.yaml'],
