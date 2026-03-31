@@ -330,6 +330,7 @@ services:
       SSHFS_USER: 'saltbox'  # As in users.json of sshfs
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
       PILLARS_KEK_B64: '${PILLARS_KEK_B64}'
+      PILLAR_V2_ENABLED: '${PILLAR_V2_ENABLED}'
     volumes:
       - type: volume
         source: redis_salt_certs
