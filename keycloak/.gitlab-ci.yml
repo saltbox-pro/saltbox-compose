@@ -8,7 +8,6 @@ include:
 stages:
   - base
   - main
-  - init
 
 
 .default:
@@ -32,15 +31,6 @@ stages:
     REGISTRY_ADDITIONAL_PATH: '/keycloak'
     CONTEXT_PATH: 'keycloak/'
     TARGET: keycloak
-
-
-.build-keycloak-init-image:
-  extends: .default
-  stage: init
-  variables:
-    REGISTRY_ADDITIONAL_PATH: '/keycloak-init'
-    CONTEXT_PATH: 'keycloak/'
-    TARGET: keycloak-init
 
 
 Build keycloak-base image for tag:

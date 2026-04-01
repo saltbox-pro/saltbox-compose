@@ -20,9 +20,18 @@ services:
 
   keycloak-init:
     build:
-      context: keycloak
-      target: keycloak-init
-      args:
-        BASE_KEYCLOAK_IMG: "${IMAGE_REGISTRY}/saltbox/saltbox-compose/keycloak-base:master"
-        KC_HTTP_RELATIVE_PATH: ${KEYCLOAK_BASE_URL}
-    image: '${LOCAL_IMAGE_NAMESPACE}/keycloak-init:dev'
+      context: '${KEYCLOAK_INIT_OUTER_PATH}'
+      dockerfile: 'Dockerfile'
+      target: dev
+    image: 'saltbox-keycloak-init:dev'
+    pull_policy: never
+    develop:
+      watch:
+        - action: rebuild
+          path: '${KEYCLOAK_INIT_OUTER_PATH}/saltbox_keycloak_init'
+          ignore:
+            - '**/__pycache__/'
+            - '**/*.pyc'
+            - '**/*.egg-info/'
+        - action: rebuild
+          path: '${KEYCLOAK_INIT_OUTER_PATH}/pyproject.toml'
