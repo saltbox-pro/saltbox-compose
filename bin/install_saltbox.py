@@ -157,6 +157,11 @@ def get_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        '--git',
+        action='store_true',
+        help='Clone Git repositories instead of downloading archives'
+    )
+    parser.add_argument(
         '--host',
         type=str,
         help=f'Hostname or real address to serve on, `{Config.host}` by default',
@@ -539,10 +544,16 @@ class GitLabRepo:
         return tags[-1]
 
     @cache
-    def resolve_ref(self, ref: str) -> str:
-        """ Resolve Ref inlcuding RELEASE_REF special value to commit SHA """
+    def normalize_ref(self, ref: str) -> str:
+        """ Resolve special RELEASE_REF to regular ref """
         if ref == RELEASE_REF:
             ref = self.get_latest_version_tag()
+        return ref
+
+    @cache
+    def resolve_ref_to_sha(self, ref: str) -> str:
+        """ Resolve Ref inlcuding RELEASE_REF special value to commit SHA """
+        ref = self.normalize_ref(ref)
         url = f'{self.api_project_url}/repository/commits/{ref}'
         try:
             resp = urllib.request.urlopen(url=self._create_request(url=url))
@@ -559,7 +570,34 @@ class GitLabRepo:
             f'archive.{self.ARCHIVE_SUFFIX}?{params}'
         )
 
-    def download_ref(self, ref: str, output_dir: Path = Path(), progress: bool = True) -> None:
+    @property
+    def git_url(self) -> str:
+        auth = ''
+        if self.token is not None:
+            auth = f'token:{self.token}@'
+        return f'{self.scheme}://{auth}{self.server}/{self.owner}/{self.project}.git'
+
+    def obtain_ref(self, use_git: bool, ref: str, output_dir: Path, progress: bool = True) -> None:
+        if use_git:
+            self.git_clone_ref(ref=ref, output_dir=output_dir, progress=progress)
+        else:
+            self.download_ref(ref=ref, output_dir=output_dir, progress=progress)
+
+    def git_clone_ref(self, ref: str, output_dir: Path, progress: bool = True) -> None:
+        repo_dir = str(output_dir)
+        ref = self.normalize_ref(ref)
+        commands = [
+            ['git', 'clone', '--no-checkout', '--depth=1', self.git_url, repo_dir],
+            ['git', '-C', repo_dir, 'fetch', '--depth=1', 'origin', ref],
+            ['git', '-C', repo_dir, 'checkout', 'FETCH_HEAD'],
+        ]
+        if not progress:
+            for cmd in commands:
+                cmd.append('--quiet')
+        for cmd in commands:
+            run_cmd(cmd=cmd)
+
+    def download_ref(self, ref: str, output_dir: Path, progress: bool = True) -> None:
         """
         Get code of ref version with no Git
 
@@ -570,7 +608,7 @@ class GitLabRepo:
             dosa = f'Already exists: `{output_dir}`'
             raise InstallerError(dosa)
 
-        ref = self.resolve_ref(ref)
+        ref = self.resolve_ref_to_sha(ref)
         arch_path = CACHE_DIR / f'{self.project}-{ref}.{self.ARCHIVE_SUFFIX}'
 
         if not arch_path.exists():
@@ -894,6 +932,24 @@ class Checker:
         if py_ver < min_py_ver:
             raise CheckError(f'Minimal required Python version is v{MIN_PYTHON_VERSION}')
 
+    def _check_git(self) -> None:
+        if not self.args.git:
+            return
+        cmd = ['git', 'version']
+        try:
+            proc = subprocess.run(cmd, capture_output=True, text=True)
+        except FileNotFoundError:
+            dosa = 'Not found `git` command. Git is not installed?'
+            raise CheckError(dosa) from None
+        except OSError as err:
+            raise CheckError(err) from None
+        if proc.returncode != 0:
+            dosa = f'Command `{" ".join(cmd)}` failed'
+            dtl = 'Process stderr:\n' +  proc.stderr
+            raise CheckError(dosa, details=dtl)
+        ver_str = proc.stdout.strip().split()[-1]
+        print_out(f'Git version is `{ver_str}`')
+
     def _check_docker(self) -> None:
         docker_cmd = ['docker', 'version', '--format', '{{ .Server.Version }}']
         try:
@@ -976,6 +1032,7 @@ class Checker:
             return
         self._check_cwd()
         self._check_python()
+        self._check_git()
         self._check_docker()
         self._check_compose()
         self._check_cpuinfo()
@@ -985,10 +1042,11 @@ class Checker:
 
 def download(args: argparse.Namespace, config: Config) -> None:
     progress = args.no_progress
-    sha = COMPOSE_REPO.resolve_ref(config.compose_ref)
+    sha = COMPOSE_REPO.resolve_ref_to_sha(config.compose_ref)
     print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}` (SHA {sha})...')
     print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
-    COMPOSE_REPO.download_ref(ref=config.compose_ref, output_dir=LOCAL_PATH, progress=progress)
+    COMPOSE_REPO.obtain_ref(
+        use_git=args.git, ref=config.compose_ref, output_dir=LOCAL_PATH, progress=progress)
     print_out()
 
     glob_iters = [BIN_DIR.glob(ptrn) for ptrn in SCRIPT_SUFFIXES]
@@ -999,10 +1057,11 @@ def download(args: argparse.Namespace, config: Config) -> None:
     print_out()
 
     for addon in config.selected_addons:
-        sha = addon.repo.resolve_ref(addon.ref)
+        sha = addon.repo.resolve_ref_to_sha(addon.ref)
         print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{addon.ref}` (SHA {sha})')
         print_out(f'URL: {addon.repo.url_for_ref(addon.ref)}', verbose=True)
-        addon.repo.download_ref(ref=addon.ref, output_dir=Path(addon.base_dir), progress=progress)
+        addon.repo.obtain_ref(
+            use_git=args.git, ref=addon.ref,output_dir=Path(addon.base_dir), progress=progress)
         print_out()
 
 
