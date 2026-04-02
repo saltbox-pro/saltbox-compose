@@ -43,7 +43,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Any, ClassVar, List, Optional, TextIO, Type, TypeVar, Union
+from typing import Any, ClassVar, Dict, List, Optional, TextIO, Type, TypeVar, Union
 
 ENC = 'UTF-8'
 INDENT = 2 * ' '
@@ -494,7 +494,7 @@ class GitLabRepo:
     ARCHIVE_SUFFIX = 'zip'  # Supposed to be better on error detection
     MAX_CONENT_LEN_PRINT = 2000
 
-    def __init__(self, url: str, token: Optional[str] = None, progress: bool = True) -> None:
+    def __init__(self, url: str, token: Optional[str] = None) -> None:
         self.token = token
         url_obj = urllib.parse.urlparse(url)
         path = Path(url_obj.path)
@@ -502,7 +502,6 @@ class GitLabRepo:
         self.server = url_obj.netloc
         self.owner = str(path.parent).lstrip('/')
         self.project = path.name
-        self.progress = progress
 
     @property
     def api_url(self) -> str:
@@ -540,7 +539,7 @@ class GitLabRepo:
             f'archive.{self.ARCHIVE_SUFFIX}?{params}'
         )
 
-    def download_ref(self, ref: str, output_dir: Path = Path()) -> None:
+    def download_ref(self, ref: str, output_dir: Path = Path(), progress: bool = True) -> None:
         """
         Get code of ref version with no Git
 
@@ -560,7 +559,7 @@ class GitLabRepo:
             tmp_path = Path(tmp_dir_name)
             arch_path = tmp_path / self.filename_for_ref(ref)
             try:
-                download_file(request=request, output=arch_path, progress=self.progress)
+                download_file(request=request, output=arch_path, progress=progress)
             except HttpNotFoundError:
                 dosa = f'Server returns `Not found` for Compose ref `{ref}`'
                 raise InstallerError(dosa) from None
@@ -603,7 +602,7 @@ class AddonModule:
     ref: str = RELEASE_REF
 
     def __post_init__(self) -> None:
-        kwargs = {'url': self.url}
+        kwargs: Dict[str, Any] = {'url': self.url}
         if self.is_token_required:
             kwargs['token'] = TOKEN
         self.repo = GitLabRepo(**kwargs)
@@ -966,9 +965,10 @@ class Checker:
 
 
 def download(args: argparse.Namespace, config: Config) -> None:
+    progress = args.no_progress
     print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}`...')
     print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
-    COMPOSE_REPO.download_ref(ref=config.compose_ref, output_dir=LOCAL_PATH)
+    COMPOSE_REPO.download_ref(ref=config.compose_ref, output_dir=LOCAL_PATH, progress=progress)
     print_out()
 
     glob_iters = [BIN_DIR.glob(ptrn) for ptrn in SCRIPT_SUFFIXES]
@@ -982,7 +982,7 @@ def download(args: argparse.Namespace, config: Config) -> None:
         ref = resolve_ref(ref=addon.ref, repo=addon.repo)
         print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{ref}`')
         print_out(f'URL: {addon.repo.url_for_ref(ref)}', verbose=True)
-        addon.repo.download_ref(ref=ref, output_dir=Path(addon.base_dir))
+        addon.repo.download_ref(ref=ref, output_dir=Path(addon.base_dir), progress=progress)
         print_out()
 
 
@@ -1045,7 +1045,7 @@ def run(args: argparse.Namespace, config: Config) -> None:
         ep_cmd.append('--no-progress')
 
     if config.is_token_required:
-        run_cmd([ep_cmd, '--only-env'])
+        run_cmd([*ep_cmd, '--only-env'])
         registry = get_dotenv_var(name = REGISTRY_DOTENV_VAR, dotenv=Path('.env'))
         if not registry:
             dosa = f'Failed to obtain `{REGISTRY_DOTENV_VAR}`'
@@ -1077,7 +1077,6 @@ def main() -> None:
     args = get_args()
     VERBOSE = args.verbose
     interactions = Interactions(non_interactive=args.non_interactive)
-    COMPOSE_REPO.progress = not args.no_progress
 
     if interactions.non_interactive:
         print_out('', 'Non-interactive mode, no confirmations will be asked!', '')
