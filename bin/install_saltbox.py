@@ -20,7 +20,6 @@ The script is a part of Salt.Box Compose
 Requires python>=3.7.3
 """
 
-# TODO (a.karmanov): Alternative obtaining with Git
 # TODO (a.karmanov): Offline mode with images
 
 import argparse
@@ -96,6 +95,7 @@ class InstallerError(RuntimeError):
         self.details = details
 
 class CheckError(InstallerError): ...
+class ConfigError(InstallerError): ...
 class HttpNotFoundError(InstallerError): ...
 
 
@@ -352,11 +352,19 @@ class Config:
     def validate(self) -> None:
         if not self.MIN_PORT <= self.port <= self.MAX_PORT:
             dosa = f'Port {self.port} is out of range {self.MIN_PORT}-{self.MAX_PORT}'
-            raise ValueError(dosa)
+            raise ConfigError(dosa)
         self._validate_host()
         if TOKEN is None and self.is_token_required:
             dosa = f'Missing required `{TOKEN_NAME}` env variable'
-            raise ValueError(dosa)
+            dtls = (
+                'Some selected addons depends on private repositories. To gain\n'
+                'access please request token from vendor, than export it as an\n'
+                'environment variable:\n'
+                f"{INDENT}$ export {TOKEN_NAME}='YOUR_TOKEN'\n\n"
+                'Or pass it before an install command (more secure):\n'
+                f"{INDENT}$ {TOKEN_NAME}='YOUR_TOKEN' ./install_saltbox.py ..."
+            )
+            raise ConfigError(message=dosa, details=dtls)
 
     @property
     def is_token_required(self) -> bool:
@@ -378,15 +386,15 @@ class Config:
         if self.is_host_ip:
             return
         if len(self.host) > 255:
-            raise ValueError('Too long DNS name')
+            raise ConfigError('Too long DNS name')
         elif not self.host:
-            raise ValueError('Empty hostname')
+            raise ConfigError('Empty hostname')
         if not self.compose_ref:
-            raise ValueError('Empty compose_ref')
+            raise ConfigError('Empty compose_ref')
         for part in self.host.split('.'):
             if not self.HOSTNAME_LABEL_PATTERN.match(part):
                 dosa = f'Hostname part `{part}` seems not valid'
-                raise ValueError(dosa)
+                raise ConfigError(dosa)
 
     def __str__(self) -> str:
         data = [f'Serve on: `{self.host}:{self.port}`']
@@ -643,7 +651,7 @@ class GitLabRepo:
         return request
 
 
-COMPOSE_REPO = GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-compose', token=TOKEN)
+COMPOSE_REPO = GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-compose')
 
 
 @dataclasses.dataclass
@@ -788,6 +796,8 @@ class ScriptConfigurator:
             self.conf.selected_addons = [ADDONS_MAPPING[i] for i in selected_addons_names]
             for addon in self.conf.selected_addons:
                 addon.ref = self.conf.compose_ref
+        # Early TOKEN for private Addons check
+        self.conf.validate()
 
     def configure(self) -> Config:
         self._select_addons()
@@ -863,10 +873,7 @@ class ScriptConfigurator:
         else:
             self.conf.cleanup = self.args.cleanup
 
-        try:
-            self.conf.validate()
-        except ValueError as err:
-            raise InstallerError(err) from err
+        self.conf.validate()
 
         print_out(
             'Selected options:',
@@ -915,9 +922,11 @@ class Checker:
         if content:
             dosa = f'Current working directory contains files other than `{atta}`'
             details = (
-                'Script creates one or more directories in the current working directory.\n'
-                'This check ensures no 3rd part file in the CWD to avoid conflicts.\n'
-                'Please decide to run the script in a clean directory.'
+                'Script creates one or more directories in the current working\n'
+                'directory. This check ensures no 3rd part file in the CWD to\n'
+                'avoid conflicts.\n\n'
+                'Please decide to run the script in a clean directory or cleanup\n'
+                'current directory manually to retry the installation process.'
             )
             raise CheckError(dosa, details=details)
 
