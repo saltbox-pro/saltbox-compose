@@ -58,6 +58,9 @@ ADMIN_SECRET_NAME = 'saltbox_admin_password'
 RELEASE_REF = 'RELEASE'
 REGISTRY_DOTENV_VAR='IMAGE_REGISTRY'
 
+_CACHE_HOME = Path(os.environ.get('XDG_CACHE_HOME', Path.home() / '.cache'))
+CACHE_DIR = _CACHE_HOME / 'install_saltbox'
+
 # Uses after changind CWD
 PREMAKE_SECRETS_CMD = ['bin/make_secrets.py']
 ENTRYPOINT = ['bin/update_and_run.sh', '--no-root', '--force', '--detach', '--no-git-pull']
@@ -182,6 +185,11 @@ def get_args() -> argparse.Namespace:
         '-n', '--non-interactive',
         action='store_true',
         help='Do not ask to input, use defaults',
+    )
+    parser.add_argument(
+        '--no-cache',
+        action='store_true',
+        help='Remove previously downloaded archives of repositories',
     )
     parser.add_argument(
         '--no-progress',
@@ -507,14 +515,15 @@ class GitLabRepo:
     def api_url(self) -> str:
         return f'{self.scheme}://{self.server}/api/v4'
 
+    @property
+    def api_project_url(self) -> str:
+        return f'{self.api_url}/projects/{self.owner}%2F{self.project}'
+
     @cache
     def get_tags(self) -> List[str]:
-        url = f'{self.api_url}/projects/{self.owner}%2F{self.project}/repository/tags'
-        request = urllib.request.Request(url=url)
-        if self.token:
-            request.headers['PRIVATE-TOKEN'] = self.token
+        url = f'{self.api_project_url}/repository/tags'
         try:
-            resp = urllib.request.urlopen(url=request)
+            resp = urllib.request.urlopen(url=self._create_request(url=url))
         except urllib.error.URLError as papa:
             dosa = f'Error on requesting URL {url}: {papa}'
             raise InstallerError(dosa) from None
@@ -529,8 +538,19 @@ class GitLabRepo:
         assert len(tags) > 0, 'Found no tags in saltbox-compose repository'
         return tags[-1]
 
-    def filename_for_ref(self, ref: str) -> str:
-        return f'{self.project}-{ref}.{self.ARCHIVE_SUFFIX}'
+    @cache
+    def resolve_ref(self, ref: str) -> str:
+        """ Resolve Ref inlcuding RELEASE_REF special value to commit SHA """
+        if ref == RELEASE_REF:
+            ref = self.get_latest_version_tag()
+        url = f'{self.api_project_url}/repository/commits/{ref}'
+        try:
+            resp = urllib.request.urlopen(url=self._create_request(url=url))
+        except urllib.error.URLError as papa:
+            dosa = f'Error on requesting URL {url}: {papa}'
+            raise InstallerError(dosa) from None
+        body = json.load(resp)
+        return body['id']
 
     def url_for_ref(self, ref: str) -> str:
         params = urllib.parse.urlencode({'sha': ref})
@@ -550,14 +570,12 @@ class GitLabRepo:
             dosa = f'Already exists: `{output_dir}`'
             raise InstallerError(dosa)
 
-        url = self.url_for_ref(ref)
-        request = urllib.request.Request(url)
-        if self.token:
-            request.headers['PRIVATE-TOKEN'] = self.token
+        ref = self.resolve_ref(ref)
+        arch_path = CACHE_DIR / f'{self.project}-{ref}.{self.ARCHIVE_SUFFIX}'
 
-        with tempfile.TemporaryDirectory() as tmp_dir_name:
-            tmp_path = Path(tmp_dir_name)
-            arch_path = tmp_path / self.filename_for_ref(ref)
+        if not arch_path.exists():
+            url = self.url_for_ref(ref)
+            request = self._create_request(url=url)
             try:
                 download_file(request=request, output=arch_path, progress=progress)
             except HttpNotFoundError:
@@ -570,21 +588,24 @@ class GitLabRepo:
                 dosa = f'Downloaded code archive is not a {self.ARCHIVE_SUFFIX} file'
                 details = f'Content of `{arch_path}`:\n' + data
                 raise InstallerError(dosa, details=details)
-            arch = zipfile.ZipFile(arch_path)
-            dir_name = arch.namelist()[0]
+        else:
+            print_out(f'Unpacking `{arch_path.name}` from cache')
+
+        arch = zipfile.ZipFile(arch_path)
+        dir_name = arch.namelist()[0]
+        with tempfile.TemporaryDirectory() as tmp_dir_name:
+            tmp_path = Path(tmp_dir_name)
             arch.extractall(path=tmp_path)
             shutil.move(src=str(tmp_path / dir_name), dst=output_dir)
 
+    def _create_request(self, url: str) -> urllib.request.Request:
+        request = urllib.request.Request(url=url)
+        if self.token:
+            request.headers['PRIVATE-TOKEN'] = self.token
+        return request
+
 
 COMPOSE_REPO = GitLabRepo(url='https://dev.saltbox.pro/saltbox/saltbox-compose', token=TOKEN)
-
-
-@cache
-def resolve_ref(ref: str, repo: GitLabRepo) -> str:
-    """ Resolves RELEASE_REF special value """
-    if ref == RELEASE_REF:
-        return repo.get_latest_version_tag()
-    return ref
 
 
 @dataclasses.dataclass
@@ -763,8 +784,6 @@ class ScriptConfigurator:
                 f'reference `{self.conf.compose_ref}` is selected. ')
             if not self.interactions.ask_confirm('Continue as advanced user?'):
                 raise InstallerError('Cancelled by user')
-
-        self.conf.compose_ref = resolve_ref(ref=self.conf.compose_ref, repo=COMPOSE_REPO)
 
         if self.args.admin is not None:
             self.conf.admin_name = self.args.admin
@@ -966,7 +985,8 @@ class Checker:
 
 def download(args: argparse.Namespace, config: Config) -> None:
     progress = args.no_progress
-    print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}`...')
+    sha = COMPOSE_REPO.resolve_ref(config.compose_ref)
+    print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}` (SHA {sha})...')
     print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
     COMPOSE_REPO.download_ref(ref=config.compose_ref, output_dir=LOCAL_PATH, progress=progress)
     print_out()
@@ -979,10 +999,10 @@ def download(args: argparse.Namespace, config: Config) -> None:
     print_out()
 
     for addon in config.selected_addons:
-        ref = resolve_ref(ref=addon.ref, repo=addon.repo)
-        print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{ref}`')
-        print_out(f'URL: {addon.repo.url_for_ref(ref)}', verbose=True)
-        addon.repo.download_ref(ref=ref, output_dir=Path(addon.base_dir), progress=progress)
+        sha = addon.repo.resolve_ref(addon.ref)
+        print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{addon.ref}` (SHA {sha})')
+        print_out(f'URL: {addon.repo.url_for_ref(addon.ref)}', verbose=True)
+        addon.repo.download_ref(ref=addon.ref, output_dir=Path(addon.base_dir), progress=progress)
         print_out()
 
 
@@ -1076,6 +1096,14 @@ def main() -> None:
     global VERBOSE
     args = get_args()
     VERBOSE = args.verbose
+
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    if args.no_cache:
+        print_out('', 'Cache cleanup')
+        for file in CACHE_DIR.glob(f'*.{GitLabRepo.ARCHIVE_SUFFIX}'):
+            print_out(f'Deleting cached {file}')
+            file.unlink()
+
     interactions = Interactions(non_interactive=args.non_interactive)
 
     if interactions.non_interactive:
