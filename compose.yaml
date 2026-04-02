@@ -312,6 +312,7 @@ services:
       MONGO_REPLICASET: '${MONGO_REPLICA_SET}'
       MONGO_USER: '${MONGO_USER}'
       MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
+      MONGO_EXPLAIN: '${MONGO_EXPLAIN:-false}'
       OPA_URL: 'http://opa:8181'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
       REDIS_TASKIQ_DB: 0
@@ -330,7 +331,6 @@ services:
       SSHFS_USER: 'saltbox'  # As in users.json of sshfs
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
       PILLARS_KEK_B64: '${PILLARS_KEK_B64}'
-      PILLAR_V2_ENABLED: '${PILLAR_V2_ENABLED}'
     volumes:
       - type: volume
         source: redis_salt_certs
