@@ -42,10 +42,6 @@ services:
       - 'proxy_certs:/etc/nginx/ssl/'
     secrets:
       - keycloak_client_saltbox_core_password
-    depends_on:
-      keycloak-init:
-        condition: service_completed_successfully
-        restart: false
 
   keycloak-db:
     <<: *default
@@ -98,7 +94,7 @@ services:
 
   keycloak-init:
     <<: *default
-    restart: 'no'
+    restart: 'on-failure'
     image: '${IMAGE_REGISTRY}/saltbox-keycloak-init:${KEYCLOAK_INIT_IMAGE_TAG}'
     environment:
       KEYCLOAK_ADMIN_EMAIL: '${SALTBOX_ADMIN_EMAIL}'
@@ -114,6 +110,7 @@ services:
       KEYCLOAK_USER_LASTNAME: '${SALTBOX_USER_LASTNAME}'
       KEYCLOAK_USER_NAME: '${SALTBOX_USER_USERNAME}'
       KEYCLOAK_STRICT_ROLE_CHECK: '${KEYCLOAK_STRICT_ROLE_CHECK:-true}'
+      KEYCLOAK_INIT_LOG_LEVEL: '${KEYCLOAK_INIT_LOG_LEVEL:-info}'
     secrets:
       - keycloak_admin_password
       - keycloak_client_saltbox_core_password
