@@ -6,47 +6,17 @@ include:
 
 
 stages:
-  - base
-  - main
-
-
-.default:
-  extends: .build-image
-  dependencies: []
-
-
-.build-keycloak-base-image:
-  extends: .default
-  stage: base
-  variables:
-    REGISTRY_ADDITIONAL_PATH: '/keycloak-base'
-    DOCKERFILE: 'keycloak/base.Dockerfile'
-    CONTEXT_PATH: 'keycloak/'
+  - build
 
 
 .build-keycloak-image:
-  extends: .default
-  stage: main
+  extends: .build-image
+  stage: build
   variables:
     REGISTRY_ADDITIONAL_PATH: '/keycloak'
     CONTEXT_PATH: 'keycloak/'
     TARGET: keycloak
 
-
-Build keycloak-base image for tag:
-  extends: .build-keycloak-base-image
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_TAG'
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-Build keycloak-base image for branch:
-  extends: .build-keycloak-base-image
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_REF_NAME'
-  rules:
-    - if: '$CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "parent_pipeline"'
 
 Build Keycloak image for tag:
   extends: .build-keycloak-image
@@ -58,22 +28,6 @@ Build Keycloak image for tag:
 
 Build Keycloak image for branch:
   extends: .build-keycloak-image
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_REF_NAME'
-  rules:
-    - if: '$CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "parent_pipeline"'
-
-
-Build keycloak-init image for tag:
-  extends: .build-keycloak-init-image
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_TAG'
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-Build keycloak-init image for branch:
-  extends: .build-keycloak-init-image
   variables:
     IMAGE_TAG: '$CI_COMMIT_REF_NAME'
   rules:

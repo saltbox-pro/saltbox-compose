@@ -1,10 +1,30 @@
 ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
-ARG KEYCLOAK_BASE_IMG="registry.saltbox.pro/saltbox/saltbox-compose/keycloak-base:master"
+FROM "$BASE_IMG" AS base
 
-FROM "$KEYCLOAK_BASE_IMG" AS builder
+RUN \
+    --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+<<EOF
+cat <<'SH' > /usr/local/bin/apt-install
+set -e
+mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
+apt-get update
+apt-get install -y "${@}"
+SH
+chmod +x /usr/local/bin/apt-install
+EOF
+
+
+FROM base AS builder
+
 LABEL version="2.0"
-# Increase to trigger build. Drop to 0 on version change.
+#NOTE: Increase to trigger build. Drop to 0 on version change.
 LABEL release="0"
+
+RUN \
+    --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-install keycloak
 
 ARG KC_HTTP_RELATIVE_PATH=/auth/keycloak
 ENV KC_DB=postgres
@@ -13,24 +33,20 @@ ENV KC_HTTP_RELATIVE_PATH=$KC_HTTP_RELATIVE_PATH
 
 RUN kc.sh build --verbose
 
-FROM "$BASE_IMG" AS keycloak
+
+FROM base AS keycloak
 LABEL version="1.2"
 
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
-<<EOF
-set -e
-mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
-apt-get update
-apt-get install -y java-21-openjdk wget
-EOF
+  apt-install java-21-openjdk wget
 
 COPY --from=builder /usr/lib/keycloak/ /srv/keycloak
 COPY --chmod=755 bin/startup.sh /usr/local/bin/
 
 ENV PATH="${PATH}:/srv/keycloak/bin/"
-# For single node setup
+#NOTE: For single node setup
 ENV KC_CACHE=local
 
 ENV KC_HTTP_ENABLED=true
@@ -43,5 +59,7 @@ EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/startup.sh"]
 HEALTHCHECK --start-period=30s CMD wget \
-  --no-verbose --tries=1 --spider \
+  --no-verbose \
+  --tries=1 \
+  --spider \
   "http://localhost:9000${KEYCLOAK_BASE_URL}/health/ready"
