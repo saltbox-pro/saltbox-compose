@@ -586,12 +586,24 @@ class GitLabRepo:
         return f'{self.scheme}://{auth}{self.server}/{self.owner}/{self.project}.git'
 
     def obtain_ref(self, use_git: bool, ref: str, output_dir: Path, progress: bool = True) -> None:
+        """
+        Get repository
+
+        :raises HttpNotFoundError: on 404
+        :raises InstallerError: on HTTP or network errors
+        """
         if use_git:
-            self.git_clone_ref(ref=ref, output_dir=output_dir, progress=progress)
+            fun = self.git_clone_ref
         else:
-            self.download_ref(ref=ref, output_dir=output_dir, progress=progress)
+            fun = self.download_ref
+        fun(ref=ref, output_dir=output_dir, progress=progress)
 
     def git_clone_ref(self, ref: str, output_dir: Path, progress: bool = True) -> None:
+        """
+        Get Git repository and switch it to ref
+
+        :raises InstallerError: on HTTP or network errors
+        """
         repo_dir = str(output_dir)
         ref = self.normalize_ref(ref)
         commands = [
