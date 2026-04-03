@@ -125,7 +125,6 @@ services:
     profiles:
       - salt-master
     image: '${IMAGE_REGISTRY}/saltbox-bridge/salt-master:${SALT_MASTER_IMAGE_TAG}'
-    init: true
     environment:
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       REDIS_PASSWORD_FILE: '/run/secrets/redis_salt_password'
