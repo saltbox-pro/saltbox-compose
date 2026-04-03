@@ -262,9 +262,6 @@ services:
     expose:
       - ${GATEWAY_HTTP_PORT}
     depends_on:
-      keycloak-init:
-        condition: service_completed_successfully
-        restart: false
       redis-salt:
         condition: service_healthy
         restart: false
@@ -351,9 +348,6 @@ services:
     expose:
       - ${CORE_PORT}
     depends_on:
-      keycloak-init:
-        condition: service_completed_successfully
-        restart: false
       mongo:
         condition: service_healthy
         restart: false
