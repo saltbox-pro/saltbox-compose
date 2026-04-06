@@ -70,7 +70,8 @@ Build Redis image for branch:
 Trigger Proxy build:
   trigger:
     include: 
-    - local: 'proxy/.gitlab-ci.yml'
+      - local: 'proxy/.gitlab-ci.yml'
+    strategy: depend
   rules:
     - changes:
         - 'nginx/**/*'
@@ -81,6 +82,7 @@ Trigger Keycloak build:
   trigger:
     include:
       - local: 'keycloak/.gitlab-ci.yml'
+    strategy: depend
   rules:
     - changes:
         - 'keycloak/**/*'
