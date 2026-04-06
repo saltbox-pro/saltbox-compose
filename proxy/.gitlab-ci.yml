@@ -32,7 +32,7 @@ Build Nginx image for tag:
 Build Nginx image for branch:
   extends: .build-nginx-image
   variables:
-    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+    IMAGE_TAG: '$CI_COMMIT_REF_NAME'
   rules:
     - if: '$CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "parent_pipeline"'
 
@@ -46,6 +46,6 @@ Build Proxy image for tag:
 Build Proxy image for branch:
   extends: .build-proxy-image
   variables:
-    IMAGE_TAG: '$CI_COMMIT_BRANCH'
+    IMAGE_TAG: '$CI_COMMIT_REF_NAME'
   rules:
     - if: '$CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "parent_pipeline"'
