@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 __Some changes are breaking__. Cleanup Keycloak database before update
 if possible and purge browser redirects.
 
-## [UNRELEASED]
+## [0.2.0] - 2026-04-06
 
 ### Added
 
