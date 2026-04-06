@@ -5,6 +5,9 @@ include:
     file: 'build-image.yml'
   - project: 'saltbox/ci-lib'
     file: 'def-branch-merge-guard.yml'
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      - when: always
 
 
 .build-redis-image:
