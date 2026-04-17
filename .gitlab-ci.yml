@@ -45,11 +45,21 @@ include:
     REGISTRY_ADDITIONAL_PATH: '/mongodb'
     CONTEXT_PATH: 'mongodb/'
 
+
 .rabbitmq:
   extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/rabbitmq'
     CONTEXT_PATH: 'rabbitmq/'
+
+
+.keycloak:
+  extends: .build-image
+  variables:
+    REGISTRY_ADDITIONAL_PATH: '/keycloak'
+    CONTEXT_PATH: 'keycloak/'
+    TARGET: keycloak
+
 
 Build Redis image for tag:
   extends: .build-redis-image
@@ -76,16 +86,6 @@ Trigger Proxy build:
     - changes:
         - 'nginx/**/*'
         - 'proxy/**/*'
-
-
-Trigger Keycloak build:
-  trigger:
-    include:
-      - local: 'keycloak/.gitlab-ci.yml'
-    strategy: depend
-  rules:
-    - changes:
-        - 'keycloak/**/*'
 
 
 Build OPA image for tag:
@@ -151,6 +151,7 @@ Build MongoDB image for branch:
   rules:
     - if: '$CI_COMMIT_BRANCH'
 
+
 Build RabbitMQ image for tag:
   extends: .rabbitmq
   variables:
@@ -158,9 +159,26 @@ Build RabbitMQ image for tag:
   rules:
     - if: '$CI_COMMIT_TAG'
 
+
 Build RabbitMQ image for branch:
   extends: .rabbitmq
   variables:
     IMAGE_TAG: '$CI_COMMIT_BRANCH'
   rules:
     - if: '$CI_COMMIT_BRANCH'
+
+
+Build Keycloak image for tag:
+  extends: .keycloak
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_TAG'
+  rules:
+    - if: '$CI_COMMIT_TAG'
+
+
+Build Keycloak image for branch:
+  extends: .keycloak
+  variables:
+    IMAGE_TAG: '$CI_COMMIT_REF_NAME'
+  rules:
+    - if: '$CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "parent_pipeline"'
