@@ -1,0 +1,35 @@
+{
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "users": [
+    {
+      "name": "migrator",
+      "password": "migrator",
+      "tags": []
+    },
+    {
+      "name": "${RABBITMQ_DEFAULT_USER}",
+      "password": "${RABBITMQ_DEFAULT_PASS}",
+      "tags": [ "administrator" ]
+    }
+  ],
+  "permissions": [
+    {
+      "user": "migrator",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "${RABBITMQ_DEFAULT_USER}",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ]
+}

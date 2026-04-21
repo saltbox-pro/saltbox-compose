@@ -13,7 +13,7 @@ apt-get install -y gettext-base
 EOF
 
 COPY --chmod=755 entrypoint.sh healthcheck.sh /usr/local/bin/
-COPY *.tmpl /etc/rabbitmq/
+COPY rabbitmq.d/ /etc/rabbitmq/
 
 HEALTHCHECK \
   --interval=5m \

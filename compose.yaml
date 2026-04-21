@@ -224,9 +224,12 @@ services:
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-compose/rabbitmq:${RABBITMQ_IMAGE_TAG}'
     environment:
+      RABBITMQ_DEFAULT_USER: '${SALTBOX_ADMIN_USERNAME}'
       LOG_LEVEL: "${RABBITMQ_LOG_LEVEL:-info}"
     ports:
       - 5672:5672
+    secrets:
+      - rabbitmq_amqp_password
     healthcheck:
       test: ["CMD", "/usr/local/bin/healthcheck.sh"]
 
@@ -355,6 +358,8 @@ services:
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
       LOG_LEVEL: '${SALTBOX_CORE_LOG_LEVEL}'
+      RABBITMQ_ADMIN: '${SALTBOX_ADMIN_USERNAME}'
+      RABBITMQ_AMQP_PASSWORD_FILE: '/run/secrets/rabbitmq_amqp_password'
       MONGO_DB: '${MONGO_DB}'
       MONGO_REPLICASET: '${MONGO_REPLICA_SET}'
       MONGO_USER: '${MONGO_USER}'
@@ -388,6 +393,7 @@ services:
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
       - '${LOCAL_CONFIG_BOXES_PATH}:/mnt/config-boxes/'
     secrets:
+      - rabbitmq_amqp_password
       - redis_taskiq_password
       - redis_salt_password
       - mongo_user_password
@@ -672,6 +678,8 @@ secrets:
     file: secrets/redis_salt_private_key_password
   redis_taskiq_password:
     file: secrets/redis_taskiq_password
+  rabbitmq_amqp_password:
+    file: secrets/rabbitmq_amqp_password
   saltbox_admin_password:
     file: secrets/saltbox_admin_password
   saltbox_user_password:
