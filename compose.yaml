@@ -254,6 +254,7 @@ services:
       BASIC_AUTH_USERNAME: '${BASIC_AUTH_USERNAME:-}'
       BASIC_AUTH_PASSWORD: '${BASIC_AUTH_PASSWORD:-}'
       OPA_URL: 'http://opa:8181'
+      RABBITMQ_ADMIN: '${SALTBOX_ADMIN_USERNAME}'
     volumes:
       - type: volume
         source: redis_salt_certs
@@ -262,6 +263,7 @@ services:
     secrets:
       - redis_salt_password
       - keycloak_client_saltbox_core_password
+      - rabbitmq_amqp_password
     expose:
       - ${GATEWAY_HTTP_PORT}
     depends_on:
