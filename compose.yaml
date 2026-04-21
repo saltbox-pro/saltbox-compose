@@ -306,10 +306,11 @@ services:
       # RabbitMQ environment variables
       RABBITMQ_HOST: '${RABBITMQ_HOST}'
       RABBITMQ_PORT: '${RABBITMQ_PORT}'
-      RABBITMQ_USERNAME: '${RABBITMQ_USER}'
-      RABBITMQ_PASSWORD: '${RABBITMQ_PASSWORD}'
+      RABBITMQ_ADMIN: '${SALTBOX_ADMIN_USERNAME}'
+      RABBITMQ_AMQP_PASSWORD_FILE: '/run/secrets/rabbitmq_amqp_password'
     secrets:
       - mongo_user_password
+      - rabbitmq_amqp_password
     depends_on:
       mongodb-audit:
         condition: service_healthy
