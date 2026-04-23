@@ -11,5 +11,4 @@ _*
 .ruff.toml
 .mypy.ini
 .flake8
-uv.lock
 .venv/

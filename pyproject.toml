@@ -4,12 +4,13 @@ requires-python = ">=3.7.3"
 dynamic = ["version"]
 dependencies = []
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-  "mypy",
-  "python-lsp-server[all]",
-  "ruff",
-  "ipython",
+    "ipython",
+    "mypy",
+    "pylsp-mypy",
+    "python-lsp-server[all]",
+    "ruff",
 ]
 
 [build-system]
@@ -38,13 +39,3 @@ ignore = [
 
 [tool.ruff.format]
 quote-style = "single"
-
-[tool.uv.build-backend]
-module-name = "bin"
-module-root = ""
-
-[dependency-groups]
-dev = [
-    "pylsp-mypy>=0.6.7",
-    "pylsp-rope>=0.1.17",
-]

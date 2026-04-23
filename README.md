@@ -393,6 +393,30 @@ default).
 
 ## Development agreements
 
+### Python scripts
+
+Python scripts in the `./bin/` subdirectory supposed to be compatible and free
+from dependencies (other than The Python Standard Library).
+
+To maintain the scripts it is recommended to run an appropriate environment
+with LSP:
+
+```bash
+uv sync --python 3.14
+source .venv/bin/activate
+```
+
+In contrast scripts MUST be tested with the lesser compatible Python version
+(usually `v3.7.3`). E. g.:
+
+```bash
+pyenv install
+pyenv exec python3 ./bin/install_saltbox.py
+```
+
+The [pyenv](https://github.com/pyenv/pyenv) utility takes version from the
+[`./.python-version`](./.python-version) file. Installation required once.
+
 ### Docker Compose
 
 - `healthcheck.{interval,timeout,start_period,start_interval}` keywords
