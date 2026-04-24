@@ -18,6 +18,8 @@ if possible and purge browser redirects.
 
 ### Fixed
 
+- `install_saltbox.py`: ignored `OVERRIDE` positional args.
+
 ### Removed
 
 ## [0.2.0] - 2026-04-06

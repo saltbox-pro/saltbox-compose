@@ -747,7 +747,10 @@ class ScriptConfigurator:
     def __init__(self, args: argparse.Namespace, interactions: Interactions) -> None:
         self.args = args
         self.interactions = interactions
-        self.conf = Config(force_host_as_name=args.host_is_name)
+        self.conf = Config(
+            force_host_as_name=args.host_is_name,
+            extra_override=args.OVERRIDE.copy()
+        )
         self.cmd: List[str] = ['./install_saltbox.py']
 
     def _metric_docker_hook(self) -> None:
