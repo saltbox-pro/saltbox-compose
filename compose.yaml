@@ -281,6 +281,7 @@ services:
     environment:
       LOG_LEVEL: '${AUDIT_LOG_LEVEL:-info}'
       SERVER_OUTER_SOCKET: '${WEB_SERVER_OUTER_SOCKET}'
+      LOGS_STORAGE_PATH: '${AUDIT_LOGS_STORAGE_PATH}'
       TIMEOUT_GRACEFUL_SHUTDOWN: '${AUDIT_SHUTDOWN_TIMEOUT_SEC}'
       UVICORN_WORKERS: '${AUDIT_WORKERS:-1}'
       # Gateway environment variables
@@ -310,6 +311,8 @@ services:
       RABBITMQ_PORT: '${RABBITMQ_PORT}'
       RABBITMQ_ADMIN: '${SALTBOX_ADMIN_USERNAME}'
       RABBITMQ_AMQP_PASSWORD_FILE: '/run/secrets/rabbitmq_amqp_password'
+    volumes:
+      - '${AUDIT_LOGS_STORAGE_PATH}:${AUDIT_LOGS_STORAGE_PATH}'
     secrets:
       - mongo_user_password
       - rabbitmq_amqp_password
