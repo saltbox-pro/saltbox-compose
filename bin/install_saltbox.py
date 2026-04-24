@@ -736,6 +736,7 @@ ADDONS_SELECTOR = {
     **{i: [i] for i in ADDONS_MAPPING},
     'FREE': [i.name for i in ADDONS_MAPPING.values() if i.license != 'EULA'],
     'ALL': list(ADDONS_MAPPING.keys()),
+    'NONE': [],
 }
 ADDONS_SEL_STR = ", ".join(f'`{i}`' for i in ADDONS_SELECTOR)
 
