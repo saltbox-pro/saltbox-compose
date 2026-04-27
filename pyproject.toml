@@ -29,8 +29,9 @@ line-length = 120
 target-version = "py37"
 
 [tool.ruff.lint]
+preview = true
 select=[
-    'ASYNC', 'DTZ', 'E', 'F', 'G', 'I', 'LOG', 'N', 'RUF', 'SIM', 'UP', 'W',
+    "ASYNC", "DTZ", "E", "F", "G", "I", "LOG", "N", "RUF", "SIM", "UP", "W",
 ]
 ignore = [
     "B019",
