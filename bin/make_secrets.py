@@ -57,15 +57,6 @@ def parse_args() -> argparse.Namespace:
         default=['secrets.json'],
         help='Files with',)
     parser.add_argument(
-        '-w',
-        '--overwrite',
-        help='Overwrite existing passwords',
-        action='store_true',)
-    parser.add_argument(
-        '--prune',
-        help='Delete files, which are not related to specified secrets',
-        action='store_true',)
-    parser.add_argument(
         '--explicit',
         action='append',
         default=[],
@@ -73,6 +64,22 @@ def parse_args() -> argparse.Namespace:
             'Set a secret value explicitly in form of `NAME=VALUE`. '
             'Can be specified multiple times.'
         ),)
+    default_output_dir = get_default_secrets_dir()
+    parser.add_argument(
+        '-o', '--output-dir',
+        type=Path,
+        default=default_output_dir,
+        help=f'Alternative location for secrets, by default `{default_output_dir}`'
+    )
+    parser.add_argument(
+        '--prune',
+        help='Delete files, which are not related to specified secrets',
+        action='store_true',)
+    parser.add_argument(
+        '-w',
+        '--overwrite',
+        help='Overwrite existing passwords',
+        action='store_true',)
     return parser.parse_args()
 
 
@@ -138,17 +145,19 @@ def parse_configs(paths: List[Union[str, Path]]) -> List[Secret]:
     return result
 
 
-def get_secrets_dir() -> Path:
+def get_default_secrets_dir() -> Path:
     base_dir = Path(__file__).parent.parent.resolve()
-    secrets_dir =  base_dir / 'secrets'
+    secrets_dir = base_dir / 'secrets'
     assert secrets_dir.is_absolute(), 'Expected to have absolute path to secrets dir'
-    print(f'Secrets dir is "{secrets_dir}"')
+    return secrets_dir
+
+
+def ensure_secrets_dir(secrets_dir: Path) -> None:
     if not secrets_dir.exists():
         secrets_dir.mkdir(parents=True)
     elif not secrets_dir.is_dir():
         dosa = f'Output path exists and is not a directory: "{secrets_dir}"'
         raise OSError(dosa)
-    return secrets_dir
 
 
 def parse_explicits(explicits: List[str]) -> Dict[str, str]:
@@ -168,7 +177,9 @@ def main() -> None:
     except (ValueError) as err:
         print(f'ERROR {err}', file=sys.stderr)
         sys.exit(1)
-    secrets_dir = get_secrets_dir()
+    secrets_dir = args.output_dir
+    ensure_secrets_dir(secrets_dir)
+    print(f'Secrets dir is "{secrets_dir}"')
 
     try:
         secrets = parse_configs(args.file)
@@ -179,8 +190,8 @@ def main() -> None:
 
     for x in explicits:
         if x not in {s.name for s in secrets}:
-            err = f'Explicit secret `{x}` is given, but no such secret in configs'
-            print(f'ERROR {err}', file=sys.stderr)
+            dosa = f'Explicit secret `{x}` is given, but no such secret in configs'
+            print(f'ERROR {dosa}', file=sys.stderr)
             sys.exit(1)
 
     if args.prune:
