@@ -16,6 +16,9 @@ if possible and purge browser redirects.
 
 ### Changed
 
+- `make_secrets.py`: flag `--output-dir` allows to work with an arbitrary
+  output directory.
+
 ### Fixed
 
 - `install_saltbox.py`: ignored `OVERRIDE` positional args.
