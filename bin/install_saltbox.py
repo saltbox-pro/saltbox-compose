@@ -49,13 +49,15 @@ INDENT = 2 * ' '
 HTTP_CHUNK_BYTE = 8192
 HTTP_TIMEOUT_SEC = 30
 VERSION_TAG_PATTERN = re.compile(r'^v\d+\.\d+\.\d+.*$')
-LOCAL_PATH = Path('./saltbox-compose/')
+CWD = Path.cwd()
+LOCAL_PATH = CWD / './saltbox-compose/'
 BIN_DIR = LOCAL_PATH / 'bin'
 ENV_OVERRIDE = LOCAL_PATH / 'override.env'
 SCRIPT_SUFFIXES = ('*.sh', '*.py',)
 ADMIN_SECRET_NAME = 'saltbox_admin_password'
+MONGO_ADMIN_SECRET_NAME = 'mongo_root_password'
 RELEASE_REF = 'RELEASE'
-REGISTRY_DOTENV_VAR='IMAGE_REGISTRY'
+REGISTRY_DOTENV_VAR = 'IMAGE_REGISTRY'
 
 _CACHE_HOME = Path(os.environ.get('XDG_CACHE_HOME', Path.home() / '.cache'))
 CACHE_DIR = _CACHE_HOME / 'install_saltbox'
@@ -89,13 +91,19 @@ TOKEN_NAME = 'SALTBOX_INSTALL_TOKEN'
 # GitLab group token MUST have scopes: read_repository, read_registry, read_api
 TOKEN = os.environ.get(TOKEN_NAME)
 
+
 class InstallerError(RuntimeError):
     def __init__(self, message: Union[str, BaseException], details: Optional[str] = None) -> None:
         super().__init__(message)
         self.details = details
 
+
 class CheckError(InstallerError): ...
+
+
 class ConfigError(InstallerError): ...
+
+
 class HttpNotFoundError(InstallerError): ...
 
 
@@ -209,7 +217,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument(
         '-u', '--skip-run',
         action='store_true',
-        help='Prepare but not run',
+        help='Prepare but do not run',
     )
     parser.add_argument(
         '-v', '--verbose',
@@ -218,7 +226,8 @@ def get_args() -> argparse.Namespace:
     )
     return parser.parse_args()
 
-VERBOSE=False
+
+VERBOSE = False
 
 
 @contextlib.contextmanager
@@ -235,30 +244,42 @@ def cd(path: Optional[Path]):
         os.chdir(orig)
 
 
-def run_cmd(cmd: List[str], input: Optional[str] = None) -> None:
+def run_cmd(
+    cmd: List[str],
+    input: Optional[str] = None,
+    extra_env: Optional[Dict[str, str]] = None,
+    skip: bool = False,
+) -> None:
+    env = os.environ.copy()
+    if extra_env is not None:
+        env.update(extra_env)
     cmd_str = ' '.join(cmd)
-    print_out(f'Running `{cmd_str}`', '')
+    if skip:
+        print_out(f'Skipping Run `{cmd_str}`', '')
+        return
+    else:
+        print_out(f'Running `{cmd_str}`', '')
     try:
-        subprocess.run(cmd, input=input, check=True, text=True)
+        subprocess.run(cmd, env=env, input=input, check=True, text=True)
     except subprocess.CalledProcessError as err:
         raise InstallerError(err) from None
 
 
-def _print(*args, file: TextIO, verbose: bool=False) -> None:
+def _print(*args, file: TextIO, verbose: bool = False) -> None:
     if verbose and not VERBOSE:
         return
     print(*args, file=file, sep='\n')
 
 
-def print_out(*args, verbose: bool=False) -> None:
+def print_out(*args, verbose: bool = False) -> None:
     _print(*args, verbose=verbose, file=sys.stdout)
 
 
-def print_err(*args, verbose: bool=False) -> None:
+def print_err(*args, verbose: bool = False) -> None:
     _print(*args, verbose=verbose, file=sys.stderr)
 
 
-def get_dotenv_var(name: str, dotenv: Path=Path('.env')) -> str:
+def get_dotenv_var(name: str, dotenv: Path = Path('.env')) -> str:
     """ Read str value from env-file """
     cmd = ['sh', '-c', f'. \'{dotenv.absolute()}\' && printf \'%s\' "${name}"']
     proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
@@ -308,7 +329,6 @@ class Interactions:
         except ValueError as err:
             raise InstallerError(err) from None
 
-
     def ask_confirm(self, prompt: str, default: bool = True) -> bool:
         yn = 'Y/n' if default else 'y/N'
         prompt = f'{prompt} [{yn}]: '
@@ -330,24 +350,25 @@ class Interactions:
 
 @dataclasses.dataclass
 class Config:
-    MIN_PORT = 1
-    MAX_PORT = 2**16 - 1
-    HOSTNAME_LABEL_PATTERN = re.compile(r'^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$')
+    MIN_PORT: ClassVar = 1
+    MAX_PORT: ClassVar = 2**16 - 1
+    HOSTNAME_LABEL_PATTERN: ClassVar = re.compile(r'^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$')
 
-    STABLE_BRANCH = 'master'
-    DEV_BRANCH = 'dev'
+    STABLE_BRANCH: ClassVar = 'master'
+    DEV_BRANCH: ClassVar = 'dev'
     SUPPORTED_REFS: ClassVar = [RELEASE_REF, STABLE_BRANCH, DEV_BRANCH]
 
     cleanup: bool = False
     host: str = 'saltbox.local'
     port: int = 443
-    compose_ref = RELEASE_REF
+    compose_ref: str = RELEASE_REF
     force_host_as_name: bool = False
     admin_name: str = 'master'
     extra_override: List['str'] = dataclasses.field(default_factory=list)
     set_image_tags: bool = False
     selected_addons: List['AddonModule'] = dataclasses.field(default_factory=list)
     registry_user: str = 'install_saltbox'
+    migrations_ref: Optional[str] = None
 
     def validate(self) -> None:
         if not self.MIN_PORT <= self.port <= self.MAX_PORT:
@@ -365,6 +386,10 @@ class Config:
                 f"{INDENT}$ {TOKEN_NAME}='YOUR_TOKEN' ./install_saltbox.py ..."
             )
             raise ConfigError(message=dosa, details=dtls)
+
+    @property
+    def outer_socket(self) -> str:
+        return f'{self.host}:{self.port}'
 
     @property
     def is_token_required(self) -> bool:
@@ -412,6 +437,8 @@ class Config:
 
 
 VersionSelf = TypeVar('VersionSelf', bound='Version')
+
+
 class Version:
     """ Represents simplified SemVer (3 main numbers only)"""
     # Simplified official regex (https://regex101.com/r/Ly7O1x/3)
@@ -732,18 +759,22 @@ ADDONS_MODULES = [
     ),
 ]
 ADDONS_MAPPING = {a.name: a for a in ADDONS_MODULES}
+_MIGRATIONS_NAME = 'Migrations'
+_INSTALL_MIGRATIONS_BIN = BIN_DIR / 'install_saltbox_migrations.py'
 ADDONS_SELECTOR = {
     **{i: [i] for i in ADDONS_MAPPING},
+     _MIGRATIONS_NAME: [_MIGRATIONS_NAME],
     'FREE': [i.name for i in ADDONS_MAPPING.values() if i.license != 'EULA'],
-    'ALL': list(ADDONS_MAPPING.keys()),
+    'ALL': [*ADDONS_MAPPING.keys(), _MIGRATIONS_NAME],
     'NONE': [],
 }
 ADDONS_SEL_STR = ", ".join(f'`{i}`' for i in ADDONS_SELECTOR)
 
+
 class ScriptConfigurator:
-    METRIC_DOCKER_SOCK_VAR='METRIC_DOCKER_SOCKET'
-    METRIC_DOCKER_CONT_VAR='METRIC_DOCKER_CONTAINERS_PATH'
-    DEFAULT_DOCKER_HOST='unix:///var/run/docker.sock'
+    METRIC_DOCKER_SOCK_VAR = 'METRIC_DOCKER_SOCKET'
+    METRIC_DOCKER_CONT_VAR = 'METRIC_DOCKER_CONTAINERS_PATH'
+    DEFAULT_DOCKER_HOST = 'unix:///var/run/docker.sock'
 
     def __init__(self, args: argparse.Namespace, interactions: Interactions) -> None:
         self.args = args
@@ -763,7 +794,7 @@ class ScriptConfigurator:
         dckr_host = os.environ.get('DOCKER_HOST')
         proc = subprocess.run(dckr_host_cmd, check=True, capture_output=True, text=True)
         dckr_host = proc.stdout.strip()
-        if dckr_host== self.DEFAULT_DOCKER_HOST:
+        if dckr_host == self.DEFAULT_DOCKER_HOST:
             print_out('Docker uses default socket', verbose=True)
             return
         dckr_host_parsed = urllib.parse.urlparse(proc.stdout.strip())
@@ -799,8 +830,15 @@ class ScriptConfigurator:
         if self.args.addons is None:
             self.conf.selected_addons = [ADDONS_MAPPING[i] for i in ADDONS_SELECTOR['FREE']]
         else:
+            inp_list = self.args.addons.copy()
+            if _MIGRATIONS_NAME in inp_list:
+                inp_list.remove(_MIGRATIONS_NAME)
+                if self.args.compose_ref in self.conf.SUPPORTED_REFS:
+                    self.conf.migrations_ref = self.args.compose_ref
+                else:
+                    self.conf.migrations_ref = RELEASE_REF
             try:
-                selected_addons_names = list({name for sel in self.args.addons for name in ADDONS_SELECTOR[sel]})
+                selected_addons_names = list({name for sel in inp_list for name in ADDONS_SELECTOR[sel]})
             except KeyError as err:
                 bad_name = str(err).strip("'")
                 dosa = f'Unknown addon name `{bad_name}`'
@@ -860,7 +898,7 @@ class ScriptConfigurator:
             admin_pass = self.interactions.ask_optional(
                 'Salt.Box Administartor\'s password (leave empty to generate)')
             if admin_pass is not None:
-                admin_secret=f'{ADMIN_SECRET_NAME}={admin_pass}'
+                admin_secret = f'{ADMIN_SECRET_NAME}={admin_pass}'
                 self.args.explicit_secret.append(admin_secret)
                 self.cmd += ['--explicit-secret', admin_secret]
 
@@ -932,7 +970,7 @@ class Checker:
 
     def _check_cwd(self) -> None:
         atta = Path(__file__).name
-        content = {i.name for i in Path.cwd().iterdir()}
+        content = {i.name for i in CWD.iterdir()}
         print_out('CWD content: ' + ', '.join(content), verbose=True)
         content -= {atta}
         if content:
@@ -970,7 +1008,7 @@ class Checker:
             raise CheckError(err) from None
         if proc.returncode != 0:
             dosa = f'Command `{" ".join(cmd)}` failed'
-            dtl = 'Process stderr:\n' +  proc.stderr
+            dtl = 'Process stderr:\n' + proc.stderr
             raise CheckError(dosa, details=dtl)
         ver_str = proc.stdout.strip().split()[-1]
         print_out(f'Git version is `{ver_str}`')
@@ -986,7 +1024,7 @@ class Checker:
             raise CheckError(err) from None
         if proc.returncode != 0:
             dosa = f'Command `{" ".join(docker_cmd)}` failed. May be use `sudo` to run as root?'
-            dtl = 'Process stderr:\n' +  proc.stderr
+            dtl = 'Process stderr:\n' + proc.stderr
             raise CheckError(dosa, details=dtl)
         docker_ver_str = proc.stdout.strip()
         print_out(f'Docker version string is `{docker_ver_str}`')
@@ -1003,7 +1041,7 @@ class Checker:
             raise CheckError(err) from None
         if proc.returncode != 0:
             dosa = f'Command `{" ".join(compose_cmd)}` failed. Is Docker Compose installed?'
-            dtl = 'Process stderr:\n' +  proc.stderr
+            dtl = 'Process stderr:\n' + proc.stderr
             raise CheckError(dosa, details=dtl)
         compose_ver_str = proc.stdout.strip()
         compose_ver = Version.from_str(compose_ver_str)
@@ -1086,7 +1124,7 @@ def download(args: argparse.Namespace, config: Config) -> None:
         print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{addon.ref}` (SHA {sha})')
         print_out(f'URL: {addon.repo.url_for_ref(addon.ref)}', verbose=True)
         addon.repo.obtain_ref(
-            use_git=args.git, ref=addon.ref,output_dir=Path(addon.base_dir), progress=progress)
+            use_git=args.git, ref=addon.ref, output_dir=Path(addon.base_dir), progress=progress)
         print_out()
 
 
@@ -1126,7 +1164,7 @@ def configure_system(config: Config) -> None:
 
     override.extend([
         f"SALTBOX_ADMIN_USERNAME='{config.admin_name}'",
-        f"WEB_SERVER_OUTER_SOCKET='{config.host}:{config.port}'"
+        f"WEB_SERVER_OUTER_SOCKET='{config.outer_socket}'"
     ])
     if config.is_host_seems_ip and not config.force_host_as_name:
         override.append(f"WEB_SERVER_SSL_ALT_NAMES_IP='127.0.0.1,{config.host}'")
@@ -1143,6 +1181,36 @@ def configure_system(config: Config) -> None:
     print_out(f'Override file `{ENV_OVERRIDE}` has been saved', '')
 
 
+def _deploy_migrations_hook(args: argparse.Namespace, config: Config) -> None:
+    if config.migrations_ref is None:
+        return
+    with Path(LOCAL_PATH / f'secrets/{MONGO_ADMIN_SECRET_NAME}').open('r') as f:
+        mongo_secr = f.read()
+    mig_dpl_cmd = [
+        str(_INSTALL_MIGRATIONS_BIN),
+        '--path', str(CWD),
+        '--compose-ref', config.migrations_ref,
+        '--discovery-host', 'saltbox-gateway',
+        '--discovery-port', '8001',
+        '--saltbox-outer-socket', config.outer_socket,
+        '--discovery-instance-host', 'migrations-backend',
+        '--discovery-front-container-name', 'migrations-frontend',
+        '--rabbitmq-host', 'rabbitmq',
+        'NETWORK_NAME=saltbox_default',
+        'NETWORK_EXTERNAL=true',
+    ]
+    if args.cleanup:
+        mig_dpl_cmd.append('--cleanup')
+    if args.git:
+        mig_dpl_cmd.append('--git')
+    if args.no_progress:
+        mig_dpl_cmd.append('--no-progress')
+    if args.skip_run:
+        print_out('Remember Salt.Box Migrations requires separate command to start!', '')
+        mig_dpl_cmd.append('--skip-run')
+    run_cmd(mig_dpl_cmd, extra_env={'MONGO_ADMIN_PASSWORD': mongo_secr})
+
+
 def run(args: argparse.Namespace, config: Config) -> None:
     ep_cmd = ENTRYPOINT.copy()
     if args.no_progress:
@@ -1150,7 +1218,7 @@ def run(args: argparse.Namespace, config: Config) -> None:
 
     if config.is_token_required:
         run_cmd([*ep_cmd, '--only-env'])
-        registry = get_dotenv_var(name = REGISTRY_DOTENV_VAR, dotenv=Path('.env'))
+        registry = get_dotenv_var(name=REGISTRY_DOTENV_VAR, dotenv=Path('.env'))
         if not registry:
             dosa = f'Failed to obtain `{REGISTRY_DOTENV_VAR}`'
             raise InstallerError(dosa)
@@ -1158,22 +1226,17 @@ def run(args: argparse.Namespace, config: Config) -> None:
         cmd = ['docker', 'login', '--username', config.registry_user, '--password-stdin', docker_srv]
         run_cmd(cmd=cmd, input=TOKEN)
 
-    if args.explicit_secret:
-        cmd = PREMAKE_SECRETS_CMD.copy()
-        for val in args.explicit_secret:
-            cmd += ['--explicit', val]
-        run_cmd(cmd)
+    cmd = PREMAKE_SECRETS_CMD.copy()
+    for val in args.explicit_secret:
+        cmd += ['--explicit', val]
+    run_cmd(cmd)
 
     if config.cleanup:
         ep_cmd.append('--drop-data')
-    ep_cmd_str = ' '.join(ep_cmd)
-    print_out(f'Running `{ep_cmd_str}`', '')
-    sys.stdout.flush()
-    sys.stderr.flush()
-    if args.skip_run:
-        print_out('Skipping run!', '')
-        return
-    os.execv(ep_cmd[0], ep_cmd)
+
+    run_cmd(ep_cmd, skip=args.skip_run)
+
+    _deploy_migrations_hook(args=args, config=config)
 
 
 def main() -> None:
