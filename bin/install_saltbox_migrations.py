@@ -170,9 +170,9 @@ def _make_secrets(output_dir: Path) -> None:
 def make_override(args: argparse.Namespace) -> List[str]:
     if args.internal:
         pairs = [
+            ('EXPOSE_HOST', '127.0.0.1'),
             ('NETWORK_NAME', 'saltbox_default'),
             ('NETWORK_EXTERNAL', 'true'),
-            ('SALTBOX_GATEWAY_IP', 'saltbox-gateway'),
             ('RABBITMQ_HOST', 'rabbitmq'),
             ('DISCOVERY_IS_EXTERNAL', 'False'),
             ('DISCOVERY_SERVER_OUTER_SOCKET', args.saltbox_outer_socket),
@@ -183,7 +183,6 @@ def make_override(args: argparse.Namespace) -> List[str]:
         ]
     else:
         pairs = [
-            ('SALTBOX_GATEWAY_IP', args.saltbox_host),
             ('RABBITMQ_HOST', args.saltbox_host),
             ('DISCOVERY_SERVER_OUTER_SOCKET', args.saltbox_outer_socket),
             ('DISCOVERY_DISCOVERY_URL', f'https://{args.saltbox_host}:{args.saltbox_port}/api/discovery'),
