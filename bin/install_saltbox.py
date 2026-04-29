@@ -1190,14 +1190,8 @@ def _deploy_migrations_hook(args: argparse.Namespace, config: Config) -> None:
         str(_INSTALL_MIGRATIONS_BIN),
         '--path', str(CWD),
         '--compose-ref', config.migrations_ref,
-        '--discovery-host', 'saltbox-gateway',
-        '--discovery-port', '8001',
         '--saltbox-outer-socket', config.outer_socket,
-        '--discovery-instance-host', 'migrations-backend',
-        '--discovery-front-container-name', 'migrations-frontend',
-        '--rabbitmq-host', 'rabbitmq',
-        'NETWORK_NAME=saltbox_default',
-        'NETWORK_EXTERNAL=true',
+        '--internal',
     ]
     if args.cleanup:
         mig_dpl_cmd.append('--cleanup')
@@ -1234,6 +1228,7 @@ def run(args: argparse.Namespace, config: Config) -> None:
     if config.cleanup:
         ep_cmd.append('--drop-data')
 
+    print_out()
     run_cmd(ep_cmd, skip=args.skip_run)
 
     _deploy_migrations_hook(args=args, config=config)
