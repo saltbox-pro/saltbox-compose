@@ -19,7 +19,7 @@ import argparse
 import shutil
 import sys
 from pathlib import Path
-from typing import NoReturn
+from typing import List, NoReturn
 
 from install_saltbox import RELEASE_REF, TOKEN, TOKEN_NAME, VERSION_TAG_PATTERN, GitLabRepo, cd, print_err, run_cmd
 
@@ -36,6 +36,24 @@ KNOWN_REF = ['dev', 'master', RELEASE_REF]
 def error(msg: str) -> NoReturn:
     print_err('', msg, '')
     sys.exit(1)
+
+
+def validate_args(args: argparse.Namespace) -> argparse.Namespace:
+    if (
+        args.compose_ref not in KNOWN_REF and
+        not VERSION_TAG_PATTERN.match(args.compose_ref)
+    ):
+        error(f'Unsupported `--compose-ref` value `{args.compose_ref}`')
+
+    external_triade = ['saltbox_host', 'saltbox_port', 'migrations_host']
+    external_triade_vals = [getattr(args, i) for i in external_triade]
+    substr = ', '.join(f'`--{i.replace("_", "-")}`' for i in external_triade)
+    if not args.internal and None in external_triade_vals:
+        error(f'Flags {substr} are all required without `--internal` flag')
+    if args.internal and any([i is not None for i in external_triade_vals]):
+        error(f'Flags {substr} are ignored with `--internal` flag')
+
+    return args
 
 
 def get_args() -> argparse.Namespace:
@@ -62,49 +80,46 @@ def get_args() -> argparse.Namespace:
         )
     )
     parser.add_argument(
-        '--discovery-host',
-        type=str,
-        required=True,
-        help=(
-            'IP address (not loopback e.g. 127.0.0.1) or '
-            'DNS name (non-local, not from `/etc/hosts`) to connect to Salt.Box'
-        ),
-    )
-    parser.add_argument(
-        '--discovery-port',
-        type=int,
-        default=443,
-        help='Port to access Salt.Box instance',
-    )
-    parser.add_argument(
         '--saltbox-outer-socket',
         type=str,
         required=True,
         help='Usually value of `saltbox-compose/.env` WEB_SERVER_OUTER_SOCKET var',
     )
     parser.add_argument(
-        '--discovery-instance-host',
-        type=str,
-        required=True,
-        help='Salt.Box Migrations callback IP address or resolvable for Salt.Box hostname',
+        '--internal',
+        action='store_true',
+        help=(
+            'If current host has Salt.Box instance, shared Docker network will '
+            'be used to connect the Salt.Box Migrations.'
+        )
     )
     parser.add_argument(
-        '--discovery-front-container-name',
+        '--saltbox-host',
         type=str,
         help=(
-            'Address for Salt.Box to obtain Migrations Frontend. '
-            'By default equals to `--discovery-instance-host` which is OK '
-            'for external Salt.Box Migrations instance'
+            'IP address (not loopback e.g. 127.0.0.1) or '
+            'DNS name (non-local, not from `/etc/hosts`) to connect to Salt.Box. '
+            'The host must be accessible for Migrations containers. Real IP addres '
+            'of a network interface is a good choice.'
         ),
     )
     parser.add_argument(
-        '--rabbitmq-host',
+        '--saltbox-port',
+        type=int,
+        help=(
+            'Port to access Salt.Box instance. Usually matches '
+            '`--saltbox-outer-socket` port, but may differ if '
+            'the whole installation is behind an outer reverse-proxy.'
+        )
+    )
+    parser.add_argument(
+        '--migrations-host',
         type=str,
         help=(
-            'Adddress to connect to AMPQ dispatcher. '
-            'By default equals to `--discovery-host` which is OK for external '
-            'Salt.Box Migrations instance'
-        ),
+            'Salt.Box Migrations callback IP address or hostname which is '
+            'resolvable and accessible for Salt.Box. May match `--saltbox-host` '
+            'for a same-host installation.'
+        )
     )
     # END OF DOTENV RELATED PARAMS
     parser.add_argument(
@@ -137,17 +152,7 @@ def get_args() -> argparse.Namespace:
         action='store_true',
         help='Prepare but do not run',
     )
-    args = parser.parse_args()
-    if (
-        args.compose_ref not in KNOWN_REF and
-        not VERSION_TAG_PATTERN.match(args.compose_ref)
-    ):
-        error(f'Unsupported `--compose-ref` value `{args.compose_ref}`')
-    if args.discovery_front_container_name is None:
-        args.discovery_front_container_name = args.discovery_instance_host
-    if args.rabbitmq_host is None:
-        args.rabbitmq_host = args.discovery_host
-    return args
+    return validate_args(parser.parse_args())
 
 
 def _make_secrets(output_dir: Path) -> None:
@@ -162,6 +167,32 @@ def _make_secrets(output_dir: Path) -> None:
     run_cmd(mk_scrts_cmd)
 
 
+def make_override(args: argparse.Namespace) -> List[str]:
+    if args.internal:
+        pairs = [
+            ('NETWORK_NAME', 'saltbox_default'),
+            ('NETWORK_EXTERNAL', 'true'),
+            ('SALTBOX_GATEWAY_IP', 'saltbox-gateway'),
+            ('RABBITMQ_HOST', 'rabbitmq'),
+            ('DISCOVERY_IS_EXTERNAL', 'False'),
+            ('DISCOVERY_SERVER_OUTER_SOCKET', args.saltbox_outer_socket),
+            ('DISCOVERY_DISCOVERY_URL', 'http://saltbox-gateway:8001/api/discovery'),
+            ('DISCOVERY_FRONT_CONTAINER_NAME', 'migrations-frontend'),
+            ('DISCOVERY_FRONT_CONTAINER_PORT', '80'),
+            ('DISCOVERY_INSTANCE_HOST', 'migrations-backend'),
+        ]
+    else:
+        pairs = [
+            ('SALTBOX_GATEWAY_IP', args.saltbox_host),
+            ('RABBITMQ_HOST', args.saltbox_host),
+            ('DISCOVERY_SERVER_OUTER_SOCKET', args.saltbox_outer_socket),
+            ('DISCOVERY_DISCOVERY_URL', f'https://{args.saltbox_host}:{args.saltbox_port}/api/discovery'),
+            ('DISCOVERY_INSTANCE_HOST', args.migrations_host),
+            ('DISCOVERY_FRONT_CONTAINER_NAME', args.migrations_host),
+        ]
+    return [f"{key}='{val}'" for key, val in pairs]
+
+
 def main() -> None:
     if TOKEN is None:
         error(f'Missing required `{TOKEN_NAME}` environment variable to install proprietary Migrations subsystem')
@@ -171,20 +202,14 @@ def main() -> None:
 
     ref = MIGRATIONS_REPO.normalize_ref(args.compose_ref)
 
-    override = [
-        ('SALTBOX_GATEWAY_IP', args.discovery_host),
-        ('DISCOVERY_SERVER_OUTER_SOCKET', args.saltbox_outer_socket),
-        ('DISCOVERY_DISCOVERY_URL', f'https://{args.discovery_host}:{args.discovery_port}/api/discovery'),
-        ('DISCOVERY_INSTANCE_HOST', args.discovery_instance_host),
-        ('DISCOVERY_FRONT_CONTAINER_NAME', args.discovery_front_container_name),
-        ('RABBIT_HOST', args.rabbitmq_host),
-    ]
+    override = make_override(args)
+    override.extend(args.OVERRIDE)
 
     if not VERSION_TAG_PATTERN.match(ref):
         # Supposed ref is a branch
         override = [
-            ('FRONTEND_IMAGE_TAG', ref),
-            ('BACKEND_IMAGE_TAG', ref),
+            f"FRONTEND_IMAGE_TAG='{ref}'",
+            f"BACKEND_IMAGE_TAG='{ref}'",
             *override,
         ]
 
@@ -206,10 +231,8 @@ def main() -> None:
             file.write('#' * 80 + '\n')
             file.write('## OVERRIDED VALUES\n')
             file.write('#' * 80 + '\n')
-            for key, val in override:
-                file.write(f"{key}='{val}'\n")
-            for val in args.OVERRIDE:
-                file.write(f'{val}\n')
+            for line in override:
+                file.write(line + '\n')
         if args.cleanup:
             run_cmd(CLEANUP_CMD)
         run_cmd(UP_CMD, skip=args.skip_run)
