@@ -41,6 +41,8 @@ be ran from the root of repo by relative path like `./bin/sb-compose.sh`.
   optionally inject it into Firefox).
 - `git_pull_dev_repos.py` — only for developers — update sources Git repositories.
 - `install_saltbox.sh` — donwload Salt.Box Compose, configure and run.
+- `install_saltbox_migrations.sh` — donwload Salt.Box Migrations Compose,
+  configure and run.
 - `make_secrets.py` — create required by system passwords.
 - `sb-compose.sh` — thin wrapper over the `docker compose` command is the preferred way to
 manipulate a running instance.
@@ -96,6 +98,7 @@ flowchart LR
                 up[Up Compose]
             end
         end
+        update_and_run.sh --> install_saltbox_migrations.py
     end
 ```
 
