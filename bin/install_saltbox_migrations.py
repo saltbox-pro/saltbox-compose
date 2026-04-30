@@ -17,9 +17,8 @@ The script depends on some other scripts in `saltbox-compose/bin/`
 
 import argparse
 import shutil
-import sys
 from pathlib import Path
-from typing import List, NoReturn
+from typing import List
 
 from install_saltbox import (
     RELEASE_REF,
@@ -27,9 +26,10 @@ from install_saltbox import (
     TOKEN_NAME,
     VERSION_TAG_PATTERN,
     GitLabRepo,
+    InstallerError,
     cd,
     check_repo_compability_level,
-    print_err,
+    print_installer_error_and_exit,
     run_cmd,
 )
 
@@ -44,25 +44,20 @@ KNOWN_REF = ['dev', 'master', RELEASE_REF]
 MIGRATIONS_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL = 1
 
 
-def error(msg: str) -> NoReturn:
-    print_err('', msg, '')
-    sys.exit(1)
-
-
 def validate_args(args: argparse.Namespace) -> argparse.Namespace:
     if (
         args.compose_ref not in KNOWN_REF and
         not VERSION_TAG_PATTERN.match(args.compose_ref)
     ):
-        error(f'Unsupported `--compose-ref` value `{args.compose_ref}`')
+        raise InstallerError(f'Unsupported `--compose-ref` value `{args.compose_ref}`')
 
     external_triade = ['saltbox_host', 'saltbox_port', 'migrations_host']
     external_triade_vals = [getattr(args, i) for i in external_triade]
     substr = ', '.join(f'`--{i.replace("_", "-")}`' for i in external_triade)
     if not args.internal and None in external_triade_vals:
-        error(f'Flags {substr} are all required without `--internal` flag')
+        raise InstallerError(f'Flags {substr} are all required without `--internal` flag')
     if args.internal and any([i is not None for i in external_triade_vals]):
-        error(f'Flags {substr} are ignored with `--internal` flag')
+        raise InstallerError(f'Flags {substr} are ignored with `--internal` flag')
 
     return args
 
@@ -205,7 +200,8 @@ def make_override(args: argparse.Namespace) -> List[str]:
 
 def main() -> None:
     if TOKEN is None:
-        error(f'Missing required `{TOKEN_NAME}` environment variable to install proprietary Migrations subsystem')
+        dosa = f'Missing required `{TOKEN_NAME}` environment variable to install proprietary Migrations subsystem'
+        raise InstallerError(dosa)
 
     args = get_args()
     output_dir = args.path / 'saltbox-migration-compose'
@@ -253,4 +249,7 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except InstallerError as papa:
+        print_installer_error_and_exit(papa)
