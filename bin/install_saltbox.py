@@ -58,6 +58,8 @@ ADMIN_SECRET_NAME = 'saltbox_admin_password'
 MONGO_ADMIN_SECRET_NAME = 'mongo_root_password'
 RELEASE_REF = 'RELEASE'
 REGISTRY_DOTENV_VAR = 'IMAGE_REGISTRY'
+INSTALLER_METADATA_FILE = '.installer.json'
+SCRIPT_NAME = 'install_saltbox.py'
 
 _CACHE_HOME = Path(os.environ.get('XDG_CACHE_HOME', Path.home() / '.cache'))
 CACHE_DIR = _CACHE_HOME / 'install_saltbox'
@@ -66,6 +68,7 @@ CACHE_DIR = _CACHE_HOME / 'install_saltbox'
 PREMAKE_SECRETS_CMD = ['bin/make_secrets.py']
 ENTRYPOINT = ['bin/update_and_run.sh', '--no-root', '--force', '--detach', '--no-git-pull']
 
+SALTBOX_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL = 1
 MIN_DOCKER_VERSION = '25.0.0'
 MIN_COMPOSE_VERSION = '2.20.2'
 MIN_PYTHON_VERSION = '3.7.3'
@@ -99,12 +102,8 @@ class InstallerError(RuntimeError):
 
 
 class CheckError(InstallerError): ...
-
-
-class ConfigError(InstallerError): ...
-
-
-class HttpNotFoundError(InstallerError): ...
+class ConfigError(InstallerError): ...  # noqa: E302
+class HttpNotFoundError(InstallerError): ...  # noqa: E302
 
 
 def get_args() -> argparse.Namespace:
@@ -279,6 +278,47 @@ def print_err(*args, verbose: bool = False) -> None:
     _print(*args, verbose=verbose, file=sys.stderr)
 
 
+@dataclasses.dataclass
+class InsallerMetadata:
+    compatibility_level: int
+
+
+def get_installer_meta(repo_path: Path) -> Optional[InsallerMetadata]:
+    meta_full_path = repo_path / INSTALLER_METADATA_FILE
+    dir_name = repo_path.name
+    if not meta_full_path.exists():
+        print_err('', f'No installer metadata file `{INSTALLER_METADATA_FILE}` in {dir_name}', '')
+        return None
+    with meta_full_path.open('r') as f:
+        data = json.load(f)
+    try:
+        return InsallerMetadata(**data)
+    except TypeError as err:
+        dtls = (
+            f'Repository `{dir_name}` contains unexpectedly formatted\n'
+            'Installer metadata file. Please report to support or try another\n'
+            f'{SCRIPT_NAME} or Salt.Box Compose version.'
+        )
+        raise InstallerError(err, details=dtls)
+
+
+def check_repo_compability_level(repo_path: Path, required_level: Optional[int]) -> None:
+    if required_level is None:
+        return
+    meta = get_installer_meta(repo_path)
+    cmp_lvl = meta.compatibility_level if meta else None
+    if cmp_lvl is None or cmp_lvl < required_level:
+        dir_name = repo_path.name
+        cmp_str = str(cmp_lvl) if cmp_lvl is not None else 'unspecified'
+        msg = f'Repository `{dir_name}` seems incompatible with this `{SCRIPT_NAME}` version'
+        details = (
+            f'The script requires compability level {required_level} for `{dir_name}`, but\n'
+            f'repository level is {cmp_str}. Please try another `--compose-ref` value\n'
+            'or contact support.'
+        )
+        raise CheckError(message=msg, details=details)
+
+
 def get_dotenv_var(name: str, dotenv: Path = Path('.env')) -> str:
     """ Read str value from env-file """
     cmd = ['sh', '-c', f'. \'{dotenv.absolute()}\' && printf \'%s\' "${name}"']
@@ -383,7 +423,7 @@ class Config:
                 'environment variable:\n'
                 f"{INDENT}$ export {TOKEN_NAME}='YOUR_TOKEN'\n\n"
                 'Or pass it before an install command (more secure):\n'
-                f"{INDENT}$ {TOKEN_NAME}='YOUR_TOKEN' ./install_saltbox.py ..."
+                f"{INDENT}$ {TOKEN_NAME}='YOUR_TOKEN' ./{SCRIPT_NAME} ..."
             )
             raise ConfigError(message=dosa, details=dtls)
 
@@ -706,6 +746,8 @@ class AddonModule:
     switchable_image_tags: List[str]
     secrets_configs: List[str] = dataclasses.field(default_factory=list)
     ref: str = RELEASE_REF
+    # Compare to a value from a special file in the repository
+    required_compatibility_level: Optional[int] = None
 
     def __post_init__(self) -> None:
         kwargs: Dict[str, Any] = {'url': self.url}
@@ -783,7 +825,7 @@ class ScriptConfigurator:
             force_host_as_name=args.host_is_name,
             extra_override=args.OVERRIDE.copy()
         )
-        self.cmd: List[str] = ['./install_saltbox.py']
+        self.cmd: List[str] = [f'./{SCRIPT_NAME}']
 
     def _metric_docker_hook(self) -> None:
         addon_nama = 'Metric'
@@ -1110,6 +1152,10 @@ def download(args: argparse.Namespace, config: Config) -> None:
     print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
     COMPOSE_REPO.obtain_ref(
         use_git=args.git, ref=config.compose_ref, output_dir=LOCAL_PATH, progress=progress)
+    check_repo_compability_level(
+        repo_path=LOCAL_PATH,
+        required_level=SALTBOX_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL,
+    )
     print_out()
 
     glob_iters = [BIN_DIR.glob(ptrn) for ptrn in SCRIPT_SUFFIXES]
@@ -1123,8 +1169,13 @@ def download(args: argparse.Namespace, config: Config) -> None:
         sha = addon.repo.resolve_ref_to_sha(addon.ref)
         print_out(f'Downloading Salt.Box add-on module {addon.name} reference `{addon.ref}` (SHA {sha})')
         print_out(f'URL: {addon.repo.url_for_ref(addon.ref)}', verbose=True)
+        repo_path = Path(addon.base_dir)
         addon.repo.obtain_ref(
-            use_git=args.git, ref=addon.ref, output_dir=Path(addon.base_dir), progress=progress)
+            use_git=args.git, ref=addon.ref, output_dir=repo_path, progress=progress)
+        check_repo_compability_level(
+            repo_path=repo_path,
+            required_level=addon.required_compatibility_level,
+        )
         print_out()
 
 

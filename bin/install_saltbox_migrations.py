@@ -21,7 +21,17 @@ import sys
 from pathlib import Path
 from typing import List, NoReturn
 
-from install_saltbox import RELEASE_REF, TOKEN, TOKEN_NAME, VERSION_TAG_PATTERN, GitLabRepo, cd, print_err, run_cmd
+from install_saltbox import (
+    RELEASE_REF,
+    TOKEN,
+    TOKEN_NAME,
+    VERSION_TAG_PATTERN,
+    GitLabRepo,
+    cd,
+    check_repo_compability_level,
+    print_err,
+    run_cmd,
+)
 
 MIN_PYTHON = '3.7.3'
 MIGRATIONS_REPO = GitLabRepo(
@@ -31,6 +41,7 @@ MIGRATIONS_REPO = GitLabRepo(
 UP_CMD = ['docker', 'compose', 'up', '--detach']
 CLEANUP_CMD = ['docker', 'compose', 'down', '--volumes', '--remove-orphans']
 KNOWN_REF = ['dev', 'master', RELEASE_REF]
+MIGRATIONS_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL = 1
 
 
 def error(msg: str) -> NoReturn:
@@ -218,6 +229,10 @@ def main() -> None:
         ref=ref,
         output_dir=output_dir,
         progress=not args.no_progress,
+    )
+    check_repo_compability_level(
+        repo_path=output_dir,
+        required_level=MIGRATIONS_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL
     )
 
     _make_secrets(output_dir=output_dir)
