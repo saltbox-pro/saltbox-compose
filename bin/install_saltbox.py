@@ -470,7 +470,10 @@ class Config:
         data.append(f'Salt.Box Administrator\'s login is: `{self.admin_name}`')
         data.append('Salt.Box Administrator\'s password is: [ SEARCH IN FURTHER OUTPUT ]')
         if self.selected_addons:
-            addons_str = ', '.join(f'{a.name} ({a.license})' for a in self.selected_addons)
+            addons_spec_list = [f'{a.name} ({a.license})' for a in self.selected_addons]
+            if self.migrations_ref:
+                addons_spec_list.append(f'{_MIGRATIONS_NAME} ({_MIGRATIONS_LICENSE})')
+            addons_str = ', '.join(addons_spec_list)
             data.append(f'Add-on modules: {addons_str}')
         data.append(f'Cleanup: {"YES!!! " if self.cleanup else "no"}')
         return '\n'.join(data)
@@ -802,6 +805,7 @@ ADDONS_MODULES = [
 ]
 ADDONS_MAPPING = {a.name: a for a in ADDONS_MODULES}
 _MIGRATIONS_NAME = 'Migrations'
+_MIGRATIONS_LICENSE = 'EULA'
 _INSTALL_MIGRATIONS_BIN = BIN_DIR / 'install_saltbox_migrations.py'
 ADDONS_SELECTOR = {
     **{i: [i] for i in ADDONS_MAPPING},
