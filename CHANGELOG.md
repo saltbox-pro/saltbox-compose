@@ -13,6 +13,11 @@ if possible and purge browser redirects.
 ## [Unreleased] - YYYY-MM-DD
 
 ### Added
+- `install_saltbox_migrations.py` helper script.
+- `install_saltbox.py` uses `install_saltbox_migrations.py` to install
+  `Migrations` as an addon.
+- `install_saltbox.py`: reads `compability_level` from `.installer.json` file
+  in every repo to guarantee to work with compatible refs only.
 
 ### Changed
 
