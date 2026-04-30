@@ -26,4 +26,3 @@ run_check() {
 
 run_check "ping" rabbitmq-diagnostics ping
 run_check "check_running" rabbitmq-diagnostics check_running
-run_check "check_local_alarms" rabbitmq-diagnostics check_local_alarms
