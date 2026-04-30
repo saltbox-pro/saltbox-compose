@@ -872,15 +872,8 @@ class ScriptConfigurator:
         if self.args.addons is None:
             self.conf.selected_addons = [ADDONS_MAPPING[i] for i in ADDONS_SELECTOR['FREE']]
         else:
-            inp_list = self.args.addons.copy()
-            if _MIGRATIONS_NAME in inp_list:
-                inp_list.remove(_MIGRATIONS_NAME)
-                if self.args.compose_ref in self.conf.SUPPORTED_REFS:
-                    self.conf.migrations_ref = self.args.compose_ref
-                else:
-                    self.conf.migrations_ref = RELEASE_REF
             try:
-                selected_addons_names = list({name for sel in inp_list for name in ADDONS_SELECTOR[sel]})
+                selected_addons_names = list({name for sel in self.args.addons for name in ADDONS_SELECTOR[sel]})
             except KeyError as err:
                 bad_name = str(err).strip("'")
                 dosa = f'Unknown addon name `{bad_name}`'
@@ -889,6 +882,12 @@ class ScriptConfigurator:
                     'Flag can be specified multiple times.'
                 )
                 raise InstallerError(message=dosa, details=dtls)
+            if _MIGRATIONS_NAME in selected_addons_names:
+                selected_addons_names.remove(_MIGRATIONS_NAME)
+                if self.args.compose_ref in self.conf.SUPPORTED_REFS:
+                    self.conf.migrations_ref = self.args.compose_ref
+                else:
+                    self.conf.migrations_ref = RELEASE_REF
             self.conf.selected_addons = [ADDONS_MAPPING[i] for i in selected_addons_names]
             for addon in self.conf.selected_addons:
                 addon.ref = self.conf.compose_ref
