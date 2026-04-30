@@ -42,7 +42,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Optional, TextIO, Type, TypeVar, Union
+from typing import Any, ClassVar, Dict, List, NoReturn, Optional, TextIO, Type, TypeVar, Union
 
 ENC = 'UTF-8'
 INDENT = 2 * ' '
@@ -1285,6 +1285,21 @@ def run(args: argparse.Namespace, config: Config) -> None:
     _deploy_migrations_hook(args=args, config=config)
 
 
+def print_installer_error_and_exit(err: InstallerError) -> NoReturn:
+    print_err(40 * '_', '', err, '')
+    if err.details:
+        print_err(textwrap.indent(str(err.details), INDENT), '')
+    if isinstance(err, CheckError):
+        print_err(
+            'Requiremens check failed',
+            'HINT: Checks can be omitted with `--skip-check` (NOT RECOMMENDED)',
+            ''
+        )
+        sys.exit(2)
+    print_err('Exit on error', '')
+    sys.exit(1)
+
+
 def main() -> None:
     global VERBOSE
     args = get_args()
@@ -1310,18 +1325,7 @@ def main() -> None:
         with cd(LOCAL_PATH):
             run(args, config=conf)
     except InstallerError as papa:
-        print_err(40 * '_', '', papa, '')
-        if papa.details:
-            print_err(textwrap.indent(str(papa.details), INDENT), '')
-        if isinstance(papa, CheckError):
-            print_err(
-                'Requiremens check failed',
-                'HINT: Checks can be omitted with `--skip-check` (NOT RECOMMENDED)',
-                ''
-            )
-            sys.exit(2)
-        print_err('Exit on error', '')
-        sys.exit(1)
+        print_installer_error_and_exit(papa)
 
 
 if __name__ == '__main__':
