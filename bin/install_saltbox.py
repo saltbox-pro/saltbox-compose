@@ -948,15 +948,15 @@ class ScriptConfigurator:
                 self.cmd += ['--explicit-secret', admin_secret]
 
         if not self.args.keep_addon_tags and self.conf.compose_ref in {Config.STABLE_BRANCH, Config.DEV_BRANCH}:
-            msg = f'Select tag `{self.args.compose_ref}` for add-on modules?'
+            msg = f'Select tag `{self.conf.compose_ref}` for add-on modules?'
             if self.interactions.ask_confirm(msg):
                 for addon in self.conf.selected_addons:
-                    addon.ref = self.args.compose_ref
+                    addon.ref = self.conf.compose_ref
             else:
                 self.cmd.append('--keep-addon-tags')
         if not self.args.keep_image_tags and self.conf.compose_ref == Config.DEV_BRANCH:
             self.conf.set_image_tags = self.interactions.ask_confirm(
-                f'Select tag `{self.args.compose_ref}` for main images?')
+                f'Select tag `{self.conf.compose_ref}` for main images?')
             if not self.conf.set_image_tags:
                 self.cmd.append('--keep-image-tags')
 
