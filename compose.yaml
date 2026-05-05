@@ -17,6 +17,18 @@ x-default-service: &default
   restart: 'always'
   stop_grace_period: ${STOP_GRACE_PERIOD}
 
+x-mongo-default-service: &mongo-default
+  <<: *default
+  image: '${IMAGE_REGISTRY}/saltbox-compose/mongodb:${MONGODB_IMAGE_TAG}'
+  command: ['--quiet']
+  secrets:
+    - mongo_key_file
+    - mongo_root_password
+    - mongo_user_password
+    - mongo_exporter_password
+  ulimits:
+    nofile: 65535
+
 services:
   proxy:
     <<: *default
@@ -564,51 +576,39 @@ services:
       - ${FRONTEND_HTTP_PORT}
 
   mongo:
-    <<: *default
-    hostname: mongo  # Important for replica set
-    image: '${IMAGE_REGISTRY}/saltbox-compose/mongodb:${MONGODB_IMAGE_TAG}'
+    <<: *mongo-default
+    hostname: '${MONGO_HOSTNAME}'  # Important for replica set
     environment:
       MONGO_ROOT_USERNAME: root
       MONGO_ROOT_PASSWORD_FILE: '/run/secrets/mongo_root_password'
       MONGO_USER_USERNAME: '${MONGO_USER}'
       MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
       MONGOD_REPLICA_SET: '${MONGO_REPLICA_SET}'
+      MONGO_EXPORTER_USERNAME: '${MONGO_EXPORTER}'
+      MONGO_EXPORTER_PASSWORD_FILE: '/run/secrets/mongo_exporter_password'
       MONGOD_KEY_FILE: '/run/secrets/mongo_key_file'
-    command: ['--quiet']
     ports:
       - '${MONGO_EXPOSE_SOCKET}:27017'
     volumes:
       - mongo_data:/var/lib/mongo/
-    secrets:
-      - mongo_key_file
-      - mongo_root_password
-      - mongo_user_password
-    ulimits:
-      nofile: 65535
-
+ 
   mongodb-audit:
-    <<: *default
-    hostname: mongodb-audit
-    image: '${IMAGE_REGISTRY}/saltbox-compose/mongodb:${MONGODB_IMAGE_TAG}'
+    <<: *mongo-default
+    hostname: '${MONGO_AUDIT_HOSTNAME}'
     environment:
-      MONGO_ROOT_USERNAME: audit_root
-      MONGO_USER_USERNAME: '${MONGO_USER}'
       # TODO: separate user and password for audit MongoDB
+      MONGO_ROOT_USERNAME: audit_root
       MONGO_ROOT_PASSWORD_FILE: '/run/secrets/mongo_root_password'
+      MONGO_USER_USERNAME: '${MONGO_USER}'
       MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
       MONGOD_REPLICA_SET: '${MONGO_AUDIT_REPLICA_SET}'
+      MONGO_EXPORTER_USERNAME: '${MONGO_EXPORTER}'
+      MONGO_EXPORTER_PASSWORD_FILE: '/run/secrets/mongo_exporter_password'
       MONGOD_KEY_FILE: '/run/secrets/mongo_key_file'
-    command: ['--quiet']
     ports:
       - '${MONGO_AUDIT_EXPOSE_SOCKET}:27017'
     volumes:
       - mongo_audit_data:/var/lib/mongo/
-    secrets:
-      - mongo_key_file
-      - mongo_root_password
-      - mongo_user_password
-    ulimits:
-      nofile: 65535
 
   opa:
     image: '${IMAGE_REGISTRY}/saltbox-compose/opa:${OPA_IMAGE_TAG}'
@@ -671,6 +671,8 @@ secrets:
     file: secrets/mongo_root_password
   mongo_user_password:
     file: secrets/mongo_user_password
+  mongo_exporter_password:
+    file: secrets/mongo_exporter_password
   mongo_key_file:
     file: secrets/mongo_key_file
   redis_salt_ca_private_key_password:
