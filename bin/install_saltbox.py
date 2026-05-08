@@ -408,6 +408,9 @@ class Config:
     set_image_tags: bool = False
     selected_addons: List['AddonModule'] = dataclasses.field(default_factory=list)
     registry_user: str = 'install_saltbox'
+    # Migrations is a special module with totally independent Compose project.
+    # Field value means install corresponding ref of `saltbox-migration-compose`.
+    # `None` to not install Salt.Box Migrations
     migrations_ref: Optional[str] = None
 
     def validate(self) -> None:
@@ -888,15 +891,19 @@ class ScriptConfigurator:
                 raise InstallerError(message=dosa, details=dtls)
             if _MIGRATIONS_NAME in selected_addons_names:
                 selected_addons_names.remove(_MIGRATIONS_NAME)
-                if self.args.compose_ref in self.conf.SUPPORTED_REFS:
-                    self.conf.migrations_ref = self.args.compose_ref
-                else:
-                    self.conf.migrations_ref = RELEASE_REF
+                self.conf.migrations_ref = RELEASE_REF
             self.conf.selected_addons = [ADDONS_MAPPING[i] for i in selected_addons_names]
             for addon in self.conf.selected_addons:
                 addon.ref = self.conf.compose_ref
         # Early TOKEN for private Addons check
         self.conf.validate()
+
+    def _migrations_ref_hook(self) -> None:
+        if (
+            self.conf.migrations_ref is not None
+            and self.conf.compose_ref in self.conf.SUPPORTED_REFS
+        ):
+            self.conf.migrations_ref = self.conf.compose_ref
 
     def configure(self) -> Config:
         self._select_addons()
@@ -922,6 +929,8 @@ class ScriptConfigurator:
         else:
             self.conf.compose_ref = self.interactions.ask('Salt.Box Compose reference', self.conf.compose_ref)
             self.cmd += ['--compose-ref', self.conf.compose_ref]
+
+        self._migrations_ref_hook()
 
         if self.conf.compose_ref not in Config.SUPPORTED_REFS:
             supported_refs = ', '.join(Config.SUPPORTED_REFS)
