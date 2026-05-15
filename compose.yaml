@@ -534,6 +534,36 @@ services:
         condition: service_completed_successfully
         restart: false
 
+  saltbox-core-taskiq-salt-worker:
+    <<: *core
+    command: 'taskiq-salt-worker'
+    ports: []
+    depends_on:
+      redis-taskiq:
+        condition: service_started
+        restart: false
+      rabbitmq:
+        condition: service_healthy
+        restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
+        restart: false
+
+  saltbox-core-taskiq-notify-worker:
+    <<: *core
+    command: 'taskiq-notify-worker'
+    ports: []
+    depends_on:
+      redis-taskiq:
+        condition: service_started
+        restart: false
+      rabbitmq:
+        condition: service_healthy
+        restart: false
+      saltbox-core-init:
+        condition: service_completed_successfully
+        restart: false
+
   saltbox-core-taskiq-scheduler:
     <<: *core
     command: 'taskiq-scheduler'

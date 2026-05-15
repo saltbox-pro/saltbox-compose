@@ -83,6 +83,12 @@ services:
   saltbox-core-taskiq-worker:
     <<: *core
 
+  saltbox-core-taskiq-salt-worker:
+    <<: *core
+
+  saltbox-core-taskiq-notify-worker:
+    <<: *core
+
   saltbox-core-taskiq-scheduler:
     <<: *core
 
