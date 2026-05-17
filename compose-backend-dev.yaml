@@ -45,7 +45,7 @@ services:
       context: $AUDIT_BUILD_DIR
       target: dev
     environment:
-      - LOG_LEVEL=DEBUG
+      - LOG_LEVEL=${AUDIT_LOG_LEVEL}
     tty: true  # colorize logs
     image: '${LOCAL_IMAGE_NAMESPACE}/saltbox-audit:dev'
     volumes:
@@ -55,6 +55,10 @@ services:
       - '/mnt/saltbox-sdk/build/'
       - '/mnt/saltbox-sdk/saltbox_sdk.egg-info/'
       - '/mnt/saltbox-audit/saltbox_audit.egg-info/'
+
+  redis-taskiq:
+    ports:
+      - 6380:6379
 
   saltbox-core:
     <<: *core
