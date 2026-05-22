@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 __Some changes are breaking__. Cleanup Keycloak database before update
 if possible and purge browser redirects.
 
-## [Unreleased] - YYYY-MM-DD
+## [0.2.1] - 2026-05-21
 
 ### Added
 - `install_saltbox_migrations.py` helper script.
@@ -18,16 +18,28 @@ if possible and purge browser redirects.
   `Migrations` as an addon.
 - `install_saltbox.py`: reads `compability_level` from `.installer.json` file
   in every repo to guarantee to work with compatible refs only.
+- `saltbox-core-taskiq-salt-worker` and `saltbox-core-taskiq-notify-worker`
+  TaskIQ worker services in `compose.yaml`.
+- OPA rego policies for salt keys endpoints (`opa/policies/core/salt/keys/`).
+- MongoDB exporter user for metrics scraping; new `MONGO_EXPORTER`,
+  `MONGO_HOSTNAME`, `MONGO_AUDIT_HOSTNAME` variables in `base.env`.
+- `grafana_smtp_password` secret in `secrets.json`.
 
 ### Changed
 
 - `make_secrets.py`: flag `--output-dir` allows to work with an arbitrary
   output directory.
+- `base.env`: default `AUDIT_LOG_LEVEL` changed from `debug` to `info`.
+- `compose-backend-dev.yaml`: audit service `LOG_LEVEL` now uses
+  `${AUDIT_LOG_LEVEL}` variable instead of hardcoded value.
+- `compose.yaml`: MongoDB services refactored with shared
+  `x-mongo-default-service` anchor.
 
 ### Fixed
 
 - `install_saltbox.py`: ignored `OVERRIDE` positional args.
 - `install_saltbox.py`: add `--addons=NONE` option.
+- `install_saltbox.py`: fix unsetted Migrations ref in interactive mode.
 
 ### Removed
 
