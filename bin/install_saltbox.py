@@ -398,6 +398,18 @@ class Config:
     DEV_BRANCH: ClassVar = 'dev'
     SUPPORTED_REFS: ClassVar = [RELEASE_REF, STABLE_BRANCH, DEV_BRANCH]
 
+    # Non-default args mostly are interactive-agnostic
+
+    # Use Git rather than pure HTTP
+    git_clone: bool
+    # Do not show any dynamic progress
+    no_progress: bool
+    # Prepare but do not start
+    skip_run: bool
+    explicit_secrets: list[str]
+
+    # Default args mostly are interactive-related
+
     cleanup: bool = False
     host: str = 'saltbox.local'
     port: int = 443
@@ -829,6 +841,10 @@ class ScriptConfigurator:
         self.args = args
         self.interactions = interactions
         self.conf = Config(
+            git_clone=args.git,
+            no_progress=args.no_progress,
+            skip_run=args.skip_run,
+            explicit_secrets=args.explicit_secret.copy(),
             force_host_as_name=args.host_is_name,
             extra_override=args.OVERRIDE.copy()
         )
@@ -948,12 +964,12 @@ class ScriptConfigurator:
                 'Salt.Box Administrator\'s login', self.conf.admin_name)
             self.cmd += ['--admin', self.conf.admin_name]
 
-        if not any(x.startswith(f'{ADMIN_SECRET_NAME}=') for x in self.args.explicit_secret):
+        if not any(x.startswith(f'{ADMIN_SECRET_NAME}=') for x in self.conf.explicit_secrets):
             admin_pass = self.interactions.ask_optional(
                 'Salt.Box Administartor\'s password (leave empty to generate)')
             if admin_pass is not None:
                 admin_secret = f'{ADMIN_SECRET_NAME}={admin_pass}'
-                self.args.explicit_secret.append(admin_secret)
+                self.conf.explicit_secrets.append(admin_secret)
                 self.cmd += ['--explicit-secret', admin_secret]
 
         if not self.args.keep_addon_tags and self.conf.compose_ref in {Config.STABLE_BRANCH, Config.DEV_BRANCH}:
@@ -1157,13 +1173,13 @@ class Checker:
         print_out()
 
 
-def download(args: argparse.Namespace, config: Config) -> None:
-    progress = args.no_progress
+def download(config: Config) -> None:
+    progress = not config.no_progress
     sha = COMPOSE_REPO.resolve_ref_to_sha(config.compose_ref)
     print_out(f'Downloading Salt.Box Compose reference `{config.compose_ref}` (SHA {sha})...')
     print_out(f'URL: {COMPOSE_REPO.url_for_ref(config.compose_ref)}', verbose=True)
     COMPOSE_REPO.obtain_ref(
-        use_git=args.git, ref=config.compose_ref, output_dir=LOCAL_PATH, progress=progress)
+        use_git=config.git_clone, ref=config.compose_ref, output_dir=LOCAL_PATH, progress=progress)
     check_repo_compability_level(
         repo_path=LOCAL_PATH,
         required_level=SALTBOX_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL,
@@ -1183,7 +1199,7 @@ def download(args: argparse.Namespace, config: Config) -> None:
         print_out(f'URL: {addon.repo.url_for_ref(addon.ref)}', verbose=True)
         repo_path = Path(addon.base_dir)
         addon.repo.obtain_ref(
-            use_git=args.git, ref=addon.ref, output_dir=repo_path, progress=progress)
+            use_git=config.git_clone, ref=addon.ref, output_dir=repo_path, progress=progress)
         check_repo_compability_level(
             repo_path=repo_path,
             required_level=addon.required_compatibility_level,
@@ -1244,7 +1260,7 @@ def configure_system(config: Config) -> None:
     print_out(f'Override file `{ENV_OVERRIDE}` has been saved', '')
 
 
-def _deploy_migrations_hook(args: argparse.Namespace, config: Config) -> None:
+def _deploy_migrations_hook(config: Config) -> None:
     if config.migrations_ref is None:
         return
     with Path(LOCAL_PATH / f'secrets/{MONGO_ADMIN_SECRET_NAME}').open('r') as f:
@@ -1256,21 +1272,21 @@ def _deploy_migrations_hook(args: argparse.Namespace, config: Config) -> None:
         '--saltbox-outer-socket', config.outer_socket,
         '--internal',
     ]
-    if args.cleanup:
+    if config.cleanup:
         mig_dpl_cmd.append('--cleanup')
-    if args.git:
+    if config.git_clone:
         mig_dpl_cmd.append('--git')
-    if args.no_progress:
+    if config.no_progress:
         mig_dpl_cmd.append('--no-progress')
-    if args.skip_run:
+    if config.skip_run:
         print_out('Remember Salt.Box Migrations requires separate command to start!', '')
         mig_dpl_cmd.append('--skip-run')
     run_cmd(mig_dpl_cmd, extra_env={'MONGO_ADMIN_PASSWORD': mongo_secr})
 
 
-def run(args: argparse.Namespace, config: Config) -> None:
+def run(config: Config) -> None:
     ep_cmd = ENTRYPOINT.copy()
-    if args.no_progress:
+    if config.no_progress:
         ep_cmd.append('--no-progress')
 
     if config.is_token_required:
@@ -1284,7 +1300,7 @@ def run(args: argparse.Namespace, config: Config) -> None:
         run_cmd(cmd=cmd, input=TOKEN)
 
     cmd = PREMAKE_SECRETS_CMD.copy()
-    for val in args.explicit_secret:
+    for val in config.explicit_secrets:
         cmd += ['--explicit', val]
     run_cmd(cmd)
 
@@ -1292,9 +1308,9 @@ def run(args: argparse.Namespace, config: Config) -> None:
         ep_cmd.append('--drop-data')
 
     print_out()
-    run_cmd(ep_cmd, skip=args.skip_run)
+    run_cmd(ep_cmd, skip=config.skip_run)
 
-    _deploy_migrations_hook(args=args, config=config)
+    _deploy_migrations_hook(config=config)
 
 
 def print_installer_error_and_exit(err: InstallerError) -> NoReturn:
@@ -1332,10 +1348,10 @@ def main() -> None:
     try:
         Checker(args=args).check()
         conf = ScriptConfigurator(args=args, interactions=interactions).configure()
-        download(args=args, config=conf)
+        download(config=conf)
         configure_system(config=conf)
         with cd(LOCAL_PATH):
-            run(args, config=conf)
+            run(config=conf)
     except InstallerError as papa:
         print_installer_error_and_exit(papa)
 
