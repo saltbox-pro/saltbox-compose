@@ -39,6 +39,7 @@ MIGRATIONS_REPO = GitLabRepo(
     token=TOKEN,
 )
 UP_CMD = ['docker', 'compose', 'up', '--detach']
+DOWN_CMD = ['docker', 'compose', 'down']
 CLEANUP_CMD = ['docker', 'compose', 'down', '--volumes', '--remove-orphans']
 KNOWN_REF = ['dev', 'master', RELEASE_REF]
 MIGRATIONS_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL = 1
@@ -245,6 +246,8 @@ def main() -> None:
                 file.write(line + '\n')
         if args.cleanup:
             run_cmd(CLEANUP_CMD)
+        else:
+            run_cmd(DOWN_CMD)
         run_cmd(UP_CMD, skip=args.skip_run)
 
 
