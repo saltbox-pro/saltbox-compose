@@ -37,6 +37,7 @@ UID_MAX = 60000
 GID_MIN = 1000
 GID_MAX = 60000
 
+SSH_HOST_KEY_DIR = Path('/etc/openssh-keys')
 SSHD_EXEC = '/usr/sbin/sshd'
 DEFAULT_SHELL = '/usr/sbin/nologin'
 
@@ -125,7 +126,14 @@ def create_users(users_file_path) -> None:
 
 def run_sshd(port: Any) -> None:
     # Create host keys if not exists
-    subprocess.run(['ssh-keygen', '-A'], check=True)
+    SSH_HOST_KEY_DIR.mkdir(parents=True, exist_ok=True)
+    for key_type in ('rsa', 'ecdsa', 'ed25519'):
+        key_path = SSH_HOST_KEY_DIR / f'ssh_host_{key_type}_key'
+        if not key_path.exists():
+            subprocess.run(
+                ['ssh-keygen', '-q', '-t', key_type, '-N', '', '-f', str(key_path)],
+                check=True,
+            )
 
     # Test run
     subprocess.run(['/usr/sbin/sshd', '-t'], check=True)

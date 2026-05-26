@@ -661,6 +661,10 @@ services:
       SSHFS_USER: '${SSHFS_USER}'
       USERS_FILE: '/mnt/sshfs_users.json'
       AUTHORIZED_KEYS_URL: 'http://saltbox-core:${CORE_PORT}/system/$${user}/authorized_keys'
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     secrets:
       - sshfs_user_saltbox_password
       - sshfs_user_master_password
