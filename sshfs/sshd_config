@@ -1,3 +1,7 @@
+HostKey /etc/openssh-keys/ssh_host_rsa_key
+HostKey /etc/openssh-keys/ssh_host_ecdsa_key
+HostKey /etc/openssh-keys/ssh_host_ed25519_key
+
 AuthorizedKeysFile /dev/null
 AuthorizedKeysCommand /usr/local/bin/authorized-keys-cmd
 AuthorizedKeysCommandUser root

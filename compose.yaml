@@ -673,6 +673,7 @@ services:
       - 'salt_repos:/srv/master/salt/'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/master/salt_custom/'
       - './sshfs_conf/users.json:/mnt/sshfs_users.json:ro'
+      - 'sshfs_host_keys:/etc/openssh-keys/'
 
 configs: {}
 
@@ -689,6 +690,7 @@ volumes:
   salt_master_saltbox_var: {}
   salt_repos: {}
   saltbox_core_var: {}
+  sshfs_host_keys: {}
 
 secrets:
   keycloak_admin_password:
