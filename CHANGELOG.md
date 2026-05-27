@@ -19,6 +19,8 @@ if possible and purge browser redirects.
 
 ### Fixed
 
+- Fix annoying duplicated entries in `sb-images-export.sh`.
+
 ### Removed
 
 ## [0.2.1] - 2026-05-21

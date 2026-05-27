@@ -47,7 +47,7 @@ fi
 images=$(
   echo "$cmd_output" \
   | jq --raw-output '.[] | select(.Repository != "") | .Repository + ":" + .Tag' \
-  | uniq
+  | sort | uniq
 )
 
 for i in ${images}; do
