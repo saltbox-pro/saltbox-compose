@@ -15,6 +15,8 @@ if possible and purge browser redirects.
 
 ### Added
 
+- `guest\guest` default RabbitMQ user for dev mode.
+
 ### Changed
 
 ### Fixed
