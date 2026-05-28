@@ -20,6 +20,7 @@ if possible and purge browser redirects.
 ### Fixed
 
 - Fix annoying duplicated entries in `sb-images-export.sh`.
+- Fix slow SSHFS TCP connections by decreasing nofile limit.
 
 ### Removed
 
