@@ -485,11 +485,12 @@ class Config:
         data.append(f'Salt.Box Administrator\'s login is: `{self.admin_name}`')
         data.append('Salt.Box Administrator\'s password is: [ SEARCH IN FURTHER OUTPUT ]')
         if self.selected_addons:
-            addons_spec_list = [f'{a.name} ({a.license})' for a in self.selected_addons]
+            addons_spec_list = [f'  - {a.name} (license: `{a.license}`, ref: `{a.ref}`)' for a in self.selected_addons]
             if self.migrations_ref:
-                addons_spec_list.append(f'{_MIGRATIONS_NAME} ({_MIGRATIONS_LICENSE})')
-            addons_str = ', '.join(addons_spec_list)
-            data.append(f'Add-on modules: {addons_str}')
+                mig_str = f'  - {_MIGRATIONS_NAME} (license: `{_MIGRATIONS_LICENSE}`, ref: `{self.migrations_ref}`)'
+                addons_spec_list.append(mig_str)
+            addons_str = '\n'.join(addons_spec_list)
+            data.append(f'Add-on modules:\n{addons_str}')
         data.append(f'Cleanup: {"YES!!! " if self.cleanup else "no"}')
         return '\n'.join(data)
 
