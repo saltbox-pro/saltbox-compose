@@ -41,6 +41,7 @@ import time
 import urllib.parse
 import urllib.request
 import zipfile
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, ClassVar, Dict, List, NoReturn, Optional, TextIO, Type, TypeVar, Union
 
@@ -72,21 +73,6 @@ SALTBOX_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL = 1
 MIN_DOCKER_VERSION = '25.0.0'
 MIN_COMPOSE_VERSION = '2.20.2'
 MIN_PYTHON_VERSION = '3.7.3'
-
-SWITCHABLE_IMAGE_TAGS = [
-    'FRONTEND_IMAGE_TAG',
-    'GATEWAY_IMAGE_TAG',
-    'KEYCLOAK_IMAGE_TAG',
-    'MAKE_CERTS_IMAGE_TAG',
-    'MONGODB_IMAGE_TAG',
-    'NGINX_IMAGE_TAG',
-    'OPA_IMAGE_TAG',
-    'PROXY_IMAGE_TAG',
-    'RABBITMQ_IMAGE_TAG',
-    'REDIS_IMAGE_TAG',
-    'SALT_MASTER_IMAGE_TAG',
-    'SSHFS_IMAGE_TAG',
-]
 
 cache = functools.lru_cache(maxsize=None)
 
@@ -136,11 +122,9 @@ def get_args() -> argparse.Namespace:
     parser.add_argument(
         '--compose-ref',
         type=str,
+        choices=Config.SUPPORTED_REFS,
         help=(
-            'Salt.Box Compose Git reference to obtain, '
-            f'`{RELEASE_REF}` to search fo latest release tag, '
-            f'`{Config.STABLE_BRANCH}` and `{Config.DEV_BRANCH}` '
-            'for main dev-branches. '
+            'Salt.Box Compose Git reference to obtain. '
             f'`{Config.compose_ref}` by default.'
         )
     )
@@ -177,16 +161,6 @@ def get_args() -> argparse.Namespace:
         '--host-is-name',
         action='store_true',
         help='Force SSL cert for DNS name even if `host` looks like IP address'
-    )
-    parser.add_argument(
-        '--keep-addon-tags',
-        action='store_true',
-        help='Do not switch tags of addons to branches',
-    )
-    parser.add_argument(
-        '--keep-image-tags',
-        action='store_true',
-        help=f'Do not switch image tags to `{Config.DEV_BRANCH}`',
     )
     parser.add_argument(
         '--port',
@@ -354,6 +328,26 @@ class Interactions:
 
         return val
 
+    def ask_choices(
+        self,
+        prompt: str,
+        choices: Sequence[str],
+        default: Optional[str] = None,
+    ) -> str:
+        if not choices:
+            dosa = 'No choices for prompt'
+            raise InstallerError(dosa)
+        choices_s = set(choices)
+        if default is not None and default not in choices_s:
+            dosa = f'Incorrect default `{default}`'
+            raise InstallerError(dosa)
+        prompt = f'prompt {choices_s}'
+        while True:
+            val = self.ask(prompt=prompt, default=default)
+            if val in choices_s:
+                return val
+            print_err(f'`{val}` not in {choices_s}')
+
     def ask_optional(self, prompt: str) -> Optional[str]:
         prompt = f'{prompt}: '
         if self.non_interactive:
@@ -394,9 +388,8 @@ class Config:
     MAX_PORT: ClassVar = 2**16 - 1
     HOSTNAME_LABEL_PATTERN: ClassVar = re.compile(r'^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$')
 
-    STABLE_BRANCH: ClassVar = 'master'
     DEV_BRANCH: ClassVar = 'dev'
-    SUPPORTED_REFS: ClassVar = [RELEASE_REF, STABLE_BRANCH, DEV_BRANCH]
+    SUPPORTED_REFS: ClassVar = [RELEASE_REF, DEV_BRANCH]
 
     # Non-default args mostly are interactive-agnostic
 
@@ -417,7 +410,6 @@ class Config:
     force_host_as_name: bool = False
     admin_name: str = 'master'
     extra_override: List['str'] = dataclasses.field(default_factory=list)
-    set_image_tags: bool = False
     selected_addons: List['AddonModule'] = dataclasses.field(default_factory=list)
     registry_user: str = 'install_saltbox'
     # Migrations is a special module with totally independent Compose project.
@@ -762,7 +754,6 @@ class AddonModule:
     compose_files: List[str]
     env_file: str
     is_token_required: bool
-    switchable_image_tags: List[str]
     secrets_configs: List[str] = dataclasses.field(default_factory=list)
     ref: str = RELEASE_REF
     # Compare to a value from a special file in the repository
@@ -780,7 +771,6 @@ ADDONS_MODULES = [
         name='FileBrowser',
         url='https://dev.saltbox.pro/saltbox/saltbox-filebrowser-compose',
         base_dir='saltbox-filebrowser-compose',
-        switchable_image_tags=[],
         compose_files=['compose.yaml'],
         env_file='.env',
         license='Apache-2.0',
@@ -790,7 +780,6 @@ ADDONS_MODULES = [
         name='Inventory',
         url='https://dev.saltbox.pro/saltbox/saltbox-inventory-compose',
         base_dir='saltbox-inventory-compose',
-        switchable_image_tags=['INVENTORY_IMAGE_TAG'],
         compose_files=['compose.yaml'],
         env_file='.env',
         secrets_configs=['secrets.json'],
@@ -801,7 +790,6 @@ ADDONS_MODULES = [
         name='Metric',
         url='https://dev.saltbox.pro/saltbox/saltbox-metric-compose',
         base_dir='saltbox-metric-compose',
-        switchable_image_tags=['METRIC_IMAGE_TAG', 'METRIC_OBSERVABILITY_IMAGE_TAG', 'GRAFANA_IMAGE_TAG'],
         compose_files=['compose.yaml'],
         env_file='.env',
         license='Apache-2.0',
@@ -811,7 +799,6 @@ ADDONS_MODULES = [
         name='Scheduler',
         url='https://dev.saltbox.pro/saltbox/saltbox-scheduler-compose',
         base_dir='saltbox-scheduler-compose',
-        switchable_image_tags=['SCHEDULER_IMAGE_TAG'],
         compose_files=['compose.yaml'],
         env_file='.env',
         secrets_configs=['secrets.json'],
@@ -944,19 +931,13 @@ class ScriptConfigurator:
         if self.args.compose_ref is not None:
             self.conf.compose_ref = self.args.compose_ref
         else:
-            self.conf.compose_ref = self.interactions.ask('Salt.Box Compose reference', self.conf.compose_ref)
+            self.conf.compose_ref = self.interactions.ask_choices(
+                'Salt.Box Compose reference',
+                default=self.conf.compose_ref,
+                choices=Config.SUPPORTED_REFS)
             self.cmd += ['--compose-ref', self.conf.compose_ref]
 
         self._migrations_ref_hook()
-
-        if self.conf.compose_ref not in Config.SUPPORTED_REFS:
-            supported_refs = ', '.join(Config.SUPPORTED_REFS)
-            print_out(
-                '',
-                f'Supported Compose references are: {supported_refs}, but '
-                f'reference `{self.conf.compose_ref}` is selected. ')
-            if not self.interactions.ask_confirm('Continue as advanced user?'):
-                raise InstallerError('Cancelled by user')
 
         if self.args.admin is not None:
             self.conf.admin_name = self.args.admin
@@ -973,18 +954,8 @@ class ScriptConfigurator:
                 self.conf.explicit_secrets.append(admin_secret)
                 self.cmd += ['--explicit-secret', admin_secret]
 
-        if not self.args.keep_addon_tags and self.conf.compose_ref in {Config.STABLE_BRANCH, Config.DEV_BRANCH}:
-            msg = f'Select tag `{self.conf.compose_ref}` for add-on modules?'
-            if self.interactions.ask_confirm(msg):
-                for addon in self.conf.selected_addons:
-                    addon.ref = self.conf.compose_ref
-            else:
-                self.cmd.append('--keep-addon-tags')
-        if not self.args.keep_image_tags and self.conf.compose_ref == Config.DEV_BRANCH:
-            self.conf.set_image_tags = self.interactions.ask_confirm(
-                f'Select tag `{self.conf.compose_ref}` for main images?')
-            if not self.conf.set_image_tags:
-                self.cmd.append('--keep-image-tags')
+        for addon in self.conf.selected_addons:
+            addon.ref = self.conf.compose_ref
 
         self._metric_docker_hook()
 
@@ -1233,14 +1204,6 @@ def _configure_system_addons(config: Config) -> List[str]:
 
 def configure_system(config: Config) -> None:
     override = []
-
-    if config.set_image_tags:
-        for tag_var in SWITCHABLE_IMAGE_TAGS:
-            override.append(f"{tag_var}='{config.compose_ref}'")
-        for addon in config.selected_addons:
-            override.extend(
-                f"{tag_var}='{config.compose_ref}'"
-                for tag_var in addon.switchable_image_tags)
 
     override.extend([
         f"SALTBOX_ADMIN_USERNAME='{config.admin_name}'",
