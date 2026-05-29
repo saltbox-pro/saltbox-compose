@@ -99,8 +99,6 @@ services:
   rabbitmq:
     environment:
       DEV_ENABLED: true
-      RABBITMQ_DEFAULT_USER: 'guest'
-      RABBITMQ_DEFAULT_PASS: 'guest'
       LOG_LEVEL: "debug"
     ports:
       - 5672:5672
