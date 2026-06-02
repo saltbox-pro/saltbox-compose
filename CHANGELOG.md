@@ -22,6 +22,7 @@ if possible and purge browser redirects.
 - `install_saltbox.py` not works with `dev` and `RELEASE` refs only and does
 not change tags of images. Flags `--keep-addon-tags`, `--keep-image-tags`
 deleted.
+- `keycloak-db`: replace hardcoded port `5432` with `KEYCLOAK_DB_PORT` env.
 
 ### Fixed
 

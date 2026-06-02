@@ -81,7 +81,7 @@ services:
     secrets:
       - keycloak_database_password
     expose:
-      - 5432
+      - '${KEYCLOAK_DB_PORT}'
 
   keycloak:
     <<: *default
