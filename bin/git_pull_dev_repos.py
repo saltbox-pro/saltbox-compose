@@ -17,14 +17,14 @@ import sys
 import threading
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, List
+from typing import Any
 
 # Int for limit, None for no limit
 PARALLEL_PULLS: int | None = None
 LINE = '_' * 40
 
 
-def get_conf() -> dict:
+def get_conf() -> dict[str, Any]:
     bin_dir = Path(__file__).resolve().parent
     bin_path = bin_dir / 'sb-compose.sh'
     cmd = [str(bin_path), 'config', '--format=json']
@@ -38,7 +38,7 @@ def get_conf() -> dict:
     return json.loads(result.stdout)
 
 
-lru_cache(maxsize=None)
+@lru_cache(maxsize=None)
 def get_repo_root(repo: Path) -> Path | None:
     """ Get Git repo root or None if path is not a repo """
     cmd = ['git', '-C', str(repo), 'rev-parse', '--show-toplevel']
@@ -60,7 +60,7 @@ def get_context_repos(config: dict[str, Any]) -> list[Path]:
 
 
 def get_volume_repos(config: dict[str, Any]) -> list[Path]:
-    sources: List[Path] = []
+    sources: list[Path] = []
     repos = set()
     cwd = Path.cwd()
 
@@ -127,6 +127,7 @@ def action_list(repos: list[Path]) -> None:
     print(LINE)
     for repo in repos:
         print(f'- {repo}')
+
 
 def main():
     args = get_args()

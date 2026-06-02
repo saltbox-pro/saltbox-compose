@@ -32,6 +32,7 @@ value for release and "any of release or pre-release" accordingly.
 
 - Fix annoying duplicated entries in `sb-images-export.sh`.
 - Fix slow SSHFS TCP connections by decreasing nofile limit.
+- Other minor fixes in `bin/` scripts.
 
 ### Removed
 

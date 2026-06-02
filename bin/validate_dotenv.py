@@ -21,8 +21,8 @@ REF_FILE = Path('base.env')
 ENV_FILE = Path('.env')
 EXTRA_ENV_VAR = '_UPDATE_AND_RUN_EXTRA_ENV_FILES'
 
-_kc_adm_msg='KEYCLOAK_ADMIN_* variables replaced by SALTBOX_ADMIN_*'
-_mock_minion_msg='SALT_MOC_MINION* variables replaced by SALT_MOCK_MINION*'
+_kc_adm_msg = 'KEYCLOAK_ADMIN_* variables replaced by SALTBOX_ADMIN_*'
+_mock_minion_msg = 'SALT_MOC_MINION* variables replaced by SALT_MOCK_MINION*'
 DEPRECATIONS = {
     'BACKEND_HOST': 'Obsolete on v0.0.2',
 
@@ -132,6 +132,7 @@ def main() -> None:
         if name not in ref:
             dosa = f'Unexpected variable `{name}` in `{entry.file}` line {entry.line}'
             raise ValidationError(dosa)
+
 
 if __name__ == '__main__':
     try:
