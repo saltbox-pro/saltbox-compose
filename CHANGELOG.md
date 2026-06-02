@@ -24,6 +24,8 @@ not change tags of images. Flags `--keep-addon-tags`, `--keep-image-tags`
 deleted.
 - `keycloak-db`: replace hardcoded port `5432` with `KEYCLOAK_DB_PORT` env.
 - `install_saltbox.py` searches for latest release by date not by tag name.
+- `install_saltbox.py` takes `RELEASE` and `PRERELEASE` as `--compose-ref`
+value for release and "any of release or pre-release" accordingly.
 
 ### Fixed
 

@@ -49,7 +49,8 @@ ENC = 'UTF-8'
 INDENT = 2 * ' '
 HTTP_CHUNK_BYTE = 8192
 HTTP_TIMEOUT_SEC = 30
-VERSION_TAG_PATTERN = re.compile(r'^v\d+\.\d+\.\d+.*$')
+VERSION_TAG_PATTERN = re.compile(r'^v\d+\.\d+\.\d+.*$')  # v0.1.1-ANY
+RELEASE_ONLY_TAG_PATTERN = re.compile(r'^v\d+\.\d+\.\d+$')  # v0.1.1.
 CWD = Path.cwd()
 LOCAL_PATH = CWD / './saltbox-compose/'
 BIN_DIR = LOCAL_PATH / 'bin'
@@ -58,6 +59,7 @@ SCRIPT_SUFFIXES = ('*.sh', '*.py',)
 ADMIN_SECRET_NAME = 'saltbox_admin_password'
 MONGO_ADMIN_SECRET_NAME = 'mongo_root_password'
 RELEASE_REF = 'RELEASE'
+PRERELEASE_REF = 'PRERELEASE'
 REGISTRY_DOTENV_VAR = 'IMAGE_REGISTRY'
 INSTALLER_METADATA_FILE = '.installer.json'
 SCRIPT_NAME = 'install_saltbox.py'
@@ -125,6 +127,10 @@ def get_args() -> argparse.Namespace:
         choices=Config.SUPPORTED_REFS,
         help=(
             'Salt.Box Compose Git reference to obtain. '
+            f'`{RELEASE_REF}` for latest release, '
+            f'`{PRERELEASE_REF}` for latest release OR pre-release '
+            '(what is the latest). '
+            f'`{Config.DEV_BRANCH}` for the same name branch. '
             f'`{Config.compose_ref}` by default.'
         )
     )
@@ -389,7 +395,7 @@ class Config:
     HOSTNAME_LABEL_PATTERN: ClassVar = re.compile(r'^(?!-)[A-Za-z0-9-]{1,63}(?<!-)$')
 
     DEV_BRANCH: ClassVar = 'dev'
-    SUPPORTED_REFS: ClassVar = [RELEASE_REF, DEV_BRANCH]
+    SUPPORTED_REFS: ClassVar = [RELEASE_REF, PRERELEASE_REF, DEV_BRANCH]
 
     # Non-default args mostly are interactive-agnostic
 
@@ -623,24 +629,27 @@ class GitLabRepo:
         body = json.load(resp)
         return [i['name'] for i in body]
 
-    def get_version_tags(self) -> List[str]:
-        return list(filter(lambda x: VERSION_TAG_PATTERN.match(x), self.get_tags()))
+    def get_version_tags(self, allow_pre_releases=False) -> List[str]:
+        regex = VERSION_TAG_PATTERN if allow_pre_releases else RELEASE_ONLY_TAG_PATTERN
+        return list(filter(lambda x: regex.match(x), self.get_tags()))
 
-    def get_latest_version_tag(self) -> str:
-        tags = self.get_version_tags()
+    def get_latest_version_tag(self, allow_pre_releases=False) -> str:
+        tags = self.get_version_tags(allow_pre_releases=allow_pre_releases)
         assert len(tags) > 0, 'Found no tags in saltbox-compose repository'
         return tags[-1]
 
     @cache
     def normalize_ref(self, ref: str) -> str:
-        """ Resolve special RELEASE_REF to regular ref """
+        """ Resolve special values to regular ref """
         if ref == RELEASE_REF:
-            ref = self.get_latest_version_tag()
+            return self.get_latest_version_tag(allow_pre_releases=False)
+        if ref == PRERELEASE_REF:
+            return self.get_latest_version_tag(allow_pre_releases=True)
         return ref
 
     @cache
     def resolve_ref_to_sha(self, ref: str) -> str:
-        """ Resolve Ref inlcuding RELEASE_REF special value to commit SHA """
+        """ Resolve Ref inlcuding special values to commit SHA """
         ref = self.normalize_ref(ref)
         url = f'{self.api_project_url}/repository/commits/{ref}'
         try:
@@ -905,10 +914,7 @@ class ScriptConfigurator:
         self.conf.validate()
 
     def _migrations_ref_hook(self) -> None:
-        if (
-            self.conf.migrations_ref is not None
-            and self.conf.compose_ref in self.conf.SUPPORTED_REFS
-        ):
+        if self.conf.migrations_ref is not None:
             self.conf.migrations_ref = self.conf.compose_ref
 
     def configure(self) -> Config:
