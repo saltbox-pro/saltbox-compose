@@ -23,6 +23,7 @@ if possible and purge browser redirects.
 not change tags of images. Flags `--keep-addon-tags`, `--keep-image-tags`
 deleted.
 - `keycloak-db`: replace hardcoded port `5432` with `KEYCLOAK_DB_PORT` env.
+- `install_saltbox.py` searches for latest release by date not by tag name.
 
 ### Fixed
 

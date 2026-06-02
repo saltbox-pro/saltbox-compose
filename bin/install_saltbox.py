@@ -612,14 +612,16 @@ class GitLabRepo:
 
     @cache
     def get_tags(self) -> List[str]:
-        url = f'{self.api_project_url}/repository/tags'
+        """ Get list of latest tags sorted by commit date """
+        params = urllib.parse.urlencode({'order_by': 'updated', 'sort': 'asc'})  # Ordered by commit date
+        url = f'{self.api_project_url}/repository/tags?{params}'
         try:
             resp = urllib.request.urlopen(url=self._create_request(url=url))
         except urllib.error.URLError as papa:
             dosa = f'Error on requesting URL {url}: {papa}'
             raise InstallerError(dosa) from None
         body = json.load(resp)
-        return sorted(i['name'] for i in body)
+        return [i['name'] for i in body]
 
     def get_version_tags(self) -> List[str]:
         return list(filter(lambda x: VERSION_TAG_PATTERN.match(x), self.get_tags()))
