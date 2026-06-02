@@ -25,6 +25,7 @@ from install_saltbox import (
     TOKEN,
     TOKEN_NAME,
     VERSION_TAG_PATTERN,
+    Config,
     GitLabRepo,
     InstallerError,
     cd,
@@ -41,13 +42,12 @@ MIGRATIONS_REPO = GitLabRepo(
 UP_CMD = ['docker', 'compose', 'up', '--detach']
 DOWN_CMD = ['docker', 'compose', 'down']
 CLEANUP_CMD = ['docker', 'compose', 'down', '--volumes', '--remove-orphans']
-KNOWN_REF = ['dev', 'master', RELEASE_REF]
 MIGRATIONS_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL = 1
 
 
 def validate_args(args: argparse.Namespace) -> argparse.Namespace:
     if (
-        args.compose_ref not in KNOWN_REF and
+        args.compose_ref not in Config.SUPPORTED_REFS and
         not VERSION_TAG_PATTERN.match(args.compose_ref)
     ):
         raise InstallerError(f'Unsupported `--compose-ref` value `{args.compose_ref}`')

@@ -26,6 +26,7 @@ deleted.
 - `install_saltbox.py` searches for latest release by date not by tag name.
 - `install_saltbox.py` takes `RELEASE` and `PRERELEASE` as `--compose-ref`
 value for release and "any of release or pre-release" accordingly.
+- `install_saltbox_migrations.py` takes the same refs as `install_saltbox.py`
 
 ### Fixed
 
