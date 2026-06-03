@@ -12,3 +12,4 @@ _*
 .mypy.ini
 .flake8
 .venv/
+/.gitlab-ci-local

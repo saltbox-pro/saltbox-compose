@@ -11,49 +11,49 @@ include:
       - when: always
 
 
-.build-redis-image:
+Build Redis image:
   extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/redis'
     CONTEXT_PATH: 'redis/'
 
 
-.opa:
+Build OPA image:
   extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/opa'
     CONTEXT_PATH: 'opa/'
 
 
-.sshfs:
+Build SSHFS image:
   extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/sshfs'
     CONTEXT_PATH: 'sshfs/'
 
 
-.make-certs:
+Build make-certs image:
   extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/make-certs'
     CONTEXT_PATH: 'make-certs/'
 
 
-.mongodb:
+Build MongoDB image:
   extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/mongodb'
     CONTEXT_PATH: 'mongodb/'
 
 
-.rabbitmq:
+Build RabbitMQ image:
   extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/rabbitmq'
     CONTEXT_PATH: 'rabbitmq/'
 
 
-.keycloak:
+Build Keycloak image:
   extends: .build-image
   variables:
     REGISTRY_ADDITIONAL_PATH: '/keycloak'
@@ -61,124 +61,12 @@ include:
     TARGET: keycloak
 
 
-Build Redis image for tag:
-  extends: .build-redis-image
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_TAG'
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-Build Redis image for branch:
-  extends: .build-redis-image
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_BRANCH'
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
-
-
 Trigger Proxy build:
   trigger:
-    include: 
+    include:
       - local: 'proxy/.gitlab-ci.yml'
     strategy: depend
   rules:
     - changes:
         - 'nginx/**/*'
         - 'proxy/**/*'
-
-
-Build OPA image for tag:
-  extends: .opa
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_TAG'
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-Build OPA image for branch:
-  extends: .opa
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_BRANCH'
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
-
-
-Build SSHFS image for tag:
-  extends: .sshfs
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_TAG'
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-Build SSHFS image for branch:
-  extends: .sshfs
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_BRANCH'
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
-
-
-Build make-certs image for tag:
-  extends: .make-certs
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_TAG'
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-Build make-certs image for branch:
-  extends: .make-certs
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_BRANCH'
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
-
-
-Build MongoDB image for tag:
-  extends: .mongodb
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_TAG'
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-Build MongoDB image for branch:
-  extends: .mongodb
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_BRANCH'
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
-
-
-Build RabbitMQ image for tag:
-  extends: .rabbitmq
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_TAG'
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-Build RabbitMQ image for branch:
-  extends: .rabbitmq
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_BRANCH'
-  rules:
-    - if: '$CI_COMMIT_BRANCH'
-
-
-Build Keycloak image for tag:
-  extends: .keycloak
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_TAG'
-  rules:
-    - if: '$CI_COMMIT_TAG'
-
-
-Build Keycloak image for branch:
-  extends: .keycloak
-  variables:
-    IMAGE_TAG: '$CI_COMMIT_REF_NAME'
-  rules:
-    - if: '$CI_COMMIT_BRANCH || $CI_PIPELINE_SOURCE == "parent_pipeline"'
