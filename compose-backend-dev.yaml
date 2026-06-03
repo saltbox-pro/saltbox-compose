@@ -28,8 +28,6 @@ services:
     build:
       context: $GATEWAY_BUILD_DIR
       target: dev
-    environment:
-      - LOG_LEVEL=DEBUG
     tty: true  # colorize logs
     image: '${LOCAL_IMAGE_NAMESPACE}/saltbox-gateway:dev'
     volumes:
@@ -44,8 +42,6 @@ services:
     build:
       context: $AUDIT_BUILD_DIR
       target: dev
-    environment:
-      - LOG_LEVEL=${AUDIT_LOG_LEVEL}
     tty: true  # colorize logs
     image: '${LOCAL_IMAGE_NAMESPACE}/saltbox-audit:dev'
     volumes:
