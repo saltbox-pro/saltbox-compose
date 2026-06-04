@@ -496,15 +496,31 @@ VersionSelf = TypeVar('VersionSelf', bound='Version')
 
 
 class Version:
-    """ Represents simplified SemVer (3 main numbers only)"""
+    """ Represents simplified SemVer"""
     # Simplified official regex (https://regex101.com/r/Ly7O1x/3)
-    # at https://regex101.com/r/Ly7O1x/3204
-    #
-    # Some distros uses non-standard version strings like '28.3.3.astra1'
-    PATTERN = re.compile(r'^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)([-+.].*)?$')
+    # at https://regex101.com/r/Ly7O1x/3225
+    PATTERN = re.compile(
+        r'^(?P<major>0|[1-9]\d*)\.'
+        r'(?P<minor>0|[1-9]\d*)\.'
+        r'(?P<patch>0|[1-9]\d*)'
+        # Some distros uses non-standard version strings like '28.3.3.astra1'
+        r'(\.(?P<special>.*))?'
+        r'(-(?P<pre_release>[\.a-zA-Z0-9-]*))?'
+        r'(\+(?P<build>[\.a-zA-Z0-9-]*))?$'
+    )
 
-    def __init__(self, major: int, minor: int, patch: int) -> None:
+    def __init__(
+        self,
+        major: int,
+        minor: int,
+        patch: int,
+        pre_release: Optional[str] = None,
+        build: Optional[str] = None,
+    ) -> None:
         self._version = (major, minor, patch,)
+        self.pre_release = pre_release
+        self.build = build
+        self.special: Optional[str] = None
 
     @property
     def major(self) -> int:
@@ -528,16 +544,30 @@ class Version:
             major=int(match.group('major')),
             minor=int(match.group('minor')),
             patch=int(match.group('patch')),
+            pre_release=match.group('pre_release'),
+            build=match.group('build'),
         )
+        obj.special = match.group('special')
         return obj
 
     def __str__(self) -> str:
-        return f'{self.major}.{self.minor}.{self.patch}'
+        result = f'{self.major}.{self.minor}.{self.patch}'
+        if self.special is not None:
+            result += f'.{self.special}'
+        if self.pre_release is not None:
+            result += f'-{self.pre_release}'
+        if self.build is not None:
+            result += f'+{self.build}'
+        return result
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Version):
             return NotImplemented
-        return self._version == self._version
+        return (
+            self._version == self._version
+            and
+            self.pre_release == self.pre_release
+        )
 
     def __lt__(self, other) -> bool:
         if not isinstance(other, Version):
@@ -548,7 +578,15 @@ class Version:
                 return True
             elif self._version[i] > other._version[i]:
                 return False
-        return False
+
+        # Pre-release version has lower precedence than a regular version
+        if self.pre_release == other.pre_release:
+            return False
+
+        if self.pre_release is None or other.pre_release is None:
+            return other.pre_release is None
+        else:
+            return self.pre_release < other.pre_release
 
 
 def _download_file(resp: http.client.HTTPResponse, output: Path, progress: bool) -> None:
@@ -630,7 +668,10 @@ class GitLabRepo:
 
     def get_version_tags(self, allow_pre_releases=False) -> List[str]:
         regex = VERSION_TAG_PATTERN if allow_pre_releases else RELEASE_ONLY_TAG_PATTERN
-        return list(filter(lambda x: regex.match(x), self.get_tags()))
+        versions = list(filter(lambda x: regex.match(x), self.get_tags()))
+        ver_objs = [Version.from_str(v.lstrip('v')) for v in versions]
+        versions = [f'v{ver}' for ver in sorted(ver_objs)]
+        return versions
 
     def get_latest_version_tag(self, allow_pre_releases=False) -> str:
         tags = self.get_version_tags(allow_pre_releases=allow_pre_releases)
