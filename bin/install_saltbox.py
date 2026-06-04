@@ -41,9 +41,8 @@ import time
 import urllib.parse
 import urllib.request
 import zipfile
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, NoReturn, Optional, TextIO, Type, TypeVar, Union
+from typing import Any, ClassVar, Dict, List, NoReturn, Optional, Sequence, TextIO, Type, TypeVar, Union
 
 ENC = 'UTF-8'
 INDENT = 2 * ' '
@@ -405,7 +404,7 @@ class Config:
     no_progress: bool
     # Prepare but do not start
     skip_run: bool
-    explicit_secrets: list[str]
+    explicit_secrets: List[str]
 
     # Default args mostly are interactive-related
 
