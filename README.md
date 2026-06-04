@@ -40,6 +40,7 @@ be ran from the root of repo by relative path like `./bin/sb-compose.sh`.
 - `get_ca.sh` — obtain `ca.crt` local authority certificate file (and
   optionally inject it into Firefox).
 - `git_pull_dev_repos.py` — only for developers — update sources Git repositories.
+- `image_tags.py` — check for latest release tags for used images.
 - `install_saltbox.sh` — donwload Salt.Box Compose, configure and run.
 - `install_saltbox_migrations.sh` — donwload Salt.Box Migrations Compose,
   configure and run.
