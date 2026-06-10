@@ -1,13 +1,5 @@
 ---
 
-x-keycloak-service:
-    pull_policy: never
-    develop:
-      watch:
-        - action: rebuild
-          path: keycloak/
-
-
 services:
   keycloak:
     build:
