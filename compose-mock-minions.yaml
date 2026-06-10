@@ -7,6 +7,14 @@ x-default-service: &default
   pull_policy: never
   restart: 'always'
   stop_grace_period: ${STOP_GRACE_PERIOD}
+  ulimits:
+    nofile:
+      soft: 65535
+      hard: 65535
+  logging:
+    options:
+      max-size: '100m'
+      max-file: 10
 
 
 # Additional services

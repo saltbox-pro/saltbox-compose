@@ -15,7 +15,15 @@
 
 x-default-service: &default
   restart: 'always'
-  stop_grace_period: ${STOP_GRACE_PERIOD}
+  stop_grace_period: '${STOP_GRACE_PERIOD}'
+  ulimits:
+    nofile:
+      soft: 65535
+      hard: 65535
+  logging:
+    options:
+      max-size: '100m'
+      max-file: 10
 
 x-mongo-default-service: &mongo-default
   <<: *default
@@ -26,8 +34,6 @@ x-mongo-default-service: &mongo-default
     - mongo_root_password
     - mongo_user_password
     - mongo_exporter_password
-  ulimits:
-    nofile: 65535
 
 services:
   proxy:
@@ -621,7 +627,7 @@ services:
       - '${MONGO_EXPOSE_SOCKET}:27017'
     volumes:
       - mongo_data:/var/lib/mongo/
- 
+
   mongodb-audit:
     <<: *mongo-default
     hostname: '${MONGO_AUDIT_HOSTNAME}'
@@ -641,6 +647,7 @@ services:
       - mongo_audit_data:/var/lib/mongo/
 
   opa:
+    <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-compose/opa:${OPA_IMAGE_TAG}'
     command:
       - 'run'
@@ -661,10 +668,6 @@ services:
       SSHFS_USER: '${SSHFS_USER}'
       USERS_FILE: '/mnt/sshfs_users.json'
       AUTHORIZED_KEYS_URL: 'http://saltbox-core:${CORE_PORT}/system/$${user}/authorized_keys'
-    ulimits:
-      nofile:
-        soft: 65536
-        hard: 65536
     secrets:
       - sshfs_user_saltbox_password
       - sshfs_user_master_password
