@@ -43,7 +43,8 @@ RUN \
   apt-install java-21-openjdk wget
 
 COPY --from=builder /usr/lib/keycloak/ /srv/keycloak
-COPY --chmod=755 bin/startup.sh /usr/local/bin/
+COPY themes/ /srv/keycloak/themes/
+COPY --chmod=755 bin/startup.sh bin/apply-login-theme.sh /usr/local/bin/
 
 ENV PATH="${PATH}:/srv/keycloak/bin/"
 #NOTE: For single node setup

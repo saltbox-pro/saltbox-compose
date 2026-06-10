@@ -26,3 +26,10 @@ services:
             - '**/*.egg-info/'
         - action: rebuild
           path: '${KEYCLOAK_INIT_DIR}/pyproject.toml'
+
+  keycloak-theme-apply:
+    <<: *keycloak-service
+    image: '${LOCAL_IMAGE_NAMESPACE}/keycloak:dev'
+    entrypoint: ['sh', '/usr/local/bin/apply-login-theme.sh']
+    volumes:
+      - './keycloak/bin/apply-login-theme.sh:/usr/local/bin/apply-login-theme.sh:ro'

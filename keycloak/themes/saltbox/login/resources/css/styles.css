@@ -1,0 +1,241 @@
+:root {
+  --sb-primary: #1677ff;
+  --sb-primary-hover: #4096ff;
+  --sb-primary-active: #0958d9;
+  --sb-bg: #f5f5f5;
+  --sb-surface: #ffffff;
+  --sb-border: #d9d9d9;
+  --sb-border-light: #f0f0f0;
+  --sb-text: rgba(0, 0, 0, 0.88);
+  --sb-text-secondary: rgba(0, 0, 0, 0.65);
+  --sb-text-placeholder: rgba(0, 0, 0, 0.25);
+  --sb-radius: 6px;
+  --sb-input-padding-block: 4px;
+  --sb-input-padding-inline: 11px;
+  --sb-input-active-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  --sb-card-width: 400px;
+  --sb-shadow:
+    0 1px 2px 0 rgba(0, 0, 0, 0.03),
+    0 1px 6px -1px rgba(0, 0, 0, 0.02),
+    0 2px 4px 0 rgba(0, 0, 0, 0.02);
+  --sb-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif;
+}
+
+body#keycloak-bg,
+.pf-v5-c-login {
+  font-family: var(--sb-font);
+  background: var(--sb-bg) !important;
+}
+
+.pf-v5-c-login {
+  --pf-v5-global--primary-color--100: var(--sb-primary);
+  --pf-v5-c-login__container--MaxWidth: var(--sb-card-width);
+  --pf-v5-c-login__container--xl--MaxWidth: var(--sb-card-width);
+  --pf-v5-c-login__container--PaddingLeft: 16px;
+  --pf-v5-c-login__container--PaddingRight: 16px;
+  --pf-v5-c-login__header--xl--MarginTop: 0;
+  --pf-v5-c-login__main--BackgroundColor: var(--sb-surface);
+  --pf-v5-c-login__main--BoxShadow: var(--sb-shadow);
+}
+
+.pf-v5-c-login__container {
+  display: block !important;
+  max-width: var(--sb-card-width) !important;
+  margin: 0 auto !important;
+  padding: 24px 16px !important;
+}
+
+@media (min-width: 1200px) {
+  .pf-v5-c-login__container {
+    display: block !important;
+    max-width: var(--sb-card-width) !important;
+  }
+}
+
+#kc-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+#kc-header-wrapper,
+.pf-v5-c-login__header .pf-v5-c-brand {
+  background: url("../img/logo.svg") center / auto 40px no-repeat;
+  height: 40px;
+  max-width: 220px;
+  margin: 0 auto;
+  color: transparent;
+  font-size: 0;
+  overflow: hidden;
+}
+
+.pf-v5-c-login__main {
+  max-width: var(--sb-card-width);
+  margin: 0 auto;
+  background: var(--sb-surface) !important;
+  border: 1px solid var(--sb-border-light);
+  border-radius: 8px;
+  box-shadow: var(--sb-shadow) !important;
+}
+
+.pf-v5-c-login__main-header {
+  padding: 24px 24px 0 !important;
+}
+
+.pf-v5-c-login__main-body {
+  padding: 0 24px 24px !important;
+}
+
+#kc-form-login {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#kc-page-title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  color: var(--sb-text);
+}
+
+.pf-v5-c-form__label-text {
+  font-size: 14px;
+  color: var(--sb-text);
+}
+
+.pf-v5-c-form__group {
+  margin-bottom: 0px;
+}
+
+.pf-v5-c-form-control {
+  --pf-v5-c-form-control--BackgroundColor: var(--sb-surface);
+  --pf-v5-c-form-control--Color: var(--sb-text);
+  --pf-v5-c-form-control--before--BorderTopColor: transparent;
+  --pf-v5-c-form-control--before--BorderRightColor: transparent;
+  --pf-v5-c-form-control--before--BorderLeftColor: transparent;
+  --pf-v5-c-form-control--before--BorderBottomColor: transparent;
+  --pf-v5-c-form-control--after--BorderBottomColor: transparent;
+  --pf-v5-c-form-control--hover--after--BorderBottomColor: transparent;
+  --pf-v5-c-form-control--focus--after--BorderBottomColor: transparent;
+  --pf-v5-c-form-control--focus--after--BorderBottomWidth: 0;
+  background-color: var(--sb-surface) !important;
+  border: 1px solid var(--sb-border);
+  border-radius: var(--sb-radius);
+  min-height: 32px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after {
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+.pf-v5-c-form-control:hover {
+  border-color: var(--sb-primary-hover);
+}
+
+.pf-v5-c-form-control:focus-within {
+  border-color: var(--sb-primary);
+  box-shadow: var(--sb-input-active-shadow);
+  outline: none;
+}
+
+.pf-v5-c-form-control>input {
+  color: var(--sb-text) !important;
+  background: transparent !important;
+  font-size: 14px;
+  padding: var(--sb-input-padding-block) var(--sb-input-padding-inline);
+  line-height: 1.5714285714;
+}
+
+.pf-v5-c-form-control>input:focus {
+  outline: none;
+}
+
+.pf-v5-c-input-group {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--sb-border);
+  border-radius: var(--sb-radius);
+  background-color: var(--sb-surface);
+  min-height: 32px;
+  overflow: hidden;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.pf-v5-c-input-group:hover {
+  border-color: var(--sb-primary-hover);
+}
+
+.pf-v5-c-input-group:focus-within {
+  border-color: var(--sb-primary);
+  box-shadow: var(--sb-input-active-shadow);
+}
+
+.pf-v5-c-input-group .pf-v5-c-form-control {
+  flex: 1;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0;
+  min-height: auto;
+}
+
+.pf-v5-c-input-group .pf-v5-c-form-control:hover,
+.pf-v5-c-input-group .pf-v5-c-form-control:focus-within {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control {
+  background-color: var(--sb-surface);
+  border: none;
+  border-left: 1px solid var(--sb-border);
+  border-radius: 0;
+  color: var(--sb-text-secondary);
+  box-shadow: none;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button.pf-m-control:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+  color: var(--sb-text);
+}
+
+input::placeholder {
+  color: var(--sb-text-placeholder);
+}
+
+#kc-login {
+  background-color: var(--sb-primary) !important;
+  border-color: var(--sb-primary) !important;
+  border-radius: var(--sb-radius);
+  min-height: 32px;
+  font-size: 14px;
+  box-shadow: 0 2px 0 rgba(5, 145, 255, 0.1);
+}
+
+#kc-login:hover {
+  background-color: var(--sb-primary-hover) !important;
+  border-color: var(--sb-primary-hover) !important;
+}
+
+#kc-login:active {
+  background-color: var(--sb-primary-active) !important;
+  border-color: var(--sb-primary-active) !important;
+}
+
+a {
+  color: var(--sb-primary);
+  font-size: 14px;
+}
+
+a:hover {
+  color: var(--sb-primary-hover);
+}
