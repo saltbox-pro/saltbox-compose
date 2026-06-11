@@ -14,7 +14,7 @@ PermitEmptyPasswords no
 LogLevel VERBOSE
 MaxAuthTries 6
 MaxSessions 10
-UsePAM yes
+UsePAM no
 AllowAgentForwarding no
 AllowTcpForwarding no
 X11Forwarding no

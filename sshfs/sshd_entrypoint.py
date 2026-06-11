@@ -48,8 +48,7 @@ set -e
 
 user=$1
 
-1>&1 echo "curl \"{url_template}\""
-curl "{url_template}"
+curl --max-time 30 --connect-timeout 10 --silent "{url_template}"
 '''
 
 
