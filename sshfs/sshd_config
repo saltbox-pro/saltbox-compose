@@ -23,7 +23,6 @@ PrintMotd no
 TCPKeepAlive yes
 Compression delayed
 ClientAliveInterval 0
-ClientAliveCountMax 3
 PermitTunnel no
 ChrootDirectory none
 Banner none
