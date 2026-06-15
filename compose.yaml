@@ -63,7 +63,7 @@ services:
 
   keycloak-db:
     <<: *default
-    image: '${IMAGE_REGISTRY}/saltbox-compose/postgres:16-alpine'
+    image: '${IMAGE_REGISTRY}/saltbox-compose/postgres-16-alpine:${POSTGRES_IMAGE_TAG}'
     volumes:
       - 'keycloak-db_data:/var/lib/postgresql/data/'
     environment:
