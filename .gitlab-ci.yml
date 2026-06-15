@@ -4,11 +4,9 @@ include:
   - project: 'saltbox/ci-lib'
     file: 'build-image.yml'
   - project: 'saltbox/ci-lib'
+    file: 'mirror-image.yml'
+  - project: 'saltbox/ci-lib'
     file: 'def-branch-merge-guard.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-        when: never
-      - when: always
 
 
 Build Redis image:
@@ -59,6 +57,14 @@ Build Keycloak image:
     REGISTRY_ADDITIONAL_PATH: '/keycloak'
     CONTEXT_PATH: 'keycloak/'
     TARGET: keycloak
+
+
+Mirror Postgres image:
+  extends: .mirror-image
+  variables:
+    SOURCE_IMAGE: 'postgres'
+    SOURCE_IMAGE_TAG: 16-alpine'
+    REGISTRY_ADDITIONAL_PATH: '/postgres'
 
 
 Trigger Proxy build:
