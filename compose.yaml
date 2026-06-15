@@ -109,8 +109,6 @@ services:
     depends_on:
       keycloak-db:
         condition: service_healthy
-    volumes:
-      - './keycloak/themes/saltbox:/srv/keycloak/themes/saltbox:ro'
 
   keycloak-init:
     <<: *default
@@ -140,25 +138,6 @@ services:
     depends_on:
       keycloak:
         condition: service_healthy
-        restart: false
-
-  keycloak-theme-apply:
-    <<: *default
-    restart: 'on-failure'
-    image: '${IMAGE_REGISTRY}/saltbox-compose/keycloak:${KEYCLOAK_IMAGE_TAG}'
-    entrypoint: ['sh', '/usr/local/bin/apply-login-theme.sh']
-    environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_LOGIN_THEME: '${KEYCLOAK_LOGIN_THEME}'
-      KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
-      KEYCLOAK_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
-    secrets:
-      - keycloak_admin_password
-    volumes:
-      - './keycloak/bin/apply-login-theme.sh:/usr/local/bin/apply-login-theme.sh:ro'
-    depends_on:
-      keycloak-init:
-        condition: service_completed_successfully
         restart: false
 
   salt-master:

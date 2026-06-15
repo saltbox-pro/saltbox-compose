@@ -35,7 +35,7 @@ RUN kc.sh build --verbose
 
 
 FROM base AS keycloak
-LABEL version="1.2"
+LABEL version="1.3"
 
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -43,11 +43,11 @@ RUN \
   apt-install java-21-openjdk wget
 
 COPY --from=builder /usr/lib/keycloak/ /srv/keycloak
-COPY themes/ /srv/keycloak/themes/
-COPY --chmod=755 bin/startup.sh bin/apply-login-theme.sh /usr/local/bin/
+COPY themes/ /srv/keycloak/themes
+COPY --chmod=755 bin/startup.sh /usr/local/bin/
 
 ENV PATH="${PATH}:/srv/keycloak/bin/"
-#NOTE: For single node setup
+# NOTE: For single node setup
 ENV KC_CACHE=local
 
 ENV KC_HTTP_ENABLED=true
