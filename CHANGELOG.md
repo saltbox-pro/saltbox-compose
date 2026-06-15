@@ -16,6 +16,7 @@ if possible and purge browser redirects.
 ### Added
 
 - `guest\guest` default RabbitMQ user for dev mode.
+- Login screen consistent theme (Keycloak Salt.Box login theme).
 
 ### Changed
 
