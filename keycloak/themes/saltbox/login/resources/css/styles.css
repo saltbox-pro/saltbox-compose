@@ -13,6 +13,11 @@
   --sb-input-padding-block: 4px;
   --sb-input-padding-inline: 11px;
   --sb-input-active-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  --sb-control-height: 32px;
+  --sb-color-error: #ff4d4f;
+  --sb-color-error-bg: #fff2f0;
+  --sb-error-active-shadow: 0 0 0 2px rgba(255, 38, 5, 0.06);
+  --sb-icon-color: rgba(0, 0, 0, 0.45);
   --sb-card-width: 400px;
   --sb-shadow:
     0 1px 2px 0 rgba(0, 0, 0, 0.03),
@@ -107,105 +112,277 @@ body#keycloak-bg,
 }
 
 .pf-v5-c-form__group {
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 
-.pf-v5-c-form-control {
-  --pf-v5-c-form-control--BackgroundColor: var(--sb-surface);
+body#keycloak-bg .pf-v5-c-input-group__item.pf-m-fill {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+body#keycloak-bg .pf-v5-c-form-control {
+  --pf-v5-c-form-control--BackgroundColor: transparent;
   --pf-v5-c-form-control--Color: var(--sb-text);
+  --pf-v5-c-form-control--PaddingTop: var(--sb-input-padding-block);
+  --pf-v5-c-form-control--PaddingBottom: var(--sb-input-padding-block);
+  --pf-v5-c-form-control--PaddingLeft: var(--sb-input-padding-inline);
+  --pf-v5-c-form-control--PaddingRight: var(--sb-input-padding-inline);
   --pf-v5-c-form-control--before--BorderTopColor: transparent;
   --pf-v5-c-form-control--before--BorderRightColor: transparent;
   --pf-v5-c-form-control--before--BorderLeftColor: transparent;
   --pf-v5-c-form-control--before--BorderBottomColor: transparent;
   --pf-v5-c-form-control--after--BorderBottomColor: transparent;
+  --pf-v5-c-form-control--after--BorderBottomWidth: 0;
   --pf-v5-c-form-control--hover--after--BorderBottomColor: transparent;
   --pf-v5-c-form-control--focus--after--BorderBottomColor: transparent;
   --pf-v5-c-form-control--focus--after--BorderBottomWidth: 0;
+  --pf-v5-c-form-control--m-error--after--BorderBottomColor: transparent;
+  --pf-v5-c-form-control--m-error--after--BorderBottomWidth: 0;
+  --pf-v5-c-form-control__utilities--PaddingTop: 0;
+  --pf-v5-c-form-control__utilities--PaddingRight: 0;
+  --pf-v5-c-form-control__icon--PaddingTop: 0;
+  position: relative;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--sb-control-height);
+  min-height: var(--sb-control-height);
   background-color: var(--sb-surface) !important;
   border: 1px solid var(--sb-border);
   border-radius: var(--sb-radius);
-  min-height: 32px;
+  overflow: hidden;
+  isolation: isolate;
   transition:
     border-color 0.2s,
-    box-shadow 0.2s;
+    box-shadow 0.2s,
+    background-color 0.2s;
 }
 
-.pf-v5-c-form-control::before,
-.pf-v5-c-form-control::after {
+body#keycloak-bg .pf-v5-c-form-control::before,
+body#keycloak-bg .pf-v5-c-form-control::after {
+  content: none !important;
+  display: none !important;
   border: none !important;
-  border-radius: 0 !important;
 }
 
-.pf-v5-c-form-control:hover {
+body#keycloak-bg .pf-v5-c-form-control:hover {
   border-color: var(--sb-primary-hover);
 }
 
-.pf-v5-c-form-control:focus-within {
+body#keycloak-bg .pf-v5-c-form-control:focus-within {
   border-color: var(--sb-primary);
   box-shadow: var(--sb-input-active-shadow);
   outline: none;
 }
 
-.pf-v5-c-form-control>input {
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error {
+  border-color: var(--sb-color-error);
+  background-color: var(--sb-color-error-bg) !important;
+}
+
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error:focus-within {
+  border-color: var(--sb-color-error);
+  box-shadow: var(--sb-error-active-shadow);
+}
+
+body#keycloak-bg .pf-v5-c-form-control > :is(input, select, textarea) {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  box-sizing: border-box;
+  grid-column: unset !important;
+  grid-row: unset !important;
   color: var(--sb-text) !important;
   background: transparent !important;
+  border: none;
+  border-radius: 0;
+  -moz-appearance: none;
+  appearance: none;
   font-size: 14px;
-  padding: var(--sb-input-padding-block) var(--sb-input-padding-inline);
   line-height: 1.5714285714;
+  padding-block: var(--sb-input-padding-block) !important;
+  padding-inline: var(--sb-input-padding-inline) !important;
 }
 
-.pf-v5-c-form-control>input:focus {
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error > :is(input, select, textarea) {
+  padding-inline-end: var(--sb-input-padding-inline) !important;
+}
+
+body#keycloak-bg .pf-v5-c-form-control > :is(input, select, textarea):focus {
   outline: none;
 }
 
-.pf-v5-c-input-group {
-  display: flex;
-  align-items: stretch;
-  border: 1px solid var(--sb-border);
-  border-radius: var(--sb-radius);
-  background-color: var(--sb-surface);
-  min-height: 32px;
-  overflow: hidden;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
+body#keycloak-bg .pf-v5-c-form-control > input:-webkit-autofill,
+body#keycloak-bg .pf-v5-c-form-control > input:-webkit-autofill:hover,
+body#keycloak-bg .pf-v5-c-form-control > input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--sb-text);
+  caret-color: var(--sb-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--sb-surface) inset;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
-.pf-v5-c-input-group:hover {
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error > input:-webkit-autofill,
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error > input:-webkit-autofill:hover,
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error > input:-webkit-autofill:focus,
+body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error) .pf-v5-c-form-control > input:-webkit-autofill,
+body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error) .pf-v5-c-form-control > input:-webkit-autofill:hover,
+body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error) .pf-v5-c-form-control > input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--sb-color-error-bg) inset;
+}
+
+body#keycloak-bg .pf-v5-c-form-control > input:-moz-autofill,
+body#keycloak-bg .pf-v5-c-form-control > input:-moz-autofill-preview {
+  -moz-text-fill-color: var(--sb-text) !important;
+  box-shadow: 0 0 0 1000px var(--sb-surface) inset !important;
+}
+
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error > input:-moz-autofill,
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error > input:-moz-autofill-preview {
+  box-shadow: 0 0 0 1000px var(--sb-color-error-bg) inset !important;
+}
+
+body#keycloak-bg .pf-v5-c-form-control__utilities {
+  position: static !important;
+  flex-shrink: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center;
+  align-self: center !important;
+  grid-column: unset !important;
+  grid-row: unset !important;
+  width: auto;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 8px 0 4px !important;
+  margin: 0 !important;
+  pointer-events: none;
+}
+
+body#keycloak-bg .pf-v5-c-form-control__icon.pf-m-status {
+  display: block !important;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none;
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+  background: url("../img/exclamation-circle.svg") center / 14px 14px no-repeat;
+}
+
+body#keycloak-bg .pf-v5-c-form-control__icon.pf-m-status::before,
+body#keycloak-bg .pf-v5-c-form-control__icon.pf-m-status::after {
+  content: none !important;
+  display: none !important;
+}
+
+body#keycloak-bg .pf-v5-c-form-control__icon.pf-m-status .fa-exclamation-circle,
+body#keycloak-bg .pf-v5-c-form-control__icon.pf-m-status i {
+  display: none !important;
+}
+
+body#keycloak-bg .pf-v5-c-input-group {
+  display: flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--sb-control-height);
+  min-height: var(--sb-control-height);
+  border: 1px solid var(--sb-border);
+  border-radius: var(--sb-radius);
+  overflow: hidden;
+  background-color: var(--sb-surface);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background-color 0.2s;
+}
+
+body#keycloak-bg .pf-v5-c-input-group:hover {
   border-color: var(--sb-primary-hover);
 }
 
-.pf-v5-c-input-group:focus-within {
+body#keycloak-bg .pf-v5-c-input-group:focus-within {
   border-color: var(--sb-primary);
   box-shadow: var(--sb-input-active-shadow);
 }
 
-.pf-v5-c-input-group .pf-v5-c-form-control {
-  flex: 1;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0;
-  min-height: auto;
+body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error) {
+  border-color: var(--sb-color-error);
+  background-color: var(--sb-color-error-bg);
 }
 
-.pf-v5-c-input-group .pf-v5-c-form-control:hover,
-.pf-v5-c-input-group .pf-v5-c-form-control:focus-within {
+body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error):focus-within {
+  border-color: var(--sb-color-error);
+  box-shadow: var(--sb-error-active-shadow);
+}
+
+body#keycloak-bg .pf-v5-c-input-group .pf-v5-c-form-control {
+  flex: 1;
+  height: 100%;
+  min-height: 100%;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: var(--sb-radius) 0 0 var(--sb-radius);
+  background-color: transparent !important;
+}
+
+body#keycloak-bg .pf-v5-c-input-group .pf-v5-c-form-control:hover,
+body#keycloak-bg .pf-v5-c-input-group .pf-v5-c-form-control:focus-within {
   border-color: transparent !important;
   box-shadow: none !important;
 }
 
-.pf-v5-c-input-group .pf-v5-c-button.pf-m-control {
-  background-color: var(--sb-surface);
-  border: none;
-  border-left: 1px solid var(--sb-border);
-  border-radius: 0;
-  color: var(--sb-text-secondary);
-  box-shadow: none;
+body#keycloak-bg .pf-v5-c-input-group .pf-v5-c-button.pf-m-control {
+  flex-shrink: 0;
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-width: 32px;
+  padding: 0;
+  font-size: 0;
+  line-height: 0;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 var(--sb-radius) var(--sb-radius) 0;
+  color: var(--sb-icon-color);
+  box-shadow: none !important;
 }
 
-.pf-v5-c-input-group .pf-v5-c-button.pf-m-control:hover {
-  background-color: rgba(0, 0, 0, 0.02);
+body#keycloak-bg .pf-v5-c-input-group .pf-v5-c-button.pf-m-control:hover {
+  background-color: transparent !important;
   color: var(--sb-text);
+}
+
+body#keycloak-bg button[data-password-toggle] i {
+  display: none !important;
+}
+
+body#keycloak-bg button[data-password-toggle]::before {
+  content: "";
+  display: block;
+  width: 14px;
+  height: 14px;
+  background: url("../img/eye-invisible.svg") center / contain no-repeat;
+}
+
+body#keycloak-bg button[data-password-toggle]:has(.fa-eye-slash)::before {
+  background-image: url("../img/eye.svg");
+}
+
+body#keycloak-bg .pf-v5-c-helper-text__item-text.pf-m-error,
+body#keycloak-bg .kc-feedback-text {
+  color: var(--sb-color-error);
+  font-size: 14px;
 }
 
 input::placeholder {
