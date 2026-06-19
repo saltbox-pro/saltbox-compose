@@ -99,11 +99,86 @@ body#keycloak-bg,
   margin: 0 !important;
 }
 
+.pf-v5-c-login__main-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
 #kc-page-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
   font-size: 20px;
   font-weight: 600;
   line-height: 28px;
   color: var(--sb-text);
+}
+
+.pf-v5-c-login__main-header-utilities {
+  flex: 0 0 auto;
+  margin-left: auto;
+  align-self: center;
+}
+
+body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: auto;
+  min-height: 0;
+  padding: 0 0 0 22px;
+  border: none !important;
+  background: url("../img/global.svg") left center / 16px 16px no-repeat !important;
+  box-shadow: none !important;
+  overflow: visible;
+  cursor: pointer;
+}
+
+body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control::before,
+body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control::after {
+  content: none !important;
+  display: none !important;
+}
+
+body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control:hover,
+body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control:focus-within {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background: url("../img/global.svg") left center / 16px 16px no-repeat !important;
+}
+
+body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control__utilities {
+  display: none !important;
+}
+
+body#keycloak-bg .pf-v5-c-login__main-header-utilities #login-select-toggle {
+  flex: 0 1 auto;
+  width: auto;
+  height: 22px;
+  min-height: 22px;
+  margin: 0 0 0 -22px;
+  padding: 0 0 0 22px !important;
+  border: none;
+  background: transparent !important;
+  color: var(--sb-text-secondary);
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+body#keycloak-bg .pf-v5-c-login__main-header-utilities #login-select-toggle:hover,
+body#keycloak-bg .pf-v5-c-login__main-header-utilities #login-select-toggle:focus {
+  color: var(--sb-text);
+  outline: none;
+  box-shadow: none;
 }
 
 .pf-v5-c-form__label-text {
@@ -387,6 +462,24 @@ body#keycloak-bg .kc-feedback-text {
 
 input::placeholder {
   color: var(--sb-text-placeholder);
+}
+
+body#keycloak-bg .pf-v5-c-check__input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--sb-primary);
+  cursor: pointer;
+}
+
+body#keycloak-bg .pf-v5-c-check__label {
+  font-size: 14px;
+  color: var(--sb-text);
+  cursor: pointer;
+}
+
+body#keycloak-bg .pf-v5-c-form__actions {
+  margin-top: 24px;
 }
 
 #kc-login {
