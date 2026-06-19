@@ -100,85 +100,121 @@ body#keycloak-bg,
 }
 
 .pf-v5-c-login__main-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: flex !important;
+  flex-wrap: nowrap;
+  align-items: center !important;
   justify-content: space-between;
   gap: 8px 16px;
+  overflow: visible;
+  grid-template-columns: none !important;
 }
 
 #kc-page-title {
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
-  font-size: 20px;
+  font-size: 20px !important;
   font-weight: 600;
-  line-height: 28px;
+  line-height: 28px !important;
   color: var(--sb-text);
+  grid-column: unset !important;
+  grid-row: unset !important;
 }
 
 .pf-v5-c-login__main-header-utilities {
   flex: 0 0 auto;
   margin-left: auto;
-  align-self: center;
+  align-self: center !important;
+  position: relative;
+  z-index: 2;
+  grid-column: unset !important;
+  grid-row: unset !important;
 }
 
-body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control {
+.sb-locale {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+}
+
+.sb-locale__trigger {
   display: inline-flex;
   align-items: center;
-  width: auto;
-  min-width: 0;
-  max-width: none;
-  height: auto;
-  min-height: 0;
-  padding: 0 0 0 22px;
-  border: none !important;
-  background: url("../img/global.svg") left center / 16px 16px no-repeat !important;
-  box-shadow: none !important;
-  overflow: visible;
-  cursor: pointer;
-}
-
-body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control::before,
-body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control::after {
-  content: none !important;
-  display: none !important;
-}
-
-body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control:hover,
-body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control:focus-within {
-  border-color: transparent !important;
-  box-shadow: none !important;
-  background: url("../img/global.svg") left center / 16px 16px no-repeat !important;
-}
-
-body#keycloak-bg .pf-v5-c-login__main-header-utilities .pf-v5-c-form-control__utilities {
-  display: none !important;
-}
-
-body#keycloak-bg .pf-v5-c-login__main-header-utilities #login-select-toggle {
-  flex: 0 1 auto;
-  width: auto;
-  height: 22px;
-  min-height: 22px;
-  margin: 0 0 0 -22px;
-  padding: 0 0 0 22px !important;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
   border: none;
-  background: transparent !important;
-  color: var(--sb-text-secondary);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
   font-size: 14px;
   line-height: 22px;
-  cursor: pointer;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
+  color: var(--sb-text-secondary);
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
 }
 
-body#keycloak-bg .pf-v5-c-login__main-header-utilities #login-select-toggle:hover,
-body#keycloak-bg .pf-v5-c-login__main-header-utilities #login-select-toggle:focus {
+.sb-locale__trigger:hover,
+.sb-locale__trigger:focus,
+.sb-locale__trigger[aria-expanded="true"] {
   color: var(--sb-text);
   outline: none;
-  box-shadow: none;
+}
+
+.sb-locale__icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  background: url("../img/global.svg") center / contain no-repeat;
+}
+
+.sb-locale__current {
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.sb-locale__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 10;
+  min-width: 72px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--sb-surface);
+  border: 1px solid var(--sb-border);
+  border-radius: var(--sb-radius);
+  box-shadow:
+    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+}
+
+.sb-locale__menu[hidden] {
+  display: none;
+}
+
+.sb-locale__option {
+  display: block;
+  padding: 5px 12px;
+  border-radius: 4px;
+  color: var(--sb-text);
+  font-size: 14px;
+  line-height: 22px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sb-locale__option:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--sb-text);
+}
+
+.sb-locale__option--active {
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .pf-v5-c-form__label-text {
@@ -264,7 +300,7 @@ body#keycloak-bg .pf-v5-c-form-control.pf-m-error:focus-within {
   box-shadow: var(--sb-error-active-shadow);
 }
 
-body#keycloak-bg .pf-v5-c-form-control > :is(input, select, textarea) {
+body#keycloak-bg .pf-v5-c-form-control> :is(input, select, textarea) {
   flex: 1 1 auto;
   width: 100%;
   min-width: 0;
@@ -284,40 +320,40 @@ body#keycloak-bg .pf-v5-c-form-control > :is(input, select, textarea) {
   padding-inline: var(--sb-input-padding-inline) !important;
 }
 
-body#keycloak-bg .pf-v5-c-form-control.pf-m-error > :is(input, select, textarea) {
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error> :is(input, select, textarea) {
   padding-inline-end: var(--sb-input-padding-inline) !important;
 }
 
-body#keycloak-bg .pf-v5-c-form-control > :is(input, select, textarea):focus {
+body#keycloak-bg .pf-v5-c-form-control> :is(input, select, textarea):focus {
   outline: none;
 }
 
-body#keycloak-bg .pf-v5-c-form-control > input:-webkit-autofill,
-body#keycloak-bg .pf-v5-c-form-control > input:-webkit-autofill:hover,
-body#keycloak-bg .pf-v5-c-form-control > input:-webkit-autofill:focus {
+body#keycloak-bg .pf-v5-c-form-control>input:-webkit-autofill,
+body#keycloak-bg .pf-v5-c-form-control>input:-webkit-autofill:hover,
+body#keycloak-bg .pf-v5-c-form-control>input:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--sb-text);
   caret-color: var(--sb-text);
   -webkit-box-shadow: 0 0 0 1000px var(--sb-surface) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
 
-body#keycloak-bg .pf-v5-c-form-control.pf-m-error > input:-webkit-autofill,
-body#keycloak-bg .pf-v5-c-form-control.pf-m-error > input:-webkit-autofill:hover,
-body#keycloak-bg .pf-v5-c-form-control.pf-m-error > input:-webkit-autofill:focus,
-body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error) .pf-v5-c-form-control > input:-webkit-autofill,
-body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error) .pf-v5-c-form-control > input:-webkit-autofill:hover,
-body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error) .pf-v5-c-form-control > input:-webkit-autofill:focus {
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error>input:-webkit-autofill,
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error>input:-webkit-autofill:hover,
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error>input:-webkit-autofill:focus,
+body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error) .pf-v5-c-form-control>input:-webkit-autofill,
+body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error) .pf-v5-c-form-control>input:-webkit-autofill:hover,
+body#keycloak-bg .pf-v5-c-input-group:has(.pf-m-error) .pf-v5-c-form-control>input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px var(--sb-color-error-bg) inset;
 }
 
-body#keycloak-bg .pf-v5-c-form-control > input:-moz-autofill,
-body#keycloak-bg .pf-v5-c-form-control > input:-moz-autofill-preview {
+body#keycloak-bg .pf-v5-c-form-control>input:-moz-autofill,
+body#keycloak-bg .pf-v5-c-form-control>input:-moz-autofill-preview {
   -moz-text-fill-color: var(--sb-text) !important;
   box-shadow: 0 0 0 1000px var(--sb-surface) inset !important;
 }
 
-body#keycloak-bg .pf-v5-c-form-control.pf-m-error > input:-moz-autofill,
-body#keycloak-bg .pf-v5-c-form-control.pf-m-error > input:-moz-autofill-preview {
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error>input:-moz-autofill,
+body#keycloak-bg .pf-v5-c-form-control.pf-m-error>input:-moz-autofill-preview {
   box-shadow: 0 0 0 1000px var(--sb-color-error-bg) inset !important;
 }
 
