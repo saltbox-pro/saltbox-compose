@@ -45,13 +45,15 @@ be ran from the root of repo by relative path like `./bin/sb-compose.sh`.
 - `install_saltbox_migrations.sh` — donwload Salt.Box Migrations Compose,
   configure and run.
 - `make_secrets.py` — create required by system passwords.
-- `sb-compose.sh` — thin wrapper over the `docker compose` command is the preferred way to
-manipulate a running instance.
+- `sb-compose.sh` — thin wrapper over the `docker compose` command is __the
+recommended way__ to manipulate a running instance. It passes additional
+dotenv files to Docker Compose. Dotenvs precedence is `base.env` →
+`_UPDATE_AND_RUN_EXTRA_ENV_FILES` → `override.env`
 - `sb-exec.sh` — shortcuts for some common commands.
 - `sb-images-export.sh` — dump current images to disk e.g. to use on an offline host.
 - `sb-images-import.sh` — load dumped with `./bin/sb-images-export.sh` images.
 - `update_and_run.sh` — the main startup script.
-- `validate_dotenv.py` — check major issues in `.env` file.
+- `validate_dotenv.py` — check major issues in `override.env` file.
 
 Helper scripts supposed to be executable. Some systems may drop executable
 flag due to security reasons. On troubles to start try to re-add the flag:
@@ -82,9 +84,8 @@ flowchart LR
         --> update_and_run.sh
         subgraph update_and_run.sh
             direction TB
-            merge_env[Merge `.env`] --> validate_dotenv.py
             subgraph validate_dotenv.py
-               validate_dotenv[Validate `.env`]
+               validate_dotenv[Validate `override.env`]
             end
             validate_dotenv.py --> make_secrets.py
             subgraph make_secrets.py
@@ -113,7 +114,6 @@ sudo ./bin/update_and_run.sh
 ```
 
 The script:
-- Merges `base.env` and `override.env` (if exists) into `.env` config.
 - Makes secrets with `./bin/make_secrets.py`.
 - Updates images.
 - Prints default administrator credentials.
@@ -225,8 +225,8 @@ with `proxy_pass` URL.
 
 ## Autotests
 
-To run test suites enable `compose-autotests.yaml` in the local`.env` file.
-Then execute:
+To run test suites enable `compose-autotests.yaml` in the local `override.env`
+file. Then execute:
 
 ```bash
 sudo ./bin/sb-compose.sh up autotests
@@ -356,7 +356,7 @@ connection to download Config Boxes.
 Suppose there is a target offline host to setup the Salt.Box AND it already has [Salt.Box Compose
 requirements](#requirements) are installed. The way to bring images on it is:
 
-1. On a host with an Internet link configure and run Salt.Box once by standard manual. `.env`
+1. On a host with an Internet link configure and run Salt.Box once by standard manual. `override.env`
    Compose config MUST be the same with the target offline host at least in a part of connected
    Compose-files.
 
@@ -427,6 +427,8 @@ The [pyenv](https://github.com/pyenv/pyenv) utility takes version from the
 introduced in Docker Compose 2.20.2, it is a __current version limiter__.
 - `develop` specification introduced in Docker Compose 2.22.0, it should be
 avoided in the main [`compose.yaml`](compose.yaml) file.
+- Avoid default value notation for variables '{VAR:-value}' beacause default
+values in [`base.env`](./base.env) is more explicit.
 
 ### Redis: channels
 

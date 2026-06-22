@@ -29,6 +29,8 @@ deleted.
 value for release and "any of release or pre-release" accordingly.
 - `install_saltbox_migrations.py` takes the same refs as `install_saltbox.py`
 - Use Postgres image from `registry.saltbox.pro`
+- No more merged `.env` file: scripts read separate `base.env` and
+`override.env`.
 
 ### Fixed
 

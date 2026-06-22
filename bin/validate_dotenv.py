@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Dict, List
 
 REF_FILE = Path('base.env')
-ENV_FILE = Path('.env')
+OVERRIDE_FILE = Path('override.env')
 EXTRA_ENV_VAR = '_UPDATE_AND_RUN_EXTRA_ENV_FILES'
 
 _kc_adm_msg = 'KEYCLOAK_ADMIN_* variables replaced by SALTBOX_ADMIN_*'
@@ -113,7 +113,7 @@ def parse(dotenv: Path) -> Dict[str, Entry]:
 
 def main() -> None:
     ref = parse(REF_FILE)
-    current = parse(ENV_FILE)
+    current = parse(OVERRIDE_FILE)
     extra_dotenvs = []
 
     extra_env_val = current.get(EXTRA_ENV_VAR)

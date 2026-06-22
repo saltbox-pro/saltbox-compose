@@ -1,9 +1,9 @@
 #! /bin/bash
-set -e
+set -eu -o pipefail
 
 declare -r override_env='override.env'
-declare -r env_file='.env'
-declare -r base_env_file='base.env'
+declare -r deprecated_env='.env'
+declare -r base_env='base.env'
 bin_dir="$(dirname "$(realpath --relative-to "$(pwd)" "$0")")"
 declare -r bin_dir
 declare -r compose_cmd="${bin_dir}/sb-compose.sh"
@@ -17,7 +17,7 @@ Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
 
   -d|--detach\t\tDetach Docker Compose after start
   --drop-data\t\tDelete all volumes before start!
-  -f|--force\t\tRewrite with no confirmation
+  -f|--force\t\tNo confirmations
   -h|--help\t\tPrint this message
   -l|--login\t\tTry to login to registry
   -n|--no-pull\t\tAvoid to update current repository and images from Internet
@@ -25,8 +25,7 @@ Usage: ./bin/update_and_run.sh [-d|--detach] [-h|--help] [SERVICE]...
   --no-image-pull\tDo not pull newer images from registry
   --no-progress\t\tHide progress bars, good for CI
   --no-root\t\tDo not use sudo, run by current user
-  --only-env\t\tOnly merge ${base_env_file} and override.env and exit
-  --only-update\t\tOnly merge .env file and update images
+  --only-update\t\tOnly update images and exit
   -w|--watch\t\tEnable Docker Compose watch for developement
 
 Last --only-* flag overrides preceding.
@@ -47,11 +46,9 @@ declare -r success_msg_tpl='
 
 function success_msg() {
   post=${1:-0}
-  # shellcheck source=/dev/null
-  admin_username=$(source "$env_file" && echo "$SALTBOX_ADMIN_USERNAME")
+  admin_username=$(get_env_var 'SALTBOX_ADMIN_USERNAME')
   admin_password="$(cat "$admin_password_file")"
-  # shellcheck source=/dev/null
-  sb_url=$(source "$env_file" && echo "https://${WEB_SERVER_OUTER_SOCKET}")
+  sb_url="https://$(get_env_var 'WEB_SERVER_OUTER_SOCKET')"
   if [ "$post" == 1 ]; then
     printf '    #\n    ###\n    ####'
   fi
@@ -91,16 +88,23 @@ function as_root() {
   fi
 }
 
+function get_env_var() {
+  (
+    # shellcheck source=/dev/null
+    source "$base_env"
+    # shellcheck source=/dev/null
+    if [[ -f "$override_env" ]]
+    then source "$override_env"
+    else warn "No '${override_env}' file while getting '${1}'"
+    fi
+    echo "${!1}"
+  )
+}
+
 function git_pull_required() {
   local branch
 
   if [ $git_pull_flag = 0 ]; then
-    echo 0
-    return
-  fi
-
-  if [ ! -f "$env_file" ]; then
-    warn "No '${env_file}' file, skipping 'git pull'"
     echo 0
     return
   fi
@@ -164,7 +168,6 @@ for i in "$@"; do
     --no-git-pull) git_pull_flag=0 ;;
     --no-image-pull) image_pull_flag=0 ;;
     --no-root) no_root_flag=1 ;;
-    --only-env) last_stage='dotenv';;
     --only-update) last_stage='build' ;;
     -w|--watch) up_args+=('--watch') ;;
     -*) err "Unknown option $i" ;;
@@ -200,41 +203,23 @@ if [ "$(git_pull_required)" = 1 ]; then
   echo_run ./bin/git_pull_dev_repos.py --only-compose
 fi
 
-if [ -f "$env_file" ]; then
-  if [ $force_flag = 0 ]; then
-    read -p "File '$env_file' already exists, overwrite? (y/n): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-      rm "$env_file"
-    else
-      warn "Using existed '${env_file}'"
-    fi
-  else
-    rm "$env_file"
-  fi
+if [[ ! -f "$override_env" ]]; then
+  warn "No '${override_env}' file, using defaults"
+  sleep $msg_sleep
 fi
 
-if [ ! -f "$env_file" ]; then
-  cat "$base_env_file" > "$env_file"
-
-  if [ -f "$override_env" ]; then
-    echo >> $env_file
-    cat "$override_env" >> "$env_file"
-  else
-    warn "No '${override_env}' file, using defaults"
-  fi
-
-  chown "$(stat -c %u:%g .)" "$env_file"
-  echo "New '$env_file' file has been created"
+if [[ -f "$deprecated_env" ]]; then
+  warn "FOUND DEPRECATED '${deprecated_env}' FILE"
+  warn "Deprecated '${deprecated_env}' will not be used"
+  sleep $msg_sleep
 fi
-
 
 function on_env_validation_fail() {
   if [ $force_flag = 1 ]; then
-    warn 'Adviced to correct override.env or .env'
+    warn "Adviced to correct '${override_env}'"
     sleep $msg_sleep
   else
-    read -p "Warning on the .env file. Continue? (y/n): " -n 1 -r
+    read -p "Warning on the '${override_env}' file. Continue? (y/n): " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then exit 0; fi
   fi
@@ -242,26 +227,19 @@ function on_env_validation_fail() {
 
 echo_run ./bin/validate_dotenv.py || on_env_validation_fail
 
-if [ $last_stage = 'dotenv' ]; then exit 0; fi
-
 if [ "$(git_pull_required)" = 1 ]; then
   echo_run ./bin/git_pull_dev_repos.py --no-compose
 fi
 
-# shellcheck source=/dev/null
-IFS=',' read -ra make_secrets_confs <<< "$(source "$env_file" && echo "$_UPDATE_AND_RUN_EXTRA_SECRETS_CONFS")"
+IFS=',' read -ra make_secrets_confs <<< "$(get_env_var '_UPDATE_AND_RUN_EXTRA_SECRETS_CONFS')"
 make_secrets_arg+=("${make_secrets_confs[@]}")
 echo_run ./bin/make_secrets.py "${make_secrets_arg[@]}"
 
 if [ $login_flag = 1 ]; then
-  # shellcheck source=/dev/null
-  registry=$(
-    source "$env_file"
-    echo "$IMAGE_REGISTRY" | cut --delimiter '/' --fields 1
-  )
+  registry=$(get_env_var 'IMAGE_REGISTRY' | cut --delimiter '/' --fields 1)
 
   if [ -z "$registry" ]; then
-    err "Failed to get registry from $env_file"
+    err "Failed to get registry from dotenv files IMAGE_REGISTRY variable"
   fi
   echo_run as_root docker login "$registry"
 fi

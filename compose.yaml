@@ -257,7 +257,7 @@ services:
     image: '${IMAGE_REGISTRY}/saltbox-gateway:${GATEWAY_IMAGE_TAG}'
     command: 'uvicorn'
     environment:
-      LOG_LEVEL: '${GATEWAY_LOG_LEVEL:-info}'
+      LOG_LEVEL: '${GATEWAY_LOG_LEVEL}'
       SERVER_WS_SCHEME: 'wss'
       SERVER_OUTER_SOCKET: '${WEB_SERVER_OUTER_SOCKET}'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
@@ -323,7 +323,7 @@ services:
       MONGO_REPLICASET: '${MONGO_AUDIT_REPLICA_SET}'
       MONGO_USER: '${MONGO_USER}'
       MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
-      MONGO_EXPLAIN: '${MONGO_EXPLAIN:-false}'
+      MONGO_EXPLAIN: '${MONGO_EXPLAIN}'
       # RabbitMQ environment variables
       RABBITMQ_HOST: '${RABBITMQ_HOST}'
       RABBITMQ_PORT: '${RABBITMQ_PORT}'
@@ -373,8 +373,8 @@ services:
       GITLAB_BASE_URL: '${GITLAB_BASE_URL}'
       GITLAB_GROUP_ID: '${GITLAB_GROUP_ID}'
       GITLAB_TOKEN: '${GITLAB_TOKEN}'
-      IS_MODULE_INVENTORY_ON: '${SALTBOX_MODULE_INVENTORY_ON:-false}'
-      IS_MODULE_METRIC_ON: '${SALTBOX_MODULE_METRIC_ON:-false}'
+      IS_MODULE_INVENTORY_ON: '${SALTBOX_MODULE_INVENTORY_ON}'
+      IS_MODULE_METRIC_ON: '${SALTBOX_MODULE_METRIC_ON}'
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
       KEYCLOAK_FRONT_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
@@ -386,7 +386,7 @@ services:
       MONGO_REPLICASET: '${MONGO_REPLICA_SET}'
       MONGO_USER: '${MONGO_USER}'
       MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
-      MONGO_EXPLAIN: '${MONGO_EXPLAIN:-false}'
+      MONGO_EXPLAIN: '${MONGO_EXPLAIN}'
       OPA_URL: 'http://opa:8181'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
       REDIS_TASKIQ_DB: 0

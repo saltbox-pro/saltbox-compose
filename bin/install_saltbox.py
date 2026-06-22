@@ -54,6 +54,7 @@ CWD = Path.cwd()
 LOCAL_PATH = CWD / './saltbox-compose/'
 BIN_DIR = LOCAL_PATH / 'bin'
 ENV_OVERRIDE = LOCAL_PATH / 'override.env'
+DEFAULT_DOTENVS = (LOCAL_PATH / 'base.env', ENV_OVERRIDE,)
 SCRIPT_SUFFIXES = ('*.sh', '*.py',)
 ADMIN_SECRET_NAME = 'saltbox_admin_password'
 MONGO_ADMIN_SECRET_NAME = 'mongo_root_password'
@@ -298,9 +299,15 @@ def check_repo_compability_level(repo_path: Path, required_level: Optional[int])
         raise CheckError(message=msg, details=details)
 
 
-def get_dotenv_var(name: str, dotenv: Path = Path('.env')) -> str:
-    """ Read str value from env-file """
-    cmd = ['sh', '-c', f'. \'{dotenv.absolute()}\' && printf \'%s\' "${name}"']
+def get_dotenv_var(name: str, dotenvs: Optional[Sequence[Path]] = None) -> str:
+    """ Read str value from dotenv files (oreder matters) """
+    if dotenvs is None:
+        dotenvs = list(DEFAULT_DOTENVS).copy()
+    subcmd = ''
+    for path in dotenvs:
+        subcmd += f". '{path.absolute()}' &&"
+    subcmd += f'printf \'%s\' "${name}"'
+    cmd = ['sh', '-c', subcmd]
     proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
     val = proc.stdout
     print_out(f'Got dotenv var `{name}`: `{val}`', verbose=True)
@@ -1302,8 +1309,7 @@ def run(config: Config) -> None:
         ep_cmd.append('--no-progress')
 
     if config.is_token_required:
-        run_cmd([*ep_cmd, '--only-env'])
-        registry = get_dotenv_var(name=REGISTRY_DOTENV_VAR, dotenv=Path('.env'))
+        registry = get_dotenv_var(name=REGISTRY_DOTENV_VAR)
         if not registry:
             dosa = f'Failed to obtain `{REGISTRY_DOTENV_VAR}`'
             raise InstallerError(dosa)

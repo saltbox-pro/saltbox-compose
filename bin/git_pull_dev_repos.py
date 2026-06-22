@@ -106,7 +106,12 @@ def get_args() -> argparse.Namespace:
     parser.add_argument(
         '--only-compose',
         action='store_true',
-        help='Pull only SaltBox Compose repos, no `.env` required'
+        help='Pull only SaltBox Compose repos, no dotenv reading'
+    )
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Do not hide exceptions'
     )
     return parser.parse_args()
 
@@ -129,11 +134,10 @@ def action_list(repos: list[Path]) -> None:
         print(f'- {repo}')
 
 
-def main():
-    args = get_args()
+def main(args: argparse.Namespace) -> None:
     conf = get_conf()
 
-    repos = []
+    repos: list[Path] = []
     if not args.only_compose:
         context_repos = get_context_repos(conf)
         vol_repos = get_volume_repos(conf)
@@ -164,9 +168,12 @@ def main():
 
 
 if __name__ == '__main__':
+    args = get_args()
     try:
-        main()
+        main(args)
     except Exception as err:
         print(err, file=sys.stderr)
         print(f'{LINE}\nExit on error', file=sys.stderr)
+        if args.debug:
+            raise err
         sys.exit(1)
