@@ -1,6 +1,5 @@
 #! /bin/bash
-
-set -e
+set -eu -o pipefail
 
 info() {
   echo "> $*"
@@ -74,7 +73,7 @@ init() {
   env \
     MONGO_ROOT_PASSWORD="$(cat "$MONGO_ROOT_PASSWORD_FILE")" \
     MONGO_USER_PASSWORD="$(cat "$MONGO_USER_PASSWORD_FILE")" \
-    MONGO_EXPORTER_PASSWORD="$(cat "$MONGO_EXPORTER_PASSWORD_FILE")" \
+    MONGO_EXPORTER_PASSWORD="$(cat "${MONGO_EXPORTER_PASSWORD_FILE:-/dev/null}")" \
     "${mongosh_cmd[@]}" --file '/etc/mongo/init/users.js'
   info 'Shutting down the init instance'
   "${mongod_auth[@]}" --pidfilepath="$init_pidfile" --shutdown

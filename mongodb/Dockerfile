@@ -1,7 +1,7 @@
 ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
 
 FROM "$BASE_IMG"
-LABEL version="0.1"
+LABEL version="0.2"
 # Increase to trigger build. Drop to 0 on version change.
 LABEL release="0"
 
@@ -43,12 +43,7 @@ ENV MONGOD_CONF_FILE='/etc/mongo/mongod.conf'
 COPY --chmod=644 mongod.yaml "$MONGOD_CONF_FILE"
 
 ENV WAIT_FOR_INIT=30
-ENV MONGO_ROOT_PASSWORD_FILE=
-ENV MONGO_ROOT_USERNAME=
-ENV MONGO_USER_PASSWORD_FILE=
-ENV MONGO_USER_USERNAME=
-ENV MONGOD_REPLICA_SET=
-ENV MONGOD_KEY_FILE=
+VOLUME /var/lib/mongo/
 WORKDIR /var/lib/mongo/
 EXPOSE 27017
 HEALTHCHECK \

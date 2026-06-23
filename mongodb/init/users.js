@@ -1,6 +1,6 @@
-function get_env(name) {
+function get_env(name, strict=true) {
     let val = process.env[name];
-    if (typeof(val) == 'undefined') {
+    if (strict && val === undefined) {
         throw new Error(`Not found ${name} environment variable`);
     }
     return val;
@@ -16,13 +16,13 @@ function main() {
     const root_username = get_env('MONGO_ROOT_USERNAME');
     const user_password = get_env('MONGO_USER_PASSWORD');
     const user_username = get_env('MONGO_USER_USERNAME');
-    const exporter_password = get_env('MONGO_EXPORTER_PASSWORD');
-    const exporter_username = get_env('MONGO_EXPORTER_USERNAME');
+    // Exporter user is optional
+    const exporter_username = get_env('MONGO_EXPORTER_USERNAME', strict=false);
     const adm_db = 'admin';
     const local_db = 'local'
 
     if (user_username == root_username) {
-        throw new Error('MOGNO_ROOT_USERNAME must differ from MONGO_USER_USERNAME');
+        throw new Error('MONGO_ROOT_USERNAME must differ from MONGO_USER_USERNAME');
     }
 
     use(adm_db);
@@ -45,16 +45,24 @@ function main() {
     };
     create_user(user);
 
-    const exporter = {
-        user: exporter_username,
-        pwd: exporter_password,
-        roles: [
-            { role: "read", db: adm_db },
-            { role: "clusterMonitor", db: adm_db },
-            { role: "read", db: local_db }
-        ]
-    };
-    create_user(exporter);
+    if (exporter_username !== undefined) {
+        const exporter_password = get_env('MONGO_EXPORTER_PASSWORD');
+        if (exporter_password == '') {
+            throw new Error(`No password for exporter user ${exporter_username}`);
+        }
+        const exporter = {
+            user: exporter_username,
+            pwd: exporter_password,
+            roles: [
+                { role: 'read', db: adm_db },
+                { role: 'clusterMonitor', db: adm_db },
+                { role: 'read', db: local_db }
+            ]
+        };
+        create_user(exporter);
+    }
 }
 
 main();
+
+// vi: sw=4

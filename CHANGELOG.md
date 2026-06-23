@@ -31,6 +31,7 @@ value for release and "any of release or pre-release" accordingly.
 - Use Postgres image from `registry.saltbox.pro`
 - No more merged `.env` file: scripts read separate `base.env` and
 `override.env`.
+- MongoDB exporter user is optional now.
 
 ### Fixed
 
