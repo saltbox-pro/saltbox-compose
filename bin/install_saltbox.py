@@ -81,6 +81,8 @@ cache = functools.lru_cache(maxsize=None)
 TOKEN_NAME = 'SALTBOX_INSTALL_TOKEN'
 # GitLab group token MUST have scopes: read_repository, read_registry, read_api
 TOKEN = os.environ.get(TOKEN_NAME)
+# CI_JOB_TOKEN must be passed as 'JOB-TOKEN' header
+TOKEN_HEADER = os.environ.get('SALTBOX_INSTALL_TOKEN_HEADER', 'PRIVATE-TOKEN')
 
 
 class InstallerError(RuntimeError):
@@ -801,7 +803,7 @@ class GitLabRepo:
     def _create_request(self, url: str) -> urllib.request.Request:
         request = urllib.request.Request(url=url)
         if self.token:
-            request.headers['PRIVATE-TOKEN'] = self.token
+            request.headers[TOKEN_HEADER] = self.token
         return request
 
 
