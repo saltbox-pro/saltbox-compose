@@ -299,12 +299,13 @@ def check_repo_compability_level(repo_path: Path, required_level: Optional[int])
         raise CheckError(message=msg, details=details)
 
 
-def get_dotenv_var(name: str, dotenvs: Optional[Sequence[Path]] = None) -> str:
+def get_dotenv_var(name: str, dotenvs: Optional[Sequence[Union[str, Path]]] = None) -> str:
     """ Read str value from dotenv files (oreder matters) """
     if dotenvs is None:
         dotenvs = list(DEFAULT_DOTENVS).copy()
     subcmd = ''
     for path in dotenvs:
+        path = Path(path)
         subcmd += f". '{path.absolute()}' &&"
     subcmd += f'printf \'%s\' "${name}"'
     cmd = ['sh', '-c', subcmd]
