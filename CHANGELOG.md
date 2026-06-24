@@ -43,6 +43,8 @@ value for release and "any of release or pre-release" accordingly.
 
 ### Removed
 
+- Obsolete `bin/check_image_tags.sh` helper script.
+
 ## [0.2.1] - 2026-05-21
 
 ### Added
