@@ -11,6 +11,7 @@ include:
 
 Build Redis image:
   extends: .build-image
+  stage: build
   variables:
     REGISTRY_ADDITIONAL_PATH: '/redis'
     CONTEXT_PATH: 'redis/'
@@ -18,6 +19,7 @@ Build Redis image:
 
 Build OPA image:
   extends: .build-image
+  stage: build
   variables:
     REGISTRY_ADDITIONAL_PATH: '/opa'
     CONTEXT_PATH: 'opa/'
@@ -25,6 +27,7 @@ Build OPA image:
 
 Build SSHFS image:
   extends: .build-image
+  stage: build
   variables:
     REGISTRY_ADDITIONAL_PATH: '/sshfs'
     CONTEXT_PATH: 'sshfs/'
@@ -32,6 +35,7 @@ Build SSHFS image:
 
 Build make-certs image:
   extends: .build-image
+  stage: build
   variables:
     REGISTRY_ADDITIONAL_PATH: '/make-certs'
     CONTEXT_PATH: 'make-certs/'
@@ -39,6 +43,7 @@ Build make-certs image:
 
 Build MongoDB image:
   extends: .build-image
+  stage: build
   variables:
     REGISTRY_ADDITIONAL_PATH: '/mongodb'
     CONTEXT_PATH: 'mongodb/'
@@ -46,6 +51,7 @@ Build MongoDB image:
 
 Build RabbitMQ image:
   extends: .build-image
+  stage: build
   variables:
     REGISTRY_ADDITIONAL_PATH: '/rabbitmq'
     CONTEXT_PATH: 'rabbitmq/'
@@ -53,6 +59,7 @@ Build RabbitMQ image:
 
 Build Keycloak image:
   extends: .build-image
+  stage: build
   variables:
     REGISTRY_ADDITIONAL_PATH: '/keycloak'
     CONTEXT_PATH: 'keycloak/'
@@ -61,12 +68,14 @@ Build Keycloak image:
 
 Mirror Postgres image:
   extends: .mirror-image
+  stage: build
   variables:
     SOURCE_IMAGE: 'postgres:16-alpine'
     REGISTRY_ADDITIONAL_PATH: '/postgres-16-alpine'
 
 
 Trigger Proxy build:
+  stage: build
   trigger:
     include:
       - local: 'proxy/.gitlab-ci.yml'
@@ -75,3 +84,40 @@ Trigger Proxy build:
     - changes:
         - 'nginx/**/*'
         - 'proxy/**/*'
+
+
+Check release image tags:
+  stage: .pre
+  image: python:3.13-alpine
+  variables:
+    GITLAB_TOKEN: '$CI_JOB_TOKEN'
+    APK_CACHE_DIR: '$CI_PROJECT_DIR/.cache/apk'
+  before_script:
+    - mkdir --parents "$APK_CACHE_DIR"
+    - apk add --cache-dir "$APK_CACHE_DIR" bash docker-compose git
+    - rm -f override.env
+    - |
+      set -e
+      extra_env=''
+      for repo in \
+        saltbox-filebrowser-compose \
+        saltbox-inventory-compose \
+        saltbox-metric-compose \
+        saltbox-scheduler-compose \
+      ; do
+        url="${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}"
+        url="${url}@${CI_SERVER_HOST}:${CI_SERVER_PORT}"
+        url="${url}/saltbox/${repo}"
+        git clone --depth=1 --branch=dev "$url"
+        extra_env="${extra_env},${repo}/.env"
+        echo "COMPOSE_FILE=\"\${COMPOSE_FILE}:${repo}/compose.yaml\"" >> override.env
+      done
+      echo "_UPDATE_AND_RUN_EXTRA_ENV_FILES=\"${extra_env#,}\"" >> override.env
+    - cat override.env
+  script:
+    - python3 bin/image_tags.py check
+  cache:
+    paths:
+      - '$APK_CACHE_DIR'
+  rules:
+    - if: '$CI_COMMIT_TAG && $TEST_IMAGE_TAGS == true'
