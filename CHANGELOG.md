@@ -18,6 +18,7 @@ if possible and purge browser redirects.
 - `guest\guest` default RabbitMQ user for dev mode.
 - Login screen consistent theme (Keycloak Salt.Box login theme).
 - `./bin/check_image_tag.sh check` command.
+- `install_saltbox.py` flag `--list-addons`.
 
 ### Changed
 

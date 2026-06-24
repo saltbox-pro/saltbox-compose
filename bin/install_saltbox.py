@@ -106,6 +106,11 @@ def get_args() -> argparse.Namespace:
         help="Extra values to include into dotenv in form of NAME='VAL'",
     )
     parser.add_argument(
+        '--list-addons',
+        action='store_true',
+        help='List addons in JSON format and exit',
+    )
+    parser.add_argument(
         '--addons',
         action='append',
         default=None,
@@ -1347,10 +1352,30 @@ def print_installer_error_and_exit(err: InstallerError) -> NoReturn:
     sys.exit(1)
 
 
+def list_addons() -> None:
+    data = []
+    for addon in ADDONS_MODULES:
+        data.append(
+            {
+                'name': addon.name,
+                'url': addon.url,
+                'base_dir': addon.base_dir,
+                'env_file': addon.env_file,
+                'is_token_required': addon.is_token_required,
+                'license': addon.license,
+            }
+        )
+    print(json.dumps(data, indent=4))
+
+
 def main() -> None:
     global VERBOSE
     args = get_args()
     VERBOSE = args.verbose
+
+    if args.list_addons:
+        list_addons()
+        return
 
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     if args.no_cache:

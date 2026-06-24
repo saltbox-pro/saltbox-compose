@@ -94,17 +94,13 @@ Check release image tags:
     APK_CACHE_DIR: '$CI_PROJECT_DIR/.cache/apk'
   before_script:
     - mkdir --parents "$APK_CACHE_DIR"
-    - apk add --cache-dir "$APK_CACHE_DIR" bash docker-compose git
+    - apk add --cache-dir "$APK_CACHE_DIR" bash docker-compose git jq
     - rm -f override.env
     - |
       set -e
       extra_env=''
-      for repo in \
-        saltbox-filebrowser-compose \
-        saltbox-inventory-compose \
-        saltbox-metric-compose \
-        saltbox-scheduler-compose \
-      ; do
+      paths="$(bin/install_saltbox.py --list-addons | jq -r '.[].base_dir')"
+      for repo in $paths; do
         url="${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}"
         url="${url}@${CI_SERVER_HOST}:${CI_SERVER_PORT}"
         url="${url}/saltbox/${repo}"
@@ -115,7 +111,7 @@ Check release image tags:
       echo "_UPDATE_AND_RUN_EXTRA_ENV_FILES=\"${extra_env#,}\"" >> override.env
     - cat override.env
   script:
-    - python3 bin/image_tags.py check
+    - bin/image_tags.py check
   cache:
     paths:
       - '$APK_CACHE_DIR'
