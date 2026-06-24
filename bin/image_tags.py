@@ -109,7 +109,7 @@ def get_extra_envs() -> List[str]:
     return extra.split(',')
 
 
-def cmd_check(map: Dict[str, str], token=str) -> None:
+def cmd_check(map: Dict[str, str], token: str) -> None:
     dosa_counter = 0
     dotenvs = ['base.env', *get_extra_envs()]
     print('Checking variables in following sources:')
