@@ -21,6 +21,7 @@ x-default-service: &default
       soft: 65535
       hard: 65535
   logging:
+    driver: 'json-file'
     options:
       max-size: '100m'
       max-file: 10
