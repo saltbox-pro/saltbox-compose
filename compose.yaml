@@ -397,7 +397,6 @@ services:
       REDIS_URL: 'rediss://redis-salt:6379/0'
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       REDIS_USER_PASSWORD_FILE: '/run/secrets/redis_salt_password'
-      SALT_FUNC_REPO_URL: '${SALT_FUNC_REPO_URL}'
       SALT_MODULES_PERMISSIONS: '{"user": "root", "group": "root", "file_mode": "0o644", "dir_mode": "0o755"}'
       SALT_MODULES_SERVE_DIR: '/mnt/salt/'
       SHOW_DOCS: '${SHOW_DOCS:-false}'
