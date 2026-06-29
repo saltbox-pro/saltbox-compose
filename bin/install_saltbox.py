@@ -1244,16 +1244,18 @@ def download(config: Config) -> None:
 
 def _configure_system_addons(config: Config) -> List[str]:
     override = []
+    cmp_files = []
     env_files = []
     secr_confs = []
     for addon in config.selected_addons:
         addon_dir = Path('..') / addon.base_dir
-        override += [
-            f'COMPOSE_FILE="${{COMPOSE_FILE}}:{addon_dir / cmp_f}"'
-            for cmp_f in addon.compose_files
-        ]
+        cmp_files += [str(addon_dir / cmp_f) for cmp_f in addon.compose_files]
         env_files.append(f'{addon_dir / addon.env_file}')
         secr_confs += [f'{addon_dir / scr_conf}' for scr_conf in addon.secrets_configs]
+
+    if cmp_files:
+        val = ':'.join(cmp_files)
+        override.append(f'COMPOSE_FILE="${{COMPOSE_FILE}}:{val}"')
 
     if env_files:
         val = ','.join(env_files)
