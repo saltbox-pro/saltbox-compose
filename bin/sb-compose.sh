@@ -31,6 +31,6 @@ cmd=('docker' 'compose' "${compose_args[@]}" "$@")
 echo "$ ${cmd[*]}" >&2
 echo >&2
 
-exec docker compose "${compose_args[@]}" "$@"
+exec "${cmd[@]}"
 
 # vi: shiftwidth=2
