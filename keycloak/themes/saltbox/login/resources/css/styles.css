@@ -59,7 +59,7 @@ body#keycloak-bg,
 }
 
 #kc-header {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   text-align: center;
 }
 
@@ -84,11 +84,11 @@ body#keycloak-bg,
 }
 
 .pf-v5-c-login__main-header {
-  padding: 24px 24px 0 !important;
+  padding: 16px 24px 0 !important;
 }
 
 .pf-v5-c-login__main-body {
-  padding: 0 24px 24px !important;
+  padding: 0 24px 16px !important;
 }
 
 #kc-form-login {
@@ -142,9 +142,11 @@ body#keycloak-bg,
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  height: 24px;
   margin: 0;
-  padding: 0;
+  padding: 0 7px;
   border: none;
+  border-radius: var(--sb-radius);
   background: transparent;
   cursor: pointer;
   font-family: inherit;
@@ -154,13 +156,28 @@ body#keycloak-bg,
   position: relative;
   z-index: 1;
   pointer-events: auto;
+  transition: background-color 0.2s, color 0.2s;
 }
 
-.sb-locale__trigger:hover,
-.sb-locale__trigger:focus,
-.sb-locale__trigger[aria-expanded="true"] {
+.sb-locale__trigger:hover {
+  background: rgba(0, 0, 0, 0.06);
   color: var(--sb-text);
   outline: none;
+}
+
+.sb-locale__trigger:active {
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--sb-text);
+}
+
+.sb-locale__trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+}
+
+.sb-locale__trigger[aria-expanded="true"] {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--sb-text);
 }
 
 .sb-locale__icon {
@@ -219,11 +236,18 @@ body#keycloak-bg,
 
 .pf-v5-c-form__label-text {
   font-size: 14px;
+  font-weight: 400;
   color: var(--sb-text);
 }
 
 .pf-v5-c-form__group {
   margin-bottom: 0;
+}
+
+body#keycloak-bg #kc-form-login,
+body#keycloak-bg .pf-v5-c-form {
+  --pf-v5-c-form--Gap: 16px;
+  gap: 16px;
 }
 
 body#keycloak-bg .pf-v5-c-input-group__item.pf-m-fill {
@@ -515,26 +539,60 @@ body#keycloak-bg .pf-v5-c-check__label {
 }
 
 body#keycloak-bg .pf-v5-c-form__actions {
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 #kc-login {
+  position: relative;
   background-color: var(--sb-primary) !important;
   border-color: var(--sb-primary) !important;
   border-radius: var(--sb-radius);
   min-height: 32px;
   font-size: 14px;
   box-shadow: 0 2px 0 rgba(5, 145, 255, 0.1);
+  transition: background-color 0.2s, border-color 0.2s, opacity 0.2s;
 }
 
-#kc-login:hover {
+#kc-login:hover:not(:disabled):not(.sb-btn--loading) {
   background-color: var(--sb-primary-hover) !important;
   border-color: var(--sb-primary-hover) !important;
 }
 
-#kc-login:active {
+#kc-login:active:not(:disabled):not(.sb-btn--loading) {
   background-color: var(--sb-primary-active) !important;
   border-color: var(--sb-primary-active) !important;
+}
+
+#kc-login:disabled {
+  background-color: var(--sb-primary) !important;
+  border-color: var(--sb-primary) !important;
+  color: #fff !important;
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+#kc-login.sb-btn--loading {
+  color: transparent !important;
+  pointer-events: none;
+}
+
+#kc-login.sb-btn--loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: sb-spin 0.8s linear infinite;
+}
+
+@keyframes sb-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 a {
