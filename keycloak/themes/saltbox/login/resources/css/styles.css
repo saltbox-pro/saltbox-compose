@@ -538,10 +538,6 @@ body#keycloak-bg .pf-v5-c-check__label {
   cursor: pointer;
 }
 
-body#keycloak-bg .pf-v5-c-form__actions {
-  margin-top: 16px;
-}
-
 #kc-login {
   position: relative;
   background-color: var(--sb-primary) !important;
