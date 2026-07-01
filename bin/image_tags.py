@@ -23,6 +23,7 @@ from install_saltbox import GitLabRepo, get_dotenv_var
 URL = 'https://dev.saltbox.pro'
 GROUP = 'saltbox'
 IS_PRERELEASE_OK = True
+DEFAULT_CMD = 'list'
 
 Conf = NewType('Conf', Dict[str, Any])
 VarRepoMap = NewType('VarRepoMap', Dict[str, str])
@@ -34,13 +35,13 @@ IMAGE_PATTERN = re.compile(r'^\$\{IMAGE_REGISTRY\}\/(?P<path>.*):\$\{(?P<tag_var
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='image_tags',
-        description='Help to set release tags for Salt.Box images',)
+        description='Help to set release tags for Salt.Box images')
     parser.add_argument(
         'command',
         nargs='?',
         choices=['list', 'check'],
-        default='list',
-        help="Command to run. 'list' to show latest tags, 'check' to validate current tags",)
+        default=DEFAULT_CMD,
+        help=f"Command to run, '{DEFAULT_CMD}' by default")
     return parser.parse_args()
 
 
@@ -154,7 +155,7 @@ def main() -> None:
     img_repo_map = dict(sorted(img_repo_map.items(), key=lambda pair: pair[0]))
 
     if args.command == 'list':
-        cmd_check(map=img_repo_map, token=private_token)
+        cmd_list(map=img_repo_map, token=private_token)
     if args.command == 'check':
         cmd_check(map=img_repo_map, token=private_token)
 
