@@ -74,7 +74,7 @@ def warn(msg: str, prefix='WARN') -> None:
 
 
 def get_extra_dotenvs() -> List[Path]:
-    cmd = ['bash', str(DOTENV_TOOL_PATH), 'env-files']
+    cmd = ['bash', str(DOTENV_TOOL_PATH), 'extra-env-files']
     proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
     val = proc.stdout
     return [Path(s) for s in val.splitlines()]

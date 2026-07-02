@@ -86,7 +86,7 @@ flowchart LR
         subgraph update_and_run.sh
             direction TB
             subgraph validate_dotenv.py
-               dotenv_tool_validate[dotenv_tool.sh] --> validate_dotenv[Validate dotenv-files]
+               dotenv_tool_validate[dotenv_tool.sh] --> validate_dotenv[Validate `override.env`]
             end
             validate_dotenv.py --> dotenv_tool_secrets[dotenv_tool.sh] --> make_secrets.py
             subgraph make_secrets.py

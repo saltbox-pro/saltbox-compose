@@ -109,7 +109,7 @@ def cmd_list(map: Dict[str, str], token=str) -> None:
     print('Done')
 
 
-def get_extra_envs() -> List[str]:
+def get_dotenvs() -> List[str]:
     cmd = ['bash', str(DOTENV_TOOL_PATH), 'env-files']
     proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
     val = proc.stdout
@@ -118,7 +118,7 @@ def get_extra_envs() -> List[str]:
 
 def cmd_check(map: Dict[str, str], token: str) -> None:
     dosa_counter = 0
-    dotenvs = ['base.env', *get_extra_envs()]
+    dotenvs = get_dotenvs()
     print('Checking variables in following sources:')
     for de in dotenvs:
         print(f'  - {de}')
