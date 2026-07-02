@@ -20,6 +20,7 @@ from typing import Dict, List
 REF_FILE = Path('base.env')
 OVERRIDE_FILE = Path('override.env')
 EXTRA_ENV_VAR = '_UPDATE_AND_RUN_EXTRA_ENV_FILES'
+UPDATE_AND_RUN_LIST_SEP = ':,'
 
 _kc_adm_msg = 'KEYCLOAK_ADMIN_* variables replaced by SALTBOX_ADMIN_*'
 _mock_minion_msg = 'SALT_MOC_MINION* variables replaced by SALT_MOCK_MINION*'
@@ -74,7 +75,10 @@ def warn(msg: str, prefix='WARN') -> None:
 def parse_val_extra(val: str) -> List[Path]:
     if not val:
         return []
-    return [Path(token) for token in val.split(',')]
+    main_sep = UPDATE_AND_RUN_LIST_SEP[0]
+    for sep in UPDATE_AND_RUN_LIST_SEP[1:]:
+        val = val.replace(sep, main_sep)
+    return [Path(token) for token in val.split(main_sep)]  # TODO Interpolate
 
 
 def parse(dotenv: Path) -> Dict[str, Entry]:

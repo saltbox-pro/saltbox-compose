@@ -24,6 +24,7 @@ URL = 'https://dev.saltbox.pro'
 GROUP = 'saltbox'
 IS_PRERELEASE_OK = True
 DEFAULT_CMD = 'list'
+UPDATE_AND_RUN_LIST_SEP = ':,'
 
 Conf = NewType('Conf', Dict[str, Any])
 VarRepoMap = NewType('VarRepoMap', Dict[str, str])
@@ -107,7 +108,10 @@ def cmd_list(map: Dict[str, str], token=str) -> None:
 
 def get_extra_envs() -> List[str]:
     extra = get_dotenv_var('_UPDATE_AND_RUN_EXTRA_ENV_FILES', ['override.env'])
-    return extra.split(',')
+    main_sep = UPDATE_AND_RUN_LIST_SEP[0]
+    for sep in UPDATE_AND_RUN_LIST_SEP[1:]:
+        extra = extra.replace(sep, main_sep)
+    return extra.split(main_sep)
 
 
 def cmd_check(map: Dict[str, str], token: str) -> None:
