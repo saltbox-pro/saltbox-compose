@@ -22,7 +22,7 @@ Update images and run a Salt.Box Docker Compose based instance.
 
 Usage: $0 [-h|--help] COMMAND
 
-  get VARIABLE\t\tGet value of VARIABLE
+  get VARIABLE\t\tGet value of VARIABLE followed by EOL
   env-files\t\tPrint ordered paths of all configured Salt.Box Compose \
 dotenv-files, one per line
   extra-env-files\tGet splitted ${extra_env_var}, one value per line

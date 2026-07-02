@@ -221,8 +221,11 @@ if [ "$(git_pull_required)" = 1 ]; then
   echo_run ./bin/git_pull_dev_repos.py --no-compose
 fi
 
-secr_confs=$("${bin_dir}/dotenv_tool.sh" extra-secrets-confs)
-mapfile -t make_secrets_confs <<< "$secr_confs"
+secr_confs=$(bin/dotenv_tool.sh extra-secrets-confs)
+make_secrets_confs=()
+if [[ ! -z "$secr_confs" ]]; then
+    mapfile -t make_secrets_confs <<< "$secr_confs"
+fi
 make_secrets_arg+=("${make_secrets_confs[@]}")
 echo_run ./bin/make_secrets.py "${make_secrets_arg[@]}"
 
