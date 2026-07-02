@@ -35,6 +35,7 @@ value for release and "any of release or pre-release" accordingly.
 - No more merged `.env` file: scripts read separate `base.env` and
 `override.env`.
 - MongoDB exporter user is optional now.
+- Allow `_UPDATE_AND_RUN_EXTRA_*` interpolation.
 
 ### Fixed
 
