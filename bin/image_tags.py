@@ -18,7 +18,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, NewType
 
-from install_saltbox import GitLabRepo, get_dotenv_var
+from install_saltbox import GitLabRepo
 
 URL = 'https://dev.saltbox.pro'
 GROUP = 'saltbox'
@@ -116,6 +116,15 @@ def get_dotenvs() -> List[str]:
     return val.splitlines()
 
 
+def get_dotenv_var(name: str) -> str:
+    cmd = ['bash', str(DOTENV_TOOL_PATH), 'get', name]
+    proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    val = proc.stdout
+    if val.endswith('\n'):
+        val = val[:-1]
+    return val
+
+
 def cmd_check(map: Dict[str, str], token: str) -> None:
     dosa_counter = 0
     dotenvs = get_dotenvs()
@@ -124,7 +133,7 @@ def cmd_check(map: Dict[str, str], token: str) -> None:
         print(f'  - {de}')
     print()
     for var, url in map.items():
-        val = get_dotenv_var(var, dotenvs=dotenvs)
+        val = get_dotenv_var(name=var)
         tag = 'dev'
         tag = get_latest_tag(url, token=token)
         if not val:
