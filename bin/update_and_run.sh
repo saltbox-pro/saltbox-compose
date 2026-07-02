@@ -221,7 +221,8 @@ if [ "$(git_pull_required)" = 1 ]; then
   echo_run ./bin/git_pull_dev_repos.py --no-compose
 fi
 
-IFS=',' read -ra make_secrets_confs <<< "$(get_env_var '_UPDATE_AND_RUN_EXTRA_SECRETS_CONFS')"
+secr_confs=$("${bin_dir}/dotenv_tool.sh" extra-secrets-confs)
+mapfile -t make_secrets_confs <<< "$secr_confs"
 make_secrets_arg+=("${make_secrets_confs[@]}")
 echo_run ./bin/make_secrets.py "${make_secrets_arg[@]}"
 

@@ -20,8 +20,6 @@ from typing import Dict, List
 
 REF_FILE = Path('base.env')
 OVERRIDE_FILE = Path('override.env')
-EXTRA_ENV_VAR = '_UPDATE_AND_RUN_EXTRA_ENV_FILES'
-UPDATE_AND_RUN_LIST_SEP = ':,'
 BIN_DIR = Path(__file__).parent.resolve()
 DOTENV_TOOL_PATH = BIN_DIR / 'dotenv_tool.sh'
 
