@@ -3,12 +3,13 @@ set -eu -o pipefail
 
 declare -r base_env_file='base.env'
 declare -r local_env_file='override.env'
+declare -r separators=',:'
 
 declare -a compose_args=("--env-file=${base_env_file}")
 
 function set_extra_env_files {
   # shellcheck source=/dev/null
-  IFS=',' read -ra extra_env_files <<< "$(
+  IFS="$separators" read -ra extra_env_files <<< "$(
     source "$base_env_file"
     if [[ -f "$local_env_file" ]]
     then source "$local_env_file"
