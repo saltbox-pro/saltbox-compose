@@ -17,6 +17,8 @@
 """
 The script is a part of Salt.Box Compose
 
+Script should works standalone. No Python modules required. Run in an empty directory.
+
 Requires python>=3.7.3
 """
 

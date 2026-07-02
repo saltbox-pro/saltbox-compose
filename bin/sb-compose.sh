@@ -1,31 +1,13 @@
 #! /bin/bash
 set -eu -o pipefail
 
-declare -r base_env_file='base.env'
-declare -r local_env_file='override.env'
-declare -r separators=',:'
+declare -a compose_args=()
+bin_dir="$(dirname "$(realpath --relative-to "$(pwd)" "$0")")"
 
-declare -a compose_args=("--env-file=${base_env_file}")
-
-function set_extra_env_files {
-  # shellcheck source=/dev/null
-  IFS="$separators" read -ra extra_env_files <<< "$(
-    source "$base_env_file"
-    if [[ -f "$local_env_file" ]]
-    then source "$local_env_file"
-    else echo "No '$local_env_file' file" >&2
-    fi
-    echo "$_UPDATE_AND_RUN_EXTRA_ENV_FILES"
-  )"
-  for env_path in "${extra_env_files[@]}"; do
-    compose_args+=("--env-file=${env_path}")
-  done
-  if [ -f "$local_env_file" ]; then
-    compose_args+=("--env-file=${local_env_file}")
-  fi
-}
-
-set_extra_env_files
+envs=$("${bin_dir}/dotenv_tool.sh" env-files)
+while IFS= read -r line; do
+  compose_args+=("--env-file=${line}")
+done <<<"$envs"
 
 cmd=('docker' 'compose' "${compose_args[@]}" "$@")
 

@@ -13,6 +13,7 @@
 
 import dataclasses
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List
@@ -21,6 +22,8 @@ REF_FILE = Path('base.env')
 OVERRIDE_FILE = Path('override.env')
 EXTRA_ENV_VAR = '_UPDATE_AND_RUN_EXTRA_ENV_FILES'
 UPDATE_AND_RUN_LIST_SEP = ':,'
+BIN_DIR = Path(__file__).parent.resolve()
+DOTENV_TOOL_PATH = BIN_DIR / 'dotenv_tool.sh'
 
 _kc_adm_msg = 'KEYCLOAK_ADMIN_* variables replaced by SALTBOX_ADMIN_*'
 _mock_minion_msg = 'SALT_MOC_MINION* variables replaced by SALT_MOCK_MINION*'
@@ -72,13 +75,11 @@ def warn(msg: str, prefix='WARN') -> None:
     print('>', prefix, msg, file=sys.stderr)
 
 
-def parse_val_extra(val: str) -> List[Path]:
-    if not val:
-        return []
-    main_sep = UPDATE_AND_RUN_LIST_SEP[0]
-    for sep in UPDATE_AND_RUN_LIST_SEP[1:]:
-        val = val.replace(sep, main_sep)
-    return [Path(token) for token in val.split(main_sep)]  # TODO Interpolate
+def get_extra_dotenvs() -> List[Path]:
+    cmd = ['bash', str(DOTENV_TOOL_PATH), 'env-files']
+    proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    val = proc.stdout
+    return [Path(s) for s in val.splitlines()]
 
 
 def parse(dotenv: Path) -> Dict[str, Entry]:
@@ -118,14 +119,8 @@ def parse(dotenv: Path) -> Dict[str, Entry]:
 def main() -> None:
     ref = parse(REF_FILE)
     current = parse(OVERRIDE_FILE)
-    extra_dotenvs = []
 
-    extra_env_val = current.get(EXTRA_ENV_VAR)
-
-    if extra_env_val:
-        extra_dotenvs = parse_val_extra(extra_env_val.val)
-
-    for extra_path in extra_dotenvs:
+    for extra_path in get_extra_dotenvs():
         ref.update(parse(extra_path))
 
     for name, entry in current.items():
