@@ -108,7 +108,22 @@
         {
             "is_active": true,
             "service": "core",
-            "resource": "tasks/template",
+            "resource": "task_template_sources",
+            "action": "read",
+            "object_conditions": {
+                "name": {"$in": ["test"]}
+            },
+            "subject_type": "user",
+            "subject_conditions": {
+                "roles": { "$in": ["test_common"] }
+            },
+            "created": "2024-07-28T12:00:00Z",
+            "modified": "2024-07-28T12:00:00Z"
+        },
+        {
+            "is_active": true,
+            "service": "core",
+            "resource": "task_templates",
             "action": "read",
             "object_conditions": {
                 "name": {"$in": ["states.test.random_with_timeout", "states.r7-office.license_added", "test.random_result"]}

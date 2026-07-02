@@ -66,10 +66,10 @@ is_tasks_resource if {
     input.resource.path[0] == "tasks"
 }
 
-is_tasks_templates_resource if {
+is_task_templates_resource if {
     input.resource.service_name == "core"
-    input.resource.path[0] == "tasks"
-    input.resource.path[1] == "template"
+    input.resource.path[0] == "task-template-sources"
+    input.resource.path[2] == "templates"
 }
 
 # ==========================================
