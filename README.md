@@ -37,6 +37,7 @@ sudo sysctl -p /etc/sysctl.d/saltbox.conf
 Useful scripts are collected in [`./bin/`](./bin/) directory. They supposed to
 be ran from the root of repo by relative path like `./bin/sb-compose.sh`.
 
+- `dotenv_tools.sh` — get data from env-files.
 - `get_ca.sh` — obtain `ca.crt` local authority certificate file (and
   optionally inject it into Firefox).
 - `git_pull_dev_repos.py` — only for developers — update sources Git repositories.
@@ -85,19 +86,19 @@ flowchart LR
         subgraph update_and_run.sh
             direction TB
             subgraph validate_dotenv.py
-               validate_dotenv[Validate `override.env`]
+               dotenv_tool_validate[dotenv_tool.sh] --> validate_dotenv[Validate dotenv-files]
             end
-            validate_dotenv.py --> make_secrets.py
+            validate_dotenv.py --> dotenv_tool_secrets[dotenv_tool.sh] --> make_secrets.py
             subgraph make_secrets.py
                 make_secrets[Make secrets]
             end
             make_secrets.py --> sb-compose.sh-1
             subgraph sb-compose.sh-1[sb-compose.sh]
-                pull_images[Pull images]
+                dotenv_tool_pull[dotenv_tool.sh] --> pull_images[Pull images]
             end
             sb-compose.sh-1 --> sb-compose.sh-2
             subgraph sb-compose.sh-2[sb-compose.sh]
-                up[Up Compose]
+                dotenv_tool_up[dotenv_tool.sh] --> up[Up Compose]
             end
         end
         update_and_run.sh --> install_saltbox_migrations.py

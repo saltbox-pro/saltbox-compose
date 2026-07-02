@@ -3,7 +3,6 @@ set -eu -o pipefail
 
 declare -r override_env='override.env'
 declare -r deprecated_env='.env'
-declare -r base_env='base.env'
 bin_dir="$(dirname "$(realpath --relative-to "$(pwd)" "$0")")"
 declare -r bin_dir
 declare -r compose_cmd="${bin_dir}/sb-compose.sh"
@@ -89,16 +88,7 @@ function as_root() {
 }
 
 function get_env_var() {
-  (
-    # shellcheck source=/dev/null
-    source "$base_env"
-    # shellcheck source=/dev/null
-    if [[ -f "$override_env" ]]
-    then source "$override_env"
-    else warn "No '${override_env}' file while getting '${1}'"
-    fi
-    echo "${!1}"
-  )
+  "${bin_dir}/dotenv_tool.sh" get "${1}"
 }
 
 function git_pull_required() {
