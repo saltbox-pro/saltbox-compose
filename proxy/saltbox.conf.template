@@ -34,7 +34,7 @@ server {
 
     ssl_certificate /etc/nginx/ssl/proxy.crt;
     ssl_certificate_key /etc/nginx/ssl/proxy.key;
-    client_max_body_size 4g;
+    client_max_body_size 10g;
     client_body_timeout 10m;
 
     location / {
