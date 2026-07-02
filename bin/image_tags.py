@@ -32,6 +32,9 @@ GROUP_URL = 'https://dev.saltbox.pro/saltbox'
 # Example: ${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}
 IMAGE_PATTERN = re.compile(r'^\$\{IMAGE_REGISTRY\}\/(?P<path>.*):\$\{(?P<tag_var>.*)\}$')
 
+BIN_DIR = Path(__file__).parent.resolve()
+DOTENV_TOOL_PATH = BIN_DIR / 'dotenv_tool.sh'
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -107,11 +110,10 @@ def cmd_list(map: Dict[str, str], token=str) -> None:
 
 
 def get_extra_envs() -> List[str]:
-    extra = get_dotenv_var('_UPDATE_AND_RUN_EXTRA_ENV_FILES', ['override.env'])
-    main_sep = UPDATE_AND_RUN_LIST_SEP[0]
-    for sep in UPDATE_AND_RUN_LIST_SEP[1:]:
-        extra = extra.replace(sep, main_sep)
-    return extra.split(main_sep)
+    cmd = ['bash', str(DOTENV_TOOL_PATH), 'env-files']
+    proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    val = proc.stdout
+    return val.splitlines()
 
 
 def cmd_check(map: Dict[str, str], token: str) -> None:
