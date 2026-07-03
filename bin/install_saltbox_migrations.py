@@ -251,7 +251,7 @@ def main() -> None:
         up_cmd = UP_CMD.copy()
         if args.no_progress:
             up_cmd.append('--quiet-pull')
-        run_cmd(UP_CMD, skip=args.skip_run)
+        run_cmd(up_cmd, skip=args.skip_run)
 
 
 if __name__ == '__main__':
