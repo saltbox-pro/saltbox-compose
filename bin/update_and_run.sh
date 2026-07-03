@@ -133,7 +133,6 @@ function retry() {
 
 up_args=('--remove-orphans')
 pull_args=('--ignore-buildable')
-make_secrets_arg=('secrets.json')
 down_args=()
 down_drop_args=('--volumes' '--remove-orphans')
 detach_flag=0
@@ -222,11 +221,7 @@ if [ "$(git_pull_required)" = 1 ]; then
 fi
 
 secr_confs=$(bin/dotenv_tool.sh extra-secrets-confs)
-make_secrets_confs=()
-if [[ ! -z "$secr_confs" ]]; then
-    mapfile -t make_secrets_confs <<< "$secr_confs"
-fi
-make_secrets_arg+=("${make_secrets_confs[@]}")
+mapfile -t make_secrets_arg <<< "$secr_confs"
 echo_run ./bin/make_secrets.py "${make_secrets_arg[@]}"
 
 if [ $login_flag = 1 ]; then
