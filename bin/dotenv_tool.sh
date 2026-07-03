@@ -18,11 +18,13 @@ function err() {
 
 function print_help() {
   printf '%b' "
-Update images and run a Salt.Box Docker Compose based instance.
+Obtain Salt.Box Compose dotenv vairables.
 
 Usage: $0 [-h|--help] COMMAND
 
   get VARIABLE\t\tGet value of VARIABLE followed by EOL
+  list\t\t\tList all sorted variables with expanded value from all configured \
+dotenv-files, one per line
   env-files\t\tPrint ordered paths of all configured Salt.Box Compose \
 dotenv-files, one per line
   extra-env-files\tGet splitted ${extra_env_var}, one value per line
@@ -61,9 +63,9 @@ function get_all_env_files() {
 
 function get_var() {
   var=$1
-  envs=$(get_all_env_files)
+  mapfile -t envs < <(get_all_env_files)
   (
-    for line in $envs; do
+    for line in "${envs[@]}"; do
       # shellcheck source=/dev/null
       source "$line"
     done
@@ -81,6 +83,28 @@ function get_extra_secrets_confs() {(
   done
 )}
 
+function print_vars() {
+  mapfile -t files < <(get_all_env_files)
+  #for i in "${files[@]}"; do
+  #  echo $i
+  #done
+  vars=$(
+    grep --no-filename --only-matching '^\s*[a-zA-Z0-9_]*=' "${files[@]}" | \
+      sed -e 's/^\s*//' -e 's/=$//' | \
+      sort | \
+      uniq
+  )
+  (
+    for file in "${files[@]}"; do
+      # shellcheck source=/dev/null
+      source "$file"
+    done
+    for var in $vars; do
+      echo "${var}='${!var}'"
+    done
+  )
+}
+
 while [[ $# -gt 0 ]]; do
   set -e
   case $1 in
@@ -89,6 +113,7 @@ while [[ $# -gt 0 ]]; do
     extra-env-files) get_extra_env_files ; exit 0 ;;
     extra-secrets-confs) get_extra_secrets_confs ; exit 0 ;;
     env-files) get_all_env_files ; exit 0 ;;
+    list) print_vars ; exit 0 ;;
     *) err "Unexpected arg $1" ;;
   esac
 done

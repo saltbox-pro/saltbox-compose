@@ -20,6 +20,7 @@ if possible and purge browser redirects.
 - `./bin/check_image_tag.sh check` command.
 - `install_saltbox.py` flag `--list-addons`.
 - Explicit logging options.
+- `bin/dotenv_tool.sh` script to fetch and debug dotenv variables.
 
 ### Changed
 

@@ -37,7 +37,8 @@ sudo sysctl -p /etc/sysctl.d/saltbox.conf
 Useful scripts are collected in [`./bin/`](./bin/) directory. They supposed to
 be ran from the root of repo by relative path like `./bin/sb-compose.sh`.
 
-- `dotenv_tools.sh` — get data from env-files.
+- `dotenv_tool.sh` — get data from env-files. E.g. run `./bin/dotenv_tool.sh
+list` to get all values.
 - `get_ca.sh` — obtain `ca.crt` local authority certificate file (and
   optionally inject it into Firefox).
 - `git_pull_dev_repos.py` — only for developers — update sources Git repositories.
@@ -55,6 +56,8 @@ dotenv files to Docker Compose. Dotenvs precedence is `base.env` →
 - `sb-images-import.sh` — load dumped with `./bin/sb-images-export.sh` images.
 - `update_and_run.sh` — the main startup script.
 - `validate_dotenv.py` — check major issues in `override.env` file.
+
+Some scripts may depend on another.
 
 Helper scripts supposed to be executable. Some systems may drop executable
 flag due to security reasons. On troubles to start try to re-add the flag:
