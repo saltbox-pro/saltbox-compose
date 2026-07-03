@@ -122,6 +122,11 @@ The script:
 
 Use `override.env` to redefine `base.env` default values.
 
+> **NOTE** `override.env` has highes priority ans overrides all other values.
+Note also previouse interpolations can not be changed by `override.env`. E.g.
+some `SOME_PATH="${LOCAL_PATH}/file.yaml"` can not be changed by overriding
+`LOCAL_PATH` later.
+
 Use `-h` or `--help` flag to look script options.
 
 To make the UI available on hostname or address other than `localhost` override

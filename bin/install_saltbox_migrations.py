@@ -42,7 +42,7 @@ MIGRATIONS_REPO = GitLabRepo(
 UP_CMD = ['docker', 'compose', 'up', '--detach']
 DOWN_CMD = ['docker', 'compose', 'down']
 CLEANUP_CMD = ['docker', 'compose', 'down', '--volumes', '--remove-orphans']
-MIGRATIONS_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL = 1
+MIGRATIONS_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL = 2
 
 
 def validate_args(args: argparse.Namespace) -> argparse.Namespace:

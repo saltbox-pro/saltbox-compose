@@ -55,6 +55,7 @@ RELEASE_ONLY_TAG_PATTERN = re.compile(r'^v\d+\.\d+\.\d+$')  # v0.1.1.
 CWD = Path.cwd()
 LOCAL_PATH = CWD / './saltbox-compose/'
 BIN_DIR = LOCAL_PATH / 'bin'
+DOTENV_TOOL_PATH = BIN_DIR / 'dotenv_tool.sh'
 ENV_OVERRIDE = LOCAL_PATH / 'override.env'
 DEFAULT_DOTENVS = (LOCAL_PATH / 'base.env', ENV_OVERRIDE,)
 SCRIPT_SUFFIXES = ('*.sh', '*.py',)
@@ -73,7 +74,7 @@ CACHE_DIR = _CACHE_HOME / 'install_saltbox'
 PREMAKE_SECRETS_CMD = ['bin/make_secrets.py']
 ENTRYPOINT = ['bin/update_and_run.sh', '--no-root', '--force', '--detach', '--no-git-pull']
 
-SALTBOX_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL = 1
+SALTBOX_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL = 2
 MIN_DOCKER_VERSION = '25.0.0'
 MIN_COMPOSE_VERSION = '2.20.2'
 MIN_PYTHON_VERSION = '3.7.3'
@@ -308,19 +309,13 @@ def check_repo_compability_level(repo_path: Path, required_level: Optional[int])
         raise CheckError(message=msg, details=details)
 
 
-def get_dotenv_var(name: str, dotenvs: Optional[Sequence[Union[str, Path]]] = None) -> str:
-    """ Read str value from dotenv files (oreder matters) """
-    if dotenvs is None:
-        dotenvs = list(DEFAULT_DOTENVS).copy()
-    subcmd = ''
-    for path in dotenvs:
-        path = Path(path)
-        subcmd += f". '{path.absolute()}' &&"
-    subcmd += f'printf \'%s\' "${name}"'
-    cmd = ['sh', '-c', subcmd]
+def get_dotenv_var(name: str) -> str:
+    """ Read str value from dotenv files """
+    cmd = ['bash', str(DOTENV_TOOL_PATH), 'get', name]
     proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
     val = proc.stdout
-    print_out(f'Got dotenv var `{name}`: `{val}`', verbose=True)
+    if val.endswith('\n'):
+        val = val[:-1]
     return val
 
 
@@ -819,10 +814,8 @@ class AddonModule:
     repo: GitLabRepo = dataclasses.field(init=False)
     base_dir: str
     license: str
-    compose_files: List[str]
     env_file: str
     is_token_required: bool
-    secrets_configs: List[str] = dataclasses.field(default_factory=list)
     ref: str = RELEASE_REF
     # Compare to a value from a special file in the repository
     required_compatibility_level: Optional[int] = None
@@ -839,39 +832,37 @@ ADDONS_MODULES = [
         name='FileBrowser',
         url='https://dev.saltbox.pro/saltbox/saltbox-filebrowser-compose',
         base_dir='saltbox-filebrowser-compose',
-        compose_files=['compose.yaml'],
         env_file='.env',
         license='Apache-2.0',
         is_token_required=False,
+        required_compatibility_level=1,
     ),
     AddonModule(
         name='Inventory',
         url='https://dev.saltbox.pro/saltbox/saltbox-inventory-compose',
         base_dir='saltbox-inventory-compose',
-        compose_files=['compose.yaml'],
         env_file='.env',
-        secrets_configs=['secrets.json'],
         license='EULA',  # =(
         is_token_required=True,
+        required_compatibility_level=1,
     ),
     AddonModule(
         name='Metric',
         url='https://dev.saltbox.pro/saltbox/saltbox-metric-compose',
         base_dir='saltbox-metric-compose',
-        compose_files=['compose.yaml'],
         env_file='.env',
         license='Apache-2.0',
         is_token_required=False,
+        required_compatibility_level=1,
     ),
     AddonModule(
         name='Scheduler',
         url='https://dev.saltbox.pro/saltbox/saltbox-scheduler-compose',
         base_dir='saltbox-scheduler-compose',
-        compose_files=['compose.yaml'],
         env_file='.env',
-        secrets_configs=['secrets.json'],
         license='EULA',  # =(
         is_token_required=True,
+        required_compatibility_level=1,
     ),
 ]
 ADDONS_MAPPING = {a.name: a for a in ADDONS_MODULES}
@@ -1246,26 +1237,13 @@ def download(config: Config) -> None:
 
 def _configure_system_addons(config: Config) -> List[str]:
     override = []
-    cmp_files = []
     env_files = []
-    secr_confs = []
     for addon in config.selected_addons:
         addon_dir = Path('..') / addon.base_dir
-        cmp_files += [str(addon_dir / cmp_f) for cmp_f in addon.compose_files]
         env_files.append(f'{addon_dir / addon.env_file}')
-        secr_confs += [f'{addon_dir / scr_conf}' for scr_conf in addon.secrets_configs]
-
-    if cmp_files:
-        val = ':'.join(cmp_files)
-        override.append(f'COMPOSE_FILE="${{COMPOSE_FILE}}:{val}"')
-
     if env_files:
         val = ','.join(env_files)
         override.append(f"_UPDATE_AND_RUN_EXTRA_ENV_FILES='{val}'")
-    if secr_confs:
-        val = ','.join(secr_confs)
-        override.append(f"_UPDATE_AND_RUN_EXTRA_SECRETS_CONFS='{val}'")
-
     return override
 
 

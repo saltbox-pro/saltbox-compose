@@ -36,6 +36,8 @@ value for release and "any of release or pre-release" accordingly.
 `override.env`.
 - MongoDB exporter user is optional now.
 - Allow `_UPDATE_AND_RUN_EXTRA_*` interpolation.
+- Only `_UPDATE_AND_RUN_EXTRA_ENV_FILES` requires in `override.env` to connect
+  most addons by default.
 
 ### Fixed
 
