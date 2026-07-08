@@ -33,6 +33,15 @@ const initLocaleSwitcher = () => {
     closeMenu();
   };
 
+  const handleLocaleClick = (event) => {
+    const link = event.target.closest(".sb-locale__option");
+    if (!link?.dataset.locale) {
+      return;
+    }
+
+    window.sbSaveAppLocale?.(link.dataset.locale);
+  };
+
   const handleDocumentClick = (event) => {
     if (!localeRoot.contains(event.target)) {
       closeMenu();
@@ -46,6 +55,7 @@ const initLocaleSwitcher = () => {
   };
 
   trigger.addEventListener("click", handleTriggerClick);
+  menu.addEventListener("click", handleLocaleClick);
   document.addEventListener("click", handleDocumentClick);
   document.addEventListener("keydown", handleDocumentKeydown);
 };

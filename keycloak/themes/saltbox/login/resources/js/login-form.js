@@ -7,6 +7,7 @@ const initLoginForm = () => {
   }
 
   const handleSubmit = () => {
+    window.sbSaveAppLocale?.(document.documentElement.lang);
     loginButton.disabled = true;
     loginButton.classList.add("sb-btn--loading");
     loginButton.setAttribute("aria-busy", "true");

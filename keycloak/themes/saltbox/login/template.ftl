@@ -77,6 +77,16 @@
           </#outputformat>
       </script>
     </#if>
+    <#if realm.internationalizationEnabled>
+    <script>
+        (function () {
+            var locale = "${locale.currentLanguageTag}";
+            if (locale === "en" || locale === "ru") {
+                localStorage.setItem("currentLocale", locale);
+            }
+        })();
+    </script>
+    </#if>
     <#if properties.scripts?has_content>
         <#list properties.scripts?split(' ') as script>
             <script src="${url.resourcesPath}/${script}" type="text/javascript"></script>
@@ -168,6 +178,7 @@
                   <a
                     href="${l.url}"
                     role="option"
+                    data-locale="${l.languageTag}"
                     class="sb-locale__option<#if l.languageTag == locale.currentLanguageTag> sb-locale__option--active</#if>"
                     <#if l.languageTag == locale.currentLanguageTag>aria-current="true"</#if>
                   >
