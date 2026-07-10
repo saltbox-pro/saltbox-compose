@@ -96,7 +96,7 @@ Check release image tags:
     SALTBOX_INSTALL_TOKEN_HEADER: 'JOB-TOKEN'
   before_script:
     - mkdir --parents "$APK_CACHE_DIR"
-    - apk add --cache-dir "$APK_CACHE_DIR" bash docker-compose git jq
+    - apk add --cache-dir "$APK_CACHE_DIR" bash coreutils docker-compose git jq
     - rm -f override.env
     - |
       set -e
@@ -106,9 +106,9 @@ Check release image tags:
         url="${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}"
         url="${url}@${CI_SERVER_HOST}:${CI_SERVER_PORT}"
         url="${url}/saltbox/${repo}"
-        git clone --depth=1 --branch=dev "$url"
-        extra_env="${extra_env},${repo}/.env"
-        echo "COMPOSE_FILE=\"\${COMPOSE_FILE}:${repo}/compose.yaml\"" >> override.env
+        git -C .. clone --depth=1 --branch=dev "$url"
+        extra_env="${extra_env}:../${repo}/.env"
+        echo "COMPOSE_FILE=\"\${COMPOSE_FILE}:../${repo}/compose.yaml\"" >> override.env
       done
       echo "_UPDATE_AND_RUN_EXTRA_ENV_FILES=\"${extra_env#,}\"" >> override.env
     - cat override.env
