@@ -15,6 +15,16 @@ if possible and purge browser redirects.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.3.0] - 2026-07-10
+
+### Added
+
 - `guest\guest` default RabbitMQ user for dev mode.
 - Login screen consistent theme (Keycloak Salt.Box login theme).
 - `./bin/check_image_tag.sh check` command.

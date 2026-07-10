@@ -111,7 +111,7 @@
             "resource": "task_template_sources",
             "action": "read",
             "object_conditions": {
-                "name": {"$in": ["test"]}
+                "name": {"$in": ["test", "Локальные шаблоны"]}
             },
             "subject_type": "user",
             "subject_conditions": {
