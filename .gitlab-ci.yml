@@ -39,9 +39,6 @@ Build make-certs image:
   variables:
     REGISTRY_ADDITIONAL_PATH: '/make-certs'
     CONTEXT_PATH: 'make-certs/'
-  rules:
-    - changes:
-        - 'make-certs/**/*'
 
 
 Build MongoDB image:
@@ -50,9 +47,6 @@ Build MongoDB image:
   variables:
     REGISTRY_ADDITIONAL_PATH: '/mongodb'
     CONTEXT_PATH: 'mongodb/'
-  rules:
-    - changes:
-        - 'mongodb/**/*'
 
 
 Build RabbitMQ image:
@@ -86,10 +80,6 @@ Trigger Proxy build:
     include:
       - local: 'proxy/.gitlab-ci.yml'
     strategy: depend
-  rules:
-    - changes:
-        - 'nginx/**/*'
-        - 'proxy/**/*'
 
 
 Check release image tags:
