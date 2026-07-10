@@ -110,7 +110,7 @@ Check release image tags:
         extra_env="${extra_env}:../${repo}/.env"
         echo "COMPOSE_FILE=\"\${COMPOSE_FILE}:../${repo}/compose.yaml\"" >> override.env
       done
-      echo "_UPDATE_AND_RUN_EXTRA_ENV_FILES=\"${extra_env#,}\"" >> override.env
+      echo "_UPDATE_AND_RUN_EXTRA_ENV_FILES=\"${extra_env#:}\"" >> override.env
     - cat override.env
   script:
     - bin/image_tags.py check
