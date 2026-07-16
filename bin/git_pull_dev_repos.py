@@ -22,11 +22,11 @@ from typing import Any
 # Int for limit, None for no limit
 PARALLEL_PULLS: int | None = None
 LINE = '_' * 40
+BIN_DIR = Path(__file__).resolve().parent
 
 
 def get_conf() -> dict[str, Any]:
-    bin_dir = Path(__file__).resolve().parent
-    bin_path = bin_dir / 'sb-compose.sh'
+    bin_path = BIN_DIR / 'sb-compose.sh'
     cmd = [str(bin_path), 'config', '--format=json']
     try:
         result = subprocess.run(cmd, capture_output=True, check=True)
@@ -38,6 +38,12 @@ def get_conf() -> dict[str, Any]:
     return json.loads(result.stdout)
 
 
+def get_extra_env_paths() -> list[Path]:
+    cmd = ['bash', str(BIN_DIR / 'dotenv_tool.sh'), 'extra-env-files']
+    proc = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    return [Path(s) for s in proc.stdout.splitlines()]
+
+
 @lru_cache(maxsize=None)
 def get_repo_root(repo: Path) -> Path | None:
     """ Get Git repo root or None if path is not a repo """
@@ -46,6 +52,10 @@ def get_repo_root(repo: Path) -> Path | None:
     if res.returncode != 0:
         return None
     return Path(res.stdout.decode().strip())
+
+
+def get_compose_repos() -> list[Path]:
+    return [p.parent for p in get_extra_env_paths()]
 
 
 def get_context_repos(config: dict[str, Any]) -> list[Path]:
@@ -139,9 +149,11 @@ def main(args: argparse.Namespace) -> None:
 
     repos: list[Path] = []
     if not args.only_compose:
-        context_repos = get_context_repos(conf)
-        vol_repos = get_volume_repos(conf)
-        repos.extend(set(context_repos) | set(vol_repos))
+        reposet = set()
+        reposet.update(get_compose_repos())
+        reposet.update(get_context_repos(conf))
+        reposet.update(get_volume_repos(conf))
+        repos.extend(reposet)
     if not args.no_compose:
         repos.append(Path.cwd())
 
