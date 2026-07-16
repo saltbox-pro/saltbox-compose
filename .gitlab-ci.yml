@@ -87,7 +87,6 @@ Check release image tags:
   image: python:3.13-alpine
   variables:
     GITLAB_TOKEN: '$CI_JOB_TOKEN'
-    GITLAB_INSTANCE_URL: '${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}'
     APK_CACHE_DIR: '$CI_PROJECT_DIR/.cache/apk'
     PYTHONUNBUFFERED: 'True'
     SALTBOX_INSTALL_TOKEN_HEADER: 'JOB-TOKEN'
@@ -95,7 +94,7 @@ Check release image tags:
     - mkdir --parents "$APK_CACHE_DIR"
     - apk add --cache-dir "$APK_CACHE_DIR" bash coreutils docker-compose git jq
   script:
-    - bash ci/check_image_tags.sh
+    - bin/image_tags.py check
   cache:
     paths:
       - '$APK_CACHE_DIR'
