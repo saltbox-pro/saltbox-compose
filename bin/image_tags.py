@@ -66,6 +66,11 @@ def parse_args() -> argparse.Namespace:
         choices=['list', 'check'],
         default=DEFAULT_CMD,
         help=f"Command to run, '{DEFAULT_CMD}' by default")
+    parser.add_argument(
+        '--only-addons',
+        action='store_true',
+        help='Ignore main Salt.Box compose images'
+    )
     return parser.parse_args()
 
 
@@ -93,10 +98,12 @@ def get_image_entries(conf: Conf) -> List[str]:
     return list(result)
 
 
-def filter_main_compose_images(images: List[ImageEntry]) -> List[ImageEntry]:
+def filter_main_compose_images(
+    images: List[ImageEntry], exclude: bool = False
+) -> List[ImageEntry]:
     with open('base.env') as dotenv_f:
         dotenv = dotenv_f.read()
-    return [i for i in images if i.tag_var in dotenv]
+    return [i for i in images if exclude != (i.tag_var in dotenv)]
 
 
 @lru_cache(maxsize=None)
@@ -135,10 +142,11 @@ def cmd_list(images: List[ImageEntry], token=str) -> None:
     main_images = filter_main_compose_images(images)
     addons_images = [i for i in images if i not in main_images]
 
-    print('Main Salt.Box Compose vars:')
-    print('___')
-    proc_map(main_images, token=token)
-    print('')
+    if main_images:
+        print('Main Salt.Box Compose vars:')
+        print('___')
+        proc_map(main_images, token=token)
+        print('')
     print('Salt.Box vars for addons:')
     print('___')
     proc_map(addons_images, token=token)
@@ -204,6 +212,8 @@ def main() -> None:
             )
 
     images.sort(key=lambda i: i.tag_var)
+    if args.only_addons:
+        images = filter_main_compose_images(images, exclude=True)
 
     if args.command == 'list':
         cmd_list(images, token=private_token)
