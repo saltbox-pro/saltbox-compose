@@ -11,6 +11,12 @@ done <<<"$envs"
 
 cmd=('docker' 'compose' "${compose_args[@]}" "$@")
 
+if [ -n "${COMPOSE_FILE+x}" ]; then
+  echo "COMPOSE_FILE='${COMPOSE_FILE}'" >&2
+  echo 'Unsetting COMPOSE_FILE'
+  unset COMPOSE_FILE
+fi
+
 echo "$ ${cmd[*]}" >&2
 echo >&2
 
