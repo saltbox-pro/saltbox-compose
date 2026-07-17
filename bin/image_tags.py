@@ -14,26 +14,46 @@ import os
 import re
 import subprocess
 import sys
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, NewType
 
-from install_saltbox import GitLabRepo
+from install_saltbox import VERSION_TAG_PATTERN, GitLabRepo, Version
 
-URL = 'https://dev.saltbox.pro'
+GITLAB_INSTANCE_URL = 'https://dev.saltbox.pro'
 GROUP = 'saltbox'
 IS_PRERELEASE_OK = True
 DEFAULT_CMD = 'list'
 UPDATE_AND_RUN_LIST_SEP = ':,'
 
 Conf = NewType('Conf', Dict[str, Any])
-VarRepoMap = NewType('VarRepoMap', Dict[str, str])
-GROUP_URL = 'https://dev.saltbox.pro/saltbox'
 # Example: ${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}
 IMAGE_PATTERN = re.compile(r'^\$\{IMAGE_REGISTRY\}\/(?P<path>.*):\$\{(?P<tag_var>.*)\}$')
 
 BIN_DIR = Path(__file__).parent.resolve()
 DOTENV_TOOL_PATH = BIN_DIR / 'dotenv_tool.sh'
+
+
+@dataclass
+class ImageEntry:
+    registry: str
+    path: str
+    tag: str
+    tag_var: str
+
+    @property
+    def location(self) -> str:
+        return f'{self.registry}/{self.path}'
+
+    @property
+    def repo_path(self) -> str:
+        grp = self.registry.split('/')[-1]
+        proj = self.path.split('/')[0]
+        return f'{grp}/{proj}'
+
+    def __str__(self) -> str:
+        return f'{self.location}:{self.tag}'
 
 
 def parse_args() -> argparse.Namespace:
@@ -64,46 +84,64 @@ def get_conf() -> Conf:
 
 
 def get_image_entries(conf: Conf) -> List[str]:
-    result = []
-    for k, val in conf['services'].items():
+    result = set()
+    for val in conf['services'].values():
         image = val.get('image')
         if image is None:
             continue
-        result.append(image)
-    return result
+        result.add(image)
+    return list(result)
 
 
-def filter_main_compose_vars(vars: List[str]) -> List[str]:
+def filter_main_compose_images(images: List[ImageEntry]) -> List[ImageEntry]:
     with open('base.env') as dotenv_f:
         dotenv = dotenv_f.read()
-    return [v for v in vars if v in dotenv]
+    return [i for i in images if i.tag_var in dotenv]
 
 
 @lru_cache(maxsize=None)
-def get_latest_tag(url: str, token: str) -> str:
+def get_repo_registry(url: str, token: str) -> Dict:
     repo = GitLabRepo(url=url, token=token)
-    tag = repo.get_version_tags(allow_pre_releases=IS_PRERELEASE_OK)[-1]
-    return tag
+    return repo.get_registry_repositories(tags=True)
 
 
-def proc_map(map: VarRepoMap, token: str) -> None:
-    for var, url in map.items():
-        tag = get_latest_tag(url=url, token=token)
-        print(f"{var}='{tag}'")
+def get_latest_tag(image: ImageEntry, token: str) -> str:
+    repo_url = f'{GITLAB_INSTANCE_URL}/{image.repo_path}'
+    data = get_repo_registry(url=repo_url, token=token)
+    for registry_entry in data:
+        if registry_entry['location'] == image.location:
+            tags = [tag_entry['name'] for tag_entry in registry_entry['tags']]
+            break
+    else:
+        dosa = f'Failed to find tags for `{image.location}` in `{image.registry}`'
+        raise RuntimeError(dosa)
+
+    release_tags = list(filter(lambda x: VERSION_TAG_PATTERN.match(x), tags))
+    ver_objs = [Version.from_str(v.lstrip('v')) for v in release_tags]
+    versions = [f'v{ver}' for ver in sorted(ver_objs)]
+    return versions[-1]
 
 
-def cmd_list(map: Dict[str, str], token=str) -> None:
-    main_vars = filter_main_compose_vars(list(map))
-    main_map = VarRepoMap({k: val for k, val in map.items() if k in main_vars})
-    addons_map = VarRepoMap({k: val for k, val in map.items() if k not in main_vars})
+def cmd_list(images: List[ImageEntry], token=str) -> None:
+    def proc_map(images: List[ImageEntry], token: str) -> None:
+        listed = set()
+        for img in images:
+            if img.tag_var in listed:
+                continue
+            latest_tag = get_latest_tag(image=img, token=token)
+            print(f"{img.tag_var}='{latest_tag}'")
+            listed.add(img.tag_var)
+
+    main_images = filter_main_compose_images(images)
+    addons_images = [i for i in images if i not in main_images]
 
     print('Main Salt.Box Compose vars:')
     print('___')
-    proc_map(main_map, token=token)
+    proc_map(main_images, token=token)
     print('')
     print('Salt.Box vars for addons:')
     print('___')
-    proc_map(addons_map, token=token)
+    proc_map(addons_images, token=token)
 
     print('___')
     print('Done')
@@ -125,23 +163,18 @@ def get_dotenv_var(name: str) -> str:
     return val
 
 
-def cmd_check(map: Dict[str, str], token: str) -> None:
+def cmd_check(images: List[ImageEntry], token: str) -> None:
     dosa_counter = 0
     dotenvs = get_dotenvs()
     print('Checking variables in following sources:')
     for de in dotenvs:
         print(f'  - {de}')
     print()
-    for var, url in map.items():
-        val = get_dotenv_var(name=var)
-        tag = 'dev'
-        tag = get_latest_tag(url, token=token)
-        if not val:
-            dosa = f'No value for {var}, missing module .env?'
-            print(dosa, file=sys.stderr)
-        elif val != tag:
+    for image in {i.tag_var: i for i in images}.values():  # Uniq by ImageEntry.tag_var
+        latest_tag = get_latest_tag(image=image, token=token)
+        if image.tag != latest_tag:
             dosa_counter += 1
-            dosa = f"{var}='{val}' does not match tag '{tag}'"
+            dosa = f"{image.tag_var}='{image.tag}' does not match tag '{latest_tag}'"
             print(dosa, file=sys.stderr)
     print('___')
     if dosa_counter:
@@ -158,21 +191,24 @@ def main() -> None:
     print("  # Be sure to have all required modules enabled in 'override.env'! #")
     print('  ', '#' * 67, '\n', sep='')
 
-    img_repo_map = {}
+    registry = get_dotenv_var('IMAGE_REGISTRY')
+    images: List[ImageEntry] = []
     for entry in get_image_entries(get_conf()):
         match = IMAGE_PATTERN.match(entry)
         if match:
             path = match.group('path')
             tag_var = match.group('tag_var')
-            repo_path = path.split('/')[0]
-            img_repo_map[tag_var] = f'{GROUP_URL}/{repo_path}'
+            tag = get_dotenv_var(name=tag_var)
+            images.append(
+                ImageEntry(registry=registry, path=path, tag=tag, tag_var=tag_var)
+            )
 
-    img_repo_map = dict(sorted(img_repo_map.items(), key=lambda pair: pair[0]))
+    images.sort(key=lambda i: i.tag_var)
 
     if args.command == 'list':
-        cmd_list(map=img_repo_map, token=private_token)
+        cmd_list(images, token=private_token)
     if args.command == 'check':
-        cmd_check(map=img_repo_map, token=private_token)
+        cmd_check(images, token=private_token)
 
 
 if __name__ == '__main__':

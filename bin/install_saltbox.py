@@ -666,8 +666,23 @@ class GitLabRepo:
         return f'{self.api_url}/projects/{self.owner}%2F{self.project}'
 
     @cache
+    def get_registry_repositories(self, tags: bool = False) -> Any:
+        # NOTE Paginated response has 100 max results witch is enough for
+        # Salt.Box project as for now
+        tags_val = json.dumps(tags)
+        params = urllib.parse.urlencode({'tags': tags_val, 'per_page': '100'})
+        url = f'{self.api_project_url}/registry/repositories?{params}'
+        try:
+            resp = urllib.request.urlopen(url=self._create_request(url=url))
+        except urllib.error.URLError as papa:
+            dosa = f'Error on requesting URL {url}: {papa}'
+            raise InstallerError(dosa) from None
+        body = json.load(resp)
+        return body
+
+    @cache
     def get_tags(self) -> List[str]:
-        """ Get list of latest tags sorted by commit date """
+        """ Get list of tags sorted by commit date """
         params = urllib.parse.urlencode({'order_by': 'updated', 'sort': 'asc'})  # Ordered by commit date
         url = f'{self.api_project_url}/repository/tags?{params}'
         try:
@@ -679,6 +694,7 @@ class GitLabRepo:
         return [i['name'] for i in body]
 
     def get_version_tags(self, allow_pre_releases=False) -> List[str]:
+        """ Get list of latest tags sorted by commit date """
         regex = VERSION_TAG_PATTERN if allow_pre_releases else RELEASE_ONLY_TAG_PATTERN
         versions = list(filter(lambda x: regex.match(x), self.get_tags()))
         ver_objs = [Version.from_str(v.lstrip('v')) for v in versions]

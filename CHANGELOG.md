@@ -18,6 +18,8 @@ if possible and purge browser redirects.
 ### Changed
 
 - `git_pull_dev_repos.py`: pull also compose repos of addons.
+- `image_tag.py` fetches registry image tags rather than Git repo tags with is
+  more accurate.
 
 ### Fixed
 
