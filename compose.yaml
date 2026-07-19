@@ -101,7 +101,7 @@ services:
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: true
       KC_HOSTNAME_STRICT: false
       # TODO (a.karmanov): Dynamic hostname (currently gives sporadic 401)
-      #KC_PROXY_HEADERS: xforwarded
+      # KC_PROXY_HEADERS: xforwarded
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_BASE_URL: '${KEYCLOAK_BASE_URL}'
     secrets:
