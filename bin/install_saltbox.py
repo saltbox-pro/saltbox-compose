@@ -880,6 +880,15 @@ ADDONS_MODULES = [
         is_token_required=True,
         required_compatibility_level=1,
     ),
+    AddonModule(
+        name='ClientToolkit',
+        url='https://dev.saltbox.pro/saltbox/saltbox-client-toolkit-compose',
+        base_dir='saltbox-client-toolkit-compose',
+        env_file='.env',
+        license='EULA',  # =(
+        is_token_required=True,
+        required_compatibility_level=1,
+    ),
 ]
 ADDONS_MAPPING = {a.name: a for a in ADDONS_MODULES}
 _MIGRATIONS_NAME = 'Migrations'

@@ -21,6 +21,7 @@ if possible and purge browser redirects.
 - `image_tag.py` fetches registry image tags rather than Git repo tags with is
   more accurate.
 - `install_saltbox_migrations.py`: `--skip-run` skips `down` also.
+- `install_saltbox.py`: add brand new ClientToolkit addon.
 
 ### Fixed
 
