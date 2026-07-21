@@ -20,6 +20,7 @@ if possible and purge browser redirects.
 - `git_pull_dev_repos.py`: pull also compose repos of addons.
 - `image_tag.py` fetches registry image tags rather than Git repo tags with is
   more accurate.
+- `install_saltbox_migrations.py`: `--skip-run` skips `down` also.
 
 ### Fixed
 

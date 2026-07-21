@@ -245,9 +245,9 @@ def main() -> None:
             for line in override:
                 file.write(line + '\n')
         if args.cleanup:
-            run_cmd(CLEANUP_CMD)
+            run_cmd(CLEANUP_CMD, skip=args.skip_run)
         else:
-            run_cmd(DOWN_CMD)
+            run_cmd(DOWN_CMD, skip=args.skip_run)
         up_cmd = UP_CMD.copy()
         if args.no_progress:
             up_cmd.append('--quiet-pull')

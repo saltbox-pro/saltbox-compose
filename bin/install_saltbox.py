@@ -1304,7 +1304,7 @@ def _deploy_migrations_hook(config: Config) -> None:
     if config.no_progress:
         mig_dpl_cmd.append('--no-progress')
     if config.skip_run:
-        print_out('Remember Salt.Box Migrations requires separate command to start!', '')
+        print_out('Remember Salt.Box Migrations requires separate commands to cleanup and start!', '')
         mig_dpl_cmd.append('--skip-run')
     run_cmd(mig_dpl_cmd, extra_env={'MONGO_ADMIN_PASSWORD': mongo_secr})
 
