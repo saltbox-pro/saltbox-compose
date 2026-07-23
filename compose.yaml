@@ -338,10 +338,6 @@ services:
       mongodb-audit:
         condition: service_healthy
         restart: false
-      rabbitmq:
-        condition: service_healthy
-        restart: false
-
 
   saltbox-core: &core
     <<: *default
