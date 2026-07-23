@@ -113,7 +113,7 @@ services:
 
   keycloak-init:
     <<: *default
-    restart: 'on-failure'
+    restart: 'no'
     image: '${IMAGE_REGISTRY}/saltbox-keycloak-init:${KEYCLOAK_INIT_IMAGE_TAG}'
     environment:
       KEYCLOAK_ADMIN_EMAIL: '${SALTBOX_ADMIN_EMAIL}'
@@ -136,10 +136,6 @@ services:
       - keycloak_client_saltbox_core_password
       - saltbox_admin_password
       - saltbox_user_password
-    depends_on:
-      keycloak:
-        condition: service_healthy
-        restart: false
 
   salt-master:
     <<: *default
@@ -288,9 +284,6 @@ services:
       - ${GATEWAY_HTTP_PORT}
     depends_on:
       redis-salt:
-        condition: service_healthy
-        restart: false
-      rabbitmq:
         condition: service_healthy
         restart: false
 
@@ -457,9 +450,6 @@ services:
     command: 'shell saltbox-faststream-redis'
     expose: []
     depends_on:
-      redis-salt:
-        condition: service_started
-        restart: false
       saltbox-core-init:
         condition: service_completed_successfully
         restart: false
@@ -469,12 +459,6 @@ services:
     command: 'shell saltbox-faststream-rabbit'
     expose: []
     depends_on:
-      redis-salt:
-        condition: service_started
-        restart: false
-      rabbitmq:
-        condition: service_healthy
-        restart: false
       saltbox-core-init:
         condition: service_completed_successfully
         restart: false
@@ -484,12 +468,6 @@ services:
     command: 'shell saltbox-tasks-watcher'
     expose: []
     depends_on:
-      redis-salt:
-        condition: service_started
-        restart: false
-      rabbitmq:
-        condition: service_healthy
-        restart: false
       saltbox-core-init:
         condition: service_completed_successfully
         restart: false
@@ -499,12 +477,6 @@ services:
     command: 'shell saltbox-jobs-watcher'
     expose: []
     depends_on:
-      redis-salt:
-        condition: service_started
-        restart: false
-      rabbitmq:
-        condition: service_healthy
-        restart: false
       saltbox-core-init:
         condition: service_completed_successfully
         restart: false
@@ -516,12 +488,6 @@ services:
     deploy:
       replicas: '${CORE_TASKIQ_WORKERS_COUNT:-1}'
     depends_on:
-      redis-salt:
-        condition: service_started
-        restart: false
-      rabbitmq:
-        condition: service_healthy
-        restart: false
       saltbox-core-init:
         condition: service_completed_successfully
         restart: false
@@ -533,9 +499,6 @@ services:
     depends_on:
       redis-taskiq:
         condition: service_started
-        restart: false
-      rabbitmq:
-        condition: service_healthy
         restart: false
       saltbox-core-init:
         condition: service_completed_successfully
@@ -549,9 +512,6 @@ services:
       redis-taskiq:
         condition: service_started
         restart: false
-      rabbitmq:
-        condition: service_healthy
-        restart: false
       saltbox-core-init:
         condition: service_completed_successfully
         restart: false
@@ -564,9 +524,6 @@ services:
       redis-taskiq:
         condition: service_started
         restart: false
-      rabbitmq:
-        condition: service_healthy
-        restart: false
       saltbox-core-init:
         condition: service_completed_successfully
         restart: false
@@ -578,9 +535,6 @@ services:
     depends_on:
       redis-taskiq:
         condition: service_started
-        restart: false
-      rabbitmq:
-        condition: service_healthy
         restart: false
       saltbox-core-init:
         condition: service_completed_successfully
