@@ -36,6 +36,14 @@ x-mongo-default-service: &mongo-default
     - mongo_user_password
     - mongo_exporter_password
 
+x-core-taskiq-depends: &core-taskiq-depends
+  redis-taskiq:
+    condition: service_started
+    restart: false
+  saltbox-core-init:
+    condition: service_completed_successfully
+    restart: false
+
 services:
   proxy:
     <<: *default
@@ -437,37 +445,21 @@ services:
     <<: *core
     command: 'shell saltbox-faststream-redis'
     expose: []
-    depends_on:
-      saltbox-core-init:
-        condition: service_completed_successfully
-        restart: false
 
   saltbox-core-faststream-rabbit:
     <<: *core
     command: 'shell saltbox-faststream-rabbit'
     expose: []
-    depends_on:
-      saltbox-core-init:
-        condition: service_completed_successfully
-        restart: false
 
   saltbox-core-tasks-watcher:
     <<: *core
     command: 'shell saltbox-tasks-watcher'
     expose: []
-    depends_on:
-      saltbox-core-init:
-        condition: service_completed_successfully
-        restart: false
 
   saltbox-core-jobs-watcher:
     <<: *core
     command: 'shell saltbox-jobs-watcher'
     expose: []
-    depends_on:
-      saltbox-core-init:
-        condition: service_completed_successfully
-        restart: false
 
   saltbox-core-salt-buffer-manager:
     <<: *core
@@ -475,58 +467,30 @@ services:
     expose: []
     deploy:
       replicas: '${CORE_TASKIQ_WORKERS_COUNT:-1}'
-    depends_on:
-      saltbox-core-init:
-        condition: service_completed_successfully
-        restart: false
 
   saltbox-core-taskiq-worker:
     <<: *core
     command: 'taskiq-worker'
     ports: []
-    depends_on:
-      redis-taskiq:
-        condition: service_started
-        restart: false
-      saltbox-core-init:
-        condition: service_completed_successfully
-        restart: false
+    depends_on: *core-taskiq-depends
 
   saltbox-core-taskiq-salt-worker:
     <<: *core
     command: 'taskiq-salt-worker'
     ports: []
-    depends_on:
-      redis-taskiq:
-        condition: service_started
-        restart: false
-      saltbox-core-init:
-        condition: service_completed_successfully
-        restart: false
+    depends_on: *core-taskiq-depends
 
   saltbox-core-taskiq-notify-worker:
     <<: *core
     command: 'taskiq-notify-worker'
     ports: []
-    depends_on:
-      redis-taskiq:
-        condition: service_started
-        restart: false
-      saltbox-core-init:
-        condition: service_completed_successfully
-        restart: false
+    depends_on: *core-taskiq-depends
 
   saltbox-core-taskiq-scheduler:
     <<: *core
     command: 'taskiq-scheduler'
     ports: []
-    depends_on:
-      redis-taskiq:
-        condition: service_started
-        restart: false
-      saltbox-core-init:
-        condition: service_completed_successfully
-        restart: false
+    depends_on: *core-taskiq-depends
 
   saltbox-frontend-root-config:
     <<: *default
