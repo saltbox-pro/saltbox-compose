@@ -14,6 +14,7 @@ Create password files by simple JSON config files. Config format is:
 
 import argparse
 import json
+import os
 import secrets
 import shutil
 import string
@@ -24,6 +25,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 SECRET_ALPHABET = string.ascii_letters + string.digits
+UMASK = 0o077
 
 
 @dataclass
@@ -177,6 +179,9 @@ def main() -> None:
     except (ValueError) as err:
         print(f'ERROR {err}', file=sys.stderr)
         sys.exit(1)
+
+    os.umask(UMASK)
+
     secrets_dir = args.output_dir
     ensure_secrets_dir(secrets_dir)
     print(f'Secrets dir is "{secrets_dir}"')
