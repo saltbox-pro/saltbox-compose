@@ -416,15 +416,6 @@ services:
     expose:
       - ${CORE_PORT}
     depends_on:
-      mongo:
-        condition: service_healthy
-        restart: false
-      redis-salt:
-        condition: service_healthy
-        restart: false
-      rabbitmq:
-        condition: service_healthy
-        restart: false
       saltbox-core-init:
         condition: service_completed_successfully
         restart: false
@@ -436,9 +427,6 @@ services:
     expose: []
     depends_on:
       mongo:
-        condition: service_healthy
-        restart: false
-      rabbitmq:
         condition: service_healthy
         restart: false
       redis-salt:
