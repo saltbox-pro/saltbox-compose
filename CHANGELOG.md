@@ -28,6 +28,8 @@ if possible and purge browser redirects.
 
 ### Removed
 
+- `compose.yaml`: remove unnecessary `depends_on` relationships between services.
+
 ## [0.3.0] - 2026-07-10
 
 ### Added
