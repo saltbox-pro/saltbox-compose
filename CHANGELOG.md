@@ -23,6 +23,7 @@ if possible and purge browser redirects.
 - `install_saltbox_migrations.py`: `--skip-run` skips `down` also.
 - `install_saltbox.py`: add brand new ClientToolkit addon.
 - `make_secrets.py` set user-only access mode to new directory and files.
+- Individual variables for frontend images.
 
 ### Fixed
 
