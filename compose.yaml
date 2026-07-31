@@ -505,7 +505,7 @@ services:
   saltbox-frontend-gateway:
     <<: *default
     # TODO Delete FRONTEND_IMAGE_TAG fallback in few releases
-    image: '${IMAGE_REGISTRY}/saltbox-frontend-gateway:${GATEWAY_FRONTEND_IMAGE_TAG:-${RONTEND_IMAGE_TAG}}'
+    image: '${IMAGE_REGISTRY}/saltbox-frontend-gateway:${GATEWAY_FRONTEND_IMAGE_TAG:-${FRONTEND_IMAGE_TAG}}'
     expose:
       - ${FRONTEND_HTTP_PORT}
 
