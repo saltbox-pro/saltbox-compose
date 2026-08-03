@@ -5,16 +5,17 @@ Create password files by simple JSON config files. Config format is:
     [
       {
         "name": "NAME_OF_SECRET_FILE",
-        "length": PASSWORD_LENGTH
-      },
+        "length": PASSWORD_LENGTH,
+        "mode": "600"
+      }
     ]
+"mode" string is optional and interprets as an octal number.
 """
 
 # Requires python>=3.7.3
 
 import argparse
 import json
-import os
 import secrets
 import shutil
 import string
@@ -25,13 +26,15 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 SECRET_ALPHABET = string.ascii_letters + string.digits
-UMASK = 0o077
+DIR_MODE = 0o700
+MODE_MASK = 0o777
 
 
 @dataclass
 class Secret:
     name: str
     length: int
+    mode: int = 0o600
 
 
 def rm(path: Path) -> None:
@@ -39,6 +42,10 @@ def rm(path: Path) -> None:
         shutil.rmtree(path)
     else:
         path.unlink()
+
+
+def get_normalized_mode(path: Path) -> int:
+    return path.stat().st_mode & MODE_MASK
 
 
 def path_of_secret(secrets_dir: Path, secret_name: str) -> Path:
@@ -87,21 +94,27 @@ def parse_args() -> argparse.Namespace:
 
 def make_secret(
     path: Path,
-    secret_length: int,
+    secret: Secret,
     explicit_value: Optional[str] = None,
     overwrite=False
 ) -> None:
     is_existing = path.exists()
     if is_existing and not overwrite:
-        print(f'Skip existing `{path}`', file=sys.stderr)
+        mode = get_normalized_mode(path)
+        if mode != secret.mode:
+            print(f'Change existing `{path}` mode: {mode:#o} -> {secret.mode:#o}!', file=sys.stderr)
+            path.chmod(secret.mode)
+        else:
+            print(f'Skip existing `{path}`', file=sys.stderr)
         return
     with open(path, 'w') as f:
         if is_existing:
             print(f'Overwriting `{path}`')
         else:
             print(f'Creating `{path}`')
-        val = random(length=secret_length) if explicit_value is None else explicit_value
+        val = random(length=secret.length) if explicit_value is None else explicit_value
         f.write(val)
+    path.chmod(secret.mode)
 
 
 def prune(secrets: List[Secret], secrets_dir: Path) -> None:
@@ -128,6 +141,18 @@ def validate_conf(data: Any) -> List[Secret]:
             if not isinstance(i[field], f_type):
                 msg = f'"{field}" must be of type {f_type} in {i}'
                 raise ValueError(msg)
+        mode = i.get('mode')
+        if mode is not None:
+            digi_mode = int(mode, base=8)
+            masked_mode = digi_mode & MODE_MASK
+            if digi_mode != masked_mode:
+                msg = (
+                    f'Unsupported mode `{mode}`, '
+                    f'must be in form of `{MODE_MASK:o}` '
+                    f'or `{MODE_MASK:#o}`'
+                )
+                raise ValueError(msg)
+            i['mode'] = masked_mode
         result.append(Secret(**i))
 
     return result
@@ -160,6 +185,10 @@ def ensure_secrets_dir(secrets_dir: Path) -> None:
     elif not secrets_dir.is_dir():
         dosa = f'Output path exists and is not a directory: "{secrets_dir}"'
         raise OSError(dosa)
+    mode = get_normalized_mode(secrets_dir)
+    if mode != DIR_MODE:
+        print(f'Changing `{secrets_dir}` mode: {mode:#o} -> {DIR_MODE:#o}')
+        secrets_dir.chmod(DIR_MODE)
 
 
 def parse_explicits(explicits: List[str]) -> Dict[str, str]:
@@ -179,8 +208,6 @@ def main() -> None:
     except (ValueError) as err:
         print(f'ERROR {err}', file=sys.stderr)
         sys.exit(1)
-
-    os.umask(UMASK)
 
     secrets_dir = args.output_dir
     ensure_secrets_dir(secrets_dir)
@@ -206,7 +233,7 @@ def main() -> None:
         explicit_val = explicits.get(sec.name)
         try:
             make_secret(
-                path=path, secret_length=sec.length,
+                path=path, secret=sec,
                 explicit_value=explicit_val, overwrite=args.overwrite)
         except OSError as err:
             print(f'ERROR {err}', file=sys.stderr)
