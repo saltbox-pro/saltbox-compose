@@ -163,6 +163,7 @@ services:
     volumes:
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt_custom/'
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
+      - 'salt_master_minion_files:/var/cache/salt/master/minions'
       - 'redis_salt_certs:/etc/redis/certs/:ro'
       - 'salt_master_pki:/etc/salt/pki/'
       - 'salt_master_saltbox_var:/var/lib/saltbox-bridge/'
@@ -602,6 +603,7 @@ volumes:
   redis_taskiq_data: {}
   salt_master_pki: {}
   salt_master_saltbox_var: {}
+  salt_master_minion_files: {}
   salt_repos: {}
   saltbox_core_var: {}
   sshfs_host_keys: {}
