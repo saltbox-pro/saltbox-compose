@@ -7,6 +7,8 @@ _*
 
 # Dev
 /.vscode
+*/.idea
+/.DS_Store
 /.idea
 .ruff.toml
 .mypy.ini
