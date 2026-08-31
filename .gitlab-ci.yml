@@ -3,8 +3,13 @@
 include:
   - project: 'saltbox/ci-lib'
     file: 'build-image.yml'
+
   - project: 'saltbox/ci-lib'
     file: 'mirror-image.yml'
+
+  - project: 'saltbox/ci-lib'
+    file: 'mirror-repo.yml'
+
   - project: 'saltbox/ci-lib'
     file: 'def-branch-merge-guard.yml'
 
@@ -72,6 +77,11 @@ Mirror Postgres image:
   variables:
     SOURCE_IMAGE: 'postgres:16-alpine'
     REGISTRY_ADDITIONAL_PATH: '/postgres-16-alpine'
+
+
+Mirror Repository:
+  extends: .mirror-repo
+  stage: build
 
 
 Trigger Proxy build:
