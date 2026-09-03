@@ -134,7 +134,6 @@ def get_args() -> argparse.Namespace:
     parser.add_argument(
         '--compose-ref',
         type=str,
-        choices=Config.SUPPORTED_REFS,
         help=(
             'Salt.Box Compose Git reference to obtain. '
             f'`{RELEASE_REF}` for latest release, '
