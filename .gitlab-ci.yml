@@ -13,6 +13,9 @@ include:
   - project: 'saltbox/ci-lib'
     file: 'def-branch-merge-guard.yml'
 
+  - project: 'saltbox/ci-lib'
+    file: 'close-github-pr.yml'
+
 
 Build Redis image:
   extends: .build-image
@@ -81,6 +84,11 @@ Mirror Postgres image:
 
 Mirror Repository:
   extends: .mirror-repo
+  stage: build
+
+
+Check for GitHub PR to close:
+  extends: .close-github-pr
   stage: build
 
 
