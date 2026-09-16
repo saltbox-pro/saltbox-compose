@@ -305,6 +305,11 @@ services:
       TIMEOUT_GRACEFUL_SHUTDOWN: '${AUDIT_SHUTDOWN_TIMEOUT_SEC}'
       UVICORN_WORKERS: '${AUDIT_WORKERS:-1}'
       BASE_URL_ROOT_PATH: '${AUDIT_BACKEND_PATH}'
+      # Keycloack  environment variables
+      KEYCLOAK_FRONT_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
+      KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
+      KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
       # Gateway environment variables
       DISCOVERY_DISCOVERY_URL: 'http://saltbox-gateway:${GATEWAY_HTTP_PORT}/api/discovery'
       DISCOVERY_FRONT_CONTAINER_NAME: '${AUDIT_FRONT_CONTAINER_NAME}'
@@ -335,6 +340,7 @@ services:
     secrets:
       - mongo_user_password
       - rabbitmq_amqp_password
+      - keycloak_client_saltbox_core_password
     depends_on:
       mongodb-audit:
         condition: service_healthy
