@@ -1204,7 +1204,7 @@ class Checker:
             dosa = f'Not found `flags` field in `{cpuinfo_path}`'
             raise CheckError(dosa)
         print_out(f'Found CPU flags: {flags}', verbose=True)
-        if 'adx' not in flags or 'avx2' not in flags:
+        if 'avx' not in flags or 'avx2' not in flags:
             dosa = 'Missing required CPU flags'
             dtl = (
                 'MongoDB depends on AVX, AVX2 CPU features.\n'
