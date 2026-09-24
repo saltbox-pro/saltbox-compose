@@ -5,6 +5,8 @@ default is_admin := false
 
 default is_collections_admin := false
 default is_collections_resource := false
+default is_extra_data_categories_resource := false
+default is_extra_data_items_resource := false
 
 default is_tasks_admin := false
 default is_tasks_resource := false
@@ -51,6 +53,18 @@ is_collections_resource if {
 is_minions_resource if {
     input.resource.service_name == "core"
     input.resource.path[0] == "minions"
+}
+
+is_extra_data_categories_resource if {
+    input.resource.service_name == "core"
+    input.resource.path[0] == "extra-data"
+    input.resource.path[1] == "categories"
+}
+
+is_extra_data_items_resource if {
+    input.resource.service_name == "core"
+    input.resource.path[0] == "extra-data"
+    input.resource.path[1] == "items"
 }
 
 # ==========================================
