@@ -191,11 +191,3 @@ is_scheduler_admin if {
     some role in input.subject.roles
     role == "scheduler_admin"
 }
-
-# ==========================================
-# Inventory
-# ==========================================
-is_inventory_admin if {
-    some role in input.subject.roles
-    role == "inventory_admin"
-}
