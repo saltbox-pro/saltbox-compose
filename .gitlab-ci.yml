@@ -8,13 +8,7 @@ include:
     file: 'mirror-image.yml'
 
   - project: 'saltbox/ci-lib'
-    file: 'mirror-repo.yml'
-
-  - project: 'saltbox/ci-lib'
     file: 'def-branch-merge-guard.yml'
-
-  - project: 'saltbox/ci-lib'
-    file: 'close-github-pr.yml'
 
 
 Build Redis image:
@@ -80,16 +74,6 @@ Mirror Postgres image:
   variables:
     SOURCE_IMAGE: 'postgres:16-alpine'
     REGISTRY_ADDITIONAL_PATH: '/postgres-16-alpine'
-
-
-Mirror Repository:
-  extends: .mirror-repo
-  stage: build
-
-
-Check for GitHub PR to close:
-  extends: .close-github-pr
-  stage: build
 
 
 Trigger Proxy build:
