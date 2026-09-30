@@ -326,7 +326,8 @@ services:
       DISCOVERY_SERVICE_TYPE: '${AUDIT_SERVICE_TYPE}'
       DISCOVERY_SERVICE_VENDOR: '${AUDIT_SERVICE_VENDOR}'
       # MongoDB environment variables
-      MONGO_HOST: 'mongodb-audit'
+      MONGO_HOST: '${MONGO_AUDIT_HOSTS}'
+      MONGO_URI: '${MONGO_AUDIT_URI}'
       MONGO_DB: '${MONGO_AUDIT_DB}'
       MONGO_REPLICASET: '${MONGO_AUDIT_REPLICA_SET}'
       MONGO_USER: '${MONGO_USER}'
@@ -387,6 +388,8 @@ services:
       LOG_LEVEL: '${SALTBOX_CORE_LOG_LEVEL}'
       RABBITMQ_ADMIN: '${SALTBOX_ADMIN_USERNAME}'
       RABBITMQ_AMQP_PASSWORD_FILE: '/run/secrets/rabbitmq_amqp_password'
+      MONGO_HOST: '${MONGO_HOSTS}'
+      MONGO_URI: '${MONGO_URI}'
       MONGO_DB: '${MONGO_DB}'
       MONGO_REPLICASET: '${MONGO_REPLICA_SET}'
       MONGO_USER: '${MONGO_USER}'
@@ -527,6 +530,7 @@ services:
 
   mongo:
     <<: *mongo-default
+    command: ['--quiet', '--wiredTigerCacheSizeGB', '${MONGO_CACHE_SIZE_GB}']
     hostname: '${MONGO_HOSTNAME}'  # Important for replica set
     environment:
       MONGO_ROOT_USERNAME: root
@@ -544,6 +548,7 @@ services:
 
   mongodb-audit:
     <<: *mongo-default
+    command: ['--quiet', '--wiredTigerCacheSizeGB', '${MONGO_AUDIT_CACHE_SIZE_GB}']
     hostname: '${MONGO_AUDIT_HOSTNAME}'
     environment:
       # TODO: separate user and password for audit MongoDB

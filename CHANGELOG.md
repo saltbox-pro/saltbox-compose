@@ -15,6 +15,14 @@ if possible and purge browser redirects.
 
 ### Added
 
+- `MONGO_HOSTS`, `MONGO_AUDIT_HOSTS` variables: comma-separated list of
+  MongoDB replica set members for Core and Audit connection.
+- `MONGO_URI`, `MONGO_AUDIT_URI` variables: full MongoDB connection URI
+  overriding hosts and replica set.
+- `MONGO_CACHE_SIZE_GB`, `MONGO_AUDIT_CACHE_SIZE_GB` variables: MongoDB
+  WiredTiger cache size, by default every MongoDB instance takes a half of
+  host RAM.
+
 ### Changed
 
 - `git_pull_dev_repos.py`: pull also compose repos of addons.
