@@ -22,9 +22,13 @@ if possible and purge browser redirects.
 - `MONGO_CACHE_SIZE_GB`, `MONGO_AUDIT_CACHE_SIZE_GB` variables: MongoDB
   WiredTiger cache size, by default every MongoDB instance takes a half of
   host RAM.
+- Built-in MongoDB containers `mongo` and `mongodb-audit` are optional, they
+  are controlled by `mongo` and `mongodb-audit` profiles. Remove a profile from
+  `COMPOSE_PROFILES` when connecting to an external MongoDB cluster.
 
 ### Changed
 
+- `base.env`: `COMPOSE_PROFILES` enables `mongo` and `mongodb-audit` profiles by default.
 - `git_pull_dev_repos.py`: pull also compose repos of addons.
 - `image_tag.py` fetches registry image tags rather than Git repo tags with is
   more accurate.

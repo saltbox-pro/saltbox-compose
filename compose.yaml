@@ -342,10 +342,6 @@ services:
       - mongo_user_password
       - rabbitmq_amqp_password
       - keycloak_client_saltbox_core_password
-    depends_on:
-      mongodb-audit:
-        condition: service_healthy
-        restart: false
 
   saltbox-core: &core
     <<: *default
@@ -440,9 +436,6 @@ services:
     command: 'shell saltbox-module-init'
     expose: []
     depends_on:
-      mongo:
-        condition: service_healthy
-        restart: false
       redis-salt:
         condition: service_healthy
         restart: false
@@ -530,8 +523,10 @@ services:
 
   mongo:
     <<: *mongo-default
+    profiles:
+      - mongo
     command: ['--quiet', '--wiredTigerCacheSizeGB', '${MONGO_CACHE_SIZE_GB}']
-    hostname: '${MONGO_HOSTNAME}'  # Important for replica set
+    hostname: '${MONGO_HOSTNAME}'  #NOTE: Important for replica set
     environment:
       MONGO_ROOT_USERNAME: root
       MONGO_ROOT_PASSWORD_FILE: '/run/secrets/mongo_root_password'
@@ -548,6 +543,8 @@ services:
 
   mongodb-audit:
     <<: *mongo-default
+    profiles:
+      - mongodb-audit
     command: ['--quiet', '--wiredTigerCacheSizeGB', '${MONGO_AUDIT_CACHE_SIZE_GB}']
     hostname: '${MONGO_AUDIT_HOSTNAME}'
     environment:
