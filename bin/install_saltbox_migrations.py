@@ -35,6 +35,8 @@ from install_saltbox import (
 )
 
 MIN_PYTHON = '3.7.3'
+SALTBOX_MIGRATION_MONGO_SECRET_NAME = 'migration_mongo_user_password'
+MIGRATION_MONGO_SECRET_NAME = 'migration_mongo_user_password'
 MIGRATIONS_REPO = GitLabRepo(
     url='https://dev.saltbox.pro/saltbox/saltbox-migration-compose/',
     token=TOKEN,
@@ -174,10 +176,20 @@ def _make_secrets(output_dir: Path) -> None:
     run_cmd(mk_scrts_cmd)
 
 
+def _share_mongo_user_secret(saltbox_secrets_dir: Path, output_dir: Path) -> None:
+    src = saltbox_secrets_dir / SALTBOX_MIGRATION_MONGO_SECRET_NAME
+    if not src.is_file():
+        return
+    dst_dir = output_dir / 'secrets'
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    _ = shutil.copy(src, dst_dir / MIGRATION_MONGO_SECRET_NAME)
+
+
 def make_override(args: argparse.Namespace) -> List[str]:
     if args.internal:
         pairs = [
             ('EXPOSE_HOST', '127.0.0.1'),
+            ('MONGO_HOSTS', 'mongo'),
             ('NETWORK_NAME', 'saltbox_default'),
             ('NETWORK_EXTERNAL', 'true'),
             ('RABBITMQ_HOST', 'rabbitmq'),
@@ -232,6 +244,10 @@ def main() -> None:
         required_level=MIGRATIONS_COMPOSE_REQUIRED_COMPATIBILITY_LEVEL
     )
 
+    _share_mongo_user_secret(
+        saltbox_secrets_dir=args.path / 'saltbox-compose' / 'secrets',
+        output_dir=output_dir,
+    )
     _make_secrets(output_dir=output_dir)
 
     with cd(output_dir):
