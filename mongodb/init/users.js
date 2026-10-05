@@ -16,6 +16,12 @@ function main() {
     const root_username = get_env('MONGO_ROOT_USERNAME');
     const user_password = get_env('MONGO_USER_PASSWORD');
     const user_username = get_env('MONGO_USER_USERNAME');
+    const user_db = get_env('MONGO_USER_DB');
+    // Module users are optional, empty when the module is disabled
+    const scheduler_username = get_env('MONGO_SCHEDULER_USERNAME', strict=false);
+    const scheduler_db = get_env('MONGO_SCHEDULER_DB', strict=false);
+    const migration_username = get_env('MONGO_MIGRATION_USERNAME', strict=false);
+    const migration_db = get_env('MONGO_MIGRATION_DB', strict=false);
     // Exporter user is optional
     const exporter_username = get_env('MONGO_EXPORTER_USERNAME', strict=false);
     const adm_db = 'admin';
@@ -41,9 +47,27 @@ function main() {
     const user = {
         user: user_username,
         pwd: user_password,
-        roles: ['readWriteAnyDatabase'],
+        roles: [{role: 'readWrite', db: user_db}],
     };
     create_user(user);
+
+    if (scheduler_username) {
+        const scheduler_password = get_env('MONGO_SCHEDULER_PASSWORD');
+        create_user({
+            user: scheduler_username,
+            pwd: scheduler_password,
+            roles: [{role: 'readWrite', db: scheduler_db}],
+        });
+    }
+
+    if (migration_username) {
+        const migration_password = get_env('MONGO_MIGRATION_PASSWORD');
+        create_user({
+            user: migration_username,
+            pwd: migration_password,
+            roles: [{role: 'readWrite', db: migration_db}],
+        });
+    }
 
     if (exporter_username !== undefined) {
         const exporter_password = get_env('MONGO_EXPORTER_PASSWORD');

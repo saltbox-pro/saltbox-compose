@@ -29,6 +29,14 @@ if possible and purge browser redirects.
 ### Changed
 
 - `base.env`: `COMPOSE_PROFILES` enables `mongo` and `mongodb-audit` profiles by default.
+- `mongo` is a shared MongoDB for Core, Scheduler and Migrations, `mongodb-audit`
+  stays separate. Each database has its own user: `MONGO_USER` for `MONGO_DB`,
+  `SCHEDULER_MONGO_USER` for `SCHEDULER_MONGO_DB`, `MONGO_AUDIT_DB` for audit.
+- `migration_mongo_user_password` secret and `MIGRATION_MONGO_USER`,
+  `MIGRATION_MONGO_DB` variables: database user for Migrations, the password
+  must be copied to the Migrations host manually.
+- `MONGO_CACHE_SIZE_GB` limits WiredTiger cache of the shared `mongo` for all
+  its databases.
 - `git_pull_dev_repos.py`: pull also compose repos of addons.
 - `image_tag.py` fetches registry image tags rather than Git repo tags with is
   more accurate.
@@ -43,6 +51,9 @@ mode in config (`0o600` by default).
 ### Removed
 
 - `compose.yaml`: remove unnecessary `depends_on` relationships between services.
+- `saltbox-scheduler-mongo` service, its volume, `SCHEDULER_MONGO_IMAGE_TAG` and
+  `SCHEDULER_MONGO_EXPOSE_SOCKET` variables, `scheduler_mongo_root_password` and
+  `scheduler_mongo_key_file` secrets, Scheduler uses shared `mongo` now.
 
 ## [0.3.0] - 2026-07-10
 

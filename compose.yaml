@@ -532,12 +532,22 @@ services:
       MONGO_ROOT_PASSWORD_FILE: '/run/secrets/mongo_root_password'
       MONGO_USER_USERNAME: '${MONGO_USER}'
       MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
+      MONGO_USER_DB: '${MONGO_DB}'
+      MONGO_MIGRATION_USERNAME: '${MIGRATION_MONGO_USER}'
+      MONGO_MIGRATION_DB: '${MIGRATION_MONGO_DB}'
+      MONGO_MIGRATION_PASSWORD_FILE: '/run/secrets/migration_mongo_user_password'
       MONGOD_REPLICA_SET: '${MONGO_REPLICA_SET}'
       MONGO_EXPORTER_USERNAME: '${MONGO_EXPORTER}'
       MONGO_EXPORTER_PASSWORD_FILE: '/run/secrets/mongo_exporter_password'
       MONGOD_KEY_FILE: '/run/secrets/mongo_key_file'
     ports:
       - '${MONGO_EXPOSE_SOCKET}:27017'
+    secrets:
+      - mongo_key_file
+      - mongo_root_password
+      - mongo_user_password
+      - mongo_exporter_password
+      - migration_mongo_user_password
     volumes:
       - mongo_data:/var/lib/mongo/
 
@@ -553,6 +563,7 @@ services:
       MONGO_ROOT_PASSWORD_FILE: '/run/secrets/mongo_root_password'
       MONGO_USER_USERNAME: '${MONGO_USER}'
       MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
+      MONGO_USER_DB: '${MONGO_AUDIT_DB}'
       MONGOD_REPLICA_SET: '${MONGO_AUDIT_REPLICA_SET}'
       MONGO_EXPORTER_USERNAME: '${MONGO_EXPORTER}'
       MONGO_EXPORTER_PASSWORD_FILE: '/run/secrets/mongo_exporter_password'
@@ -616,6 +627,8 @@ volumes:
   sshfs_host_keys: {}
 
 secrets:
+  migration_mongo_user_password:
+    file: secrets/migration_mongo_user_password
   keycloak_admin_password:
     file: secrets/keycloak_admin_password
   keycloak_client_saltbox_core_password:  # Not private: exposed in /env.json
