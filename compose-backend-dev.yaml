@@ -38,20 +38,6 @@ services:
       - '/mnt/saltbox-sdk/saltbox_sdk.egg-info/'
       - '/mnt/saltbox-gateway/saltbox_gateway.egg-info/'
 
-  saltbox-audit:
-    build:
-      context: $AUDIT_BUILD_DIR
-      target: dev
-    tty: true  # colorize logs
-    image: '${LOCAL_IMAGE_NAMESPACE}/saltbox-audit:dev'
-    volumes:
-      - '${AUDIT_BUILD_DIR}:/mnt/saltbox-audit:ro'
-      - '${SDK_DIR}:/mnt/saltbox-sdk:ro'
-    tmpfs:
-      - '/mnt/saltbox-sdk/build/'
-      - '/mnt/saltbox-sdk/saltbox_sdk.egg-info/'
-      - '/mnt/saltbox-audit/saltbox_audit.egg-info/'
-
   redis-taskiq:
     ports:
       - 6380:6379

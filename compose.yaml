@@ -295,54 +295,6 @@ services:
         condition: service_healthy
         restart: false
 
-  saltbox-audit:
-    <<: *default
-    image: '${IMAGE_REGISTRY}/saltbox-audit:${AUDIT_IMAGE_TAG}'
-    command: 'uvicorn'
-    environment:
-      LOG_LEVEL: '${AUDIT_LOG_LEVEL:-info}'
-      SERVER_OUTER_SOCKET: '${WEB_SERVER_OUTER_SOCKET}'
-      TIMEOUT_GRACEFUL_SHUTDOWN: '${AUDIT_SHUTDOWN_TIMEOUT_SEC}'
-      UVICORN_WORKERS: '${AUDIT_WORKERS:-1}'
-      BASE_URL_ROOT_PATH: '${AUDIT_BACKEND_PATH}'
-      # Keycloack  environment variables
-      KEYCLOAK_FRONT_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
-      KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
-      KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
-      KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
-      # Gateway environment variables
-      DISCOVERY_DISCOVERY_URL: 'http://saltbox-gateway:${GATEWAY_HTTP_PORT}/api/discovery'
-      DISCOVERY_FRONT_CONTAINER_NAME: '${AUDIT_FRONT_CONTAINER_NAME}'
-      DISCOVERY_FRONT_CONTAINER_PORT: '${AUDIT_FRONT_CONTAINER_PORT}'
-      DISCOVERY_INSTANCE_ID: '${AUDIT_INSTANCE_ID}'
-      DISCOVERY_INSTANCE_HOST: '${AUDIT_HOST}'
-      DISCOVERY_INSTANCE_PORT: '${AUDIT_PORT}'
-      DISCOVERY_SERVER_OUTER_SOCKET: '${WEB_SERVER_OUTER_SOCKET}'
-      DISCOVERY_SERVER_SCHEME: 'https'
-      DISCOVERY_SERVER_WS_SCHEME: 'wss'
-      DISCOVERY_SERVICE_DESCRIPTION: '${AUDIT_SERVICE_DESCRIPTION}'
-      DISCOVERY_SERVICE_NAME: '${AUDIT_SERVICE_NAME}'
-      DISCOVERY_SERVICE_TITLE: '${AUDIT_SERVICE_TITLE}'
-      DISCOVERY_SERVICE_TYPE: '${AUDIT_SERVICE_TYPE}'
-      DISCOVERY_SERVICE_VENDOR: '${AUDIT_SERVICE_VENDOR}'
-      # MongoDB environment variables
-      MONGO_HOST: '${MONGO_AUDIT_HOSTS}'
-      MONGO_URI: '${MONGO_AUDIT_URI}'
-      MONGO_DB: '${MONGO_AUDIT_DB}'
-      MONGO_REPLICASET: '${MONGO_AUDIT_REPLICA_SET}'
-      MONGO_USER: '${MONGO_USER}'
-      MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
-      MONGO_EXPLAIN: '${MONGO_EXPLAIN}'
-      # RabbitMQ environment variables
-      RABBITMQ_HOST: '${RABBITMQ_HOST}'
-      RABBITMQ_PORT: '${RABBITMQ_PORT}'
-      RABBITMQ_ADMIN: '${SALTBOX_ADMIN_USERNAME}'
-      RABBITMQ_AMQP_PASSWORD_FILE: '/run/secrets/rabbitmq_amqp_password'
-    secrets:
-      - mongo_user_password
-      - rabbitmq_amqp_password
-      - keycloak_client_saltbox_core_password
-
   saltbox-core: &core
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}'
@@ -551,28 +503,6 @@ services:
     volumes:
       - mongo_data:/var/lib/mongo/
 
-  mongodb-audit:
-    <<: *mongo-default
-    profiles:
-      - mongodb-audit
-    command: ['--quiet', '--wiredTigerCacheSizeGB', '${MONGO_AUDIT_CACHE_SIZE_GB}']
-    hostname: '${MONGO_AUDIT_HOSTNAME}'
-    environment:
-      # TODO: separate user and password for audit MongoDB
-      MONGO_ROOT_USERNAME: audit_root
-      MONGO_ROOT_PASSWORD_FILE: '/run/secrets/mongo_root_password'
-      MONGO_USER_USERNAME: '${MONGO_USER}'
-      MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
-      MONGO_USER_DB: '${MONGO_AUDIT_DB}'
-      MONGOD_REPLICA_SET: '${MONGO_AUDIT_REPLICA_SET}'
-      MONGO_EXPORTER_USERNAME: '${MONGO_EXPORTER}'
-      MONGO_EXPORTER_PASSWORD_FILE: '/run/secrets/mongo_exporter_password'
-      MONGOD_KEY_FILE: '/run/secrets/mongo_key_file'
-    ports:
-      - '${MONGO_AUDIT_EXPOSE_SOCKET}:27017'
-    volumes:
-      - mongo_audit_data:/var/lib/mongo/
-
   opa:
     <<: *default
     image: '${IMAGE_REGISTRY}/saltbox-compose/opa:${OPA_IMAGE_TAG}'
@@ -614,7 +544,6 @@ configs: {}
 volumes:
   keycloak-db_data: {}
   mongo_data: {}
-  mongo_audit_data: {}
   proxy_certs: {}
   redis_salt_certs: {}
   redis_salt_data: {}
