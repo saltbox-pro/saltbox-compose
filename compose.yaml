@@ -327,15 +327,18 @@ services:
       GITLAB_BASE_URL: '${GITLAB_BASE_URL}'
       GITLAB_GROUP_ID: '${GITLAB_GROUP_ID}'
       GITLAB_TOKEN: '${GITLAB_TOKEN}'
+
       IS_MODULE_INVENTORY_ON: '${SALTBOX_MODULE_INVENTORY_ON}'
       IS_MODULE_METRIC_ON: '${SALTBOX_MODULE_METRIC_ON}'
+
       KEYCLOAK_CLIENT: '${KEYCLOAK_CLIENT}'
       KEYCLOAK_FRONT_URL: 'https://${WEB_SERVER_OUTER_SOCKET}${KEYCLOAK_BASE_URL}'
       KEYCLOAK_REALM: '${KEYCLOAK_REALM}'
       KEYCLOAK_SERVER_URL: 'http://keycloak:8080${KEYCLOAK_BASE_URL}'
-      LOG_LEVEL: '${SALTBOX_CORE_LOG_LEVEL}'
+
       RABBITMQ_ADMIN: '${SALTBOX_ADMIN_USERNAME}'
       RABBITMQ_AMQP_PASSWORD_FILE: '/run/secrets/rabbitmq_amqp_password'
+
       MONGO_HOST: '${MONGO_HOSTS}'
       MONGO_URI: '${MONGO_URI}'
       MONGO_DB: '${MONGO_DB}'
@@ -343,6 +346,7 @@ services:
       MONGO_USER: '${MONGO_USER}'
       MONGO_USER_PASSWORD_FILE: '/run/secrets/mongo_user_password'
       MONGO_EXPLAIN: '${MONGO_EXPLAIN}'
+
       OPA_URL: 'http://opa:8181'
       REDIS_CA_CERT: '/etc/redis/certs/ca.crt'
       REDIS_TASKIQ_DB: 0
@@ -353,13 +357,17 @@ services:
       REDIS_URL: 'rediss://redis-salt:6379/0'
       REDIS_USERNAME: '${REDIS_SALT_USERNAME}'
       REDIS_USER_PASSWORD_FILE: '/run/secrets/redis_salt_password'
+
       SALT_MODULES_PERMISSIONS: '{"user": "root", "group": "root", "file_mode": "0o644", "dir_mode": "0o755"}'
       SALT_MODULES_SERVE_DIR: '/mnt/salt/'
+
       SHOW_DOCS: '${SHOW_DOCS:-false}'
       SSHFS_PERMISSIONS: '{"user": "root", "group": "root", "file_mode": "0o644", "dir_mode": "0o755"}'
       SSHFS_USER: 'saltbox'  # As in users.json of sshfs
+
       TIMEOUT_GRACEFUL_SHUTDOWN: '${BACKEND_SHUTDOWN_TIMEOUT_SEC}'
       PILLARS_KEK_B64: '${PILLARS_KEK_B64}'
+      LOG_LEVEL: '${SALTBOX_CORE_LOG_LEVEL}'
     volumes:
       - type: volume
         source: redis_salt_certs
