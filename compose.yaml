@@ -26,16 +26,6 @@ x-default-service: &default
       max-size: '100m'
       max-file: 10
 
-x-mongo-default-service: &mongo-default
-  <<: *default
-  image: '${IMAGE_REGISTRY}/saltbox-compose/mongodb:${MONGODB_IMAGE_TAG}'
-  command: ['--quiet']
-  secrets:
-    - mongo_key_file
-    - mongo_root_password
-    - mongo_user_password
-    - mongo_exporter_password
-
 x-core-taskiq-depends: &core-taskiq-depends
   redis-taskiq:
     condition: service_started
@@ -483,7 +473,8 @@ services:
       - ${FRONTEND_HTTP_PORT}
 
   mongo:
-    <<: *mongo-default
+    <<: *default
+    image: '${IMAGE_REGISTRY}/saltbox-compose/mongodb:${MONGODB_IMAGE_TAG}'
     profiles:
       - mongo
     command: ['--quiet', '--wiredTigerCacheSizeGB', '${MONGO_CACHE_SIZE_GB}']
