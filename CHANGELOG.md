@@ -15,28 +15,37 @@ if possible and purge browser redirects.
 
 ### Added
 
-- `MONGO_HOSTS`, `MONGO_AUDIT_HOSTS` variables: comma-separated list of
-  MongoDB replica set members for Core and Audit connection.
-- `MONGO_URI`, `MONGO_AUDIT_URI` variables: full MongoDB connection URI
-  overriding hosts and replica set.
-- `MONGO_CACHE_SIZE_GB`, `MONGO_AUDIT_CACHE_SIZE_GB` variables: MongoDB
-  WiredTiger cache size, by default every MongoDB instance takes a half of
-  host RAM.
-- Built-in MongoDB containers `mongo` and `mongodb-audit` are optional, they
-  are controlled by `mongo` and `mongodb-audit` profiles. Remove a profile from
-  `COMPOSE_PROFILES` when connecting to an external MongoDB cluster.
+- `MONGO_HOSTS` variable: comma-separated list of MongoDB replica set members
+  for Core connection.
+- `MONGO_URI` variable: full MongoDB connection URI overriding hosts and
+  replica set.
+- `MONGO_CACHE_SIZE_GB` variable: MongoDB WiredTiger cache size, by default
+  every MongoDB instance takes a half of host RAM.
+- Built-in MongoDB container `mongo` is optional, it is controlled by the
+  `mongo` profile. Remove the profile from `COMPOSE_PROFILES` when connecting
+  to an external MongoDB cluster.
+- `compose.yaml`: mount host's `/etc/hosts` read-only into the `saltbox-core`
+  container.
 
 ### Changed
 
-- `base.env`: `COMPOSE_PROFILES` enables `mongo` and `mongodb-audit` profiles by default.
-- `mongo` is a shared MongoDB for Core, Scheduler and Migrations, `mongodb-audit`
-  stays separate. Each database has its own user: `MONGO_USER` for `MONGO_DB`,
-  `SCHEDULER_MONGO_USER` for `SCHEDULER_MONGO_DB`, `MONGO_AUDIT_DB` for audit.
+- `base.env`: `COMPOSE_PROFILES` enables the `mongo` profile by default.
+- `mongo` is a shared MongoDB for Core, Scheduler and Migrations. Each
+  database has its own user: `MONGO_USER` for `MONGO_DB`,
+  `SCHEDULER_MONGO_USER` for `SCHEDULER_MONGO_DB`.
 - `migration_mongo_user_password` secret and `MIGRATION_MONGO_USER`,
-  `MIGRATION_MONGO_DB` variables: database user for Migrations, the password
-  must be copied to the Migrations host manually.
+  `MIGRATION_MONGO_DB` variables: database user for Migrations.
+  `install_saltbox_migrations.py` now copies the password secret to the
+  Migrations host automatically when run with `--internal`; otherwise it
+  must still be copied manually.
 - `MONGO_CACHE_SIZE_GB` limits WiredTiger cache of the shared `mongo` for all
   its databases.
+- `compose.yaml`: inline the `x-mongo-default-service` anchor into the
+  `mongo` service, now the only MongoDB container.
+- `compose.yaml`: group `saltbox-core` environment variables for readability.
+- `rabbitmq/rabbitmq.d/config.yaml.tmpl`: temporarily permit deprecated
+  RabbitMQ features (`management_metrics_collection`,
+  `transient_nonexcl_queues`) as a backlog workaround.
 - `git_pull_dev_repos.py`: pull also compose repos of addons.
 - `image_tag.py` fetches registry image tags rather than Git repo tags with is
   more accurate.
@@ -48,12 +57,23 @@ mode in config (`0o600` by default).
 
 ### Fixed
 
+- `secrets.json`: fix `keycloak_client_grafana_password` secret file mode
+  (now `644`).
+
 ### Removed
 
 - `compose.yaml`: remove unnecessary `depends_on` relationships between services.
 - `saltbox-scheduler-mongo` service, its volume, `SCHEDULER_MONGO_IMAGE_TAG` and
   `SCHEDULER_MONGO_EXPOSE_SOCKET` variables, `scheduler_mongo_root_password` and
   `scheduler_mongo_key_file` secrets, Scheduler uses shared `mongo` now.
+- Audit service (`saltbox-audit`) and its dedicated MongoDB (`mongodb-audit`):
+  drops `AUDIT_*` variables, `MONGO_AUDIT_*` variables, the `mongodb-audit`
+  compose profile, `mongo_audit_data` volume, and the dev-compose
+  `saltbox-audit` build service.
+- Obsolete inventory OPA policy (`opa/policies/inventory/base.rego` and the
+  `is_inventory_admin` helper in `opa/policies/utils/base.rego`) and
+  `saltbox-inventory-frontend`, `saltbox-inventory-mongo` entries from
+  `SALTBOX_CORE_NO_PROXY`.
 
 ## [0.3.0] - 2026-07-10
 
