@@ -45,6 +45,7 @@
 - **[Конфигурация](#конфигурация)**
   - [HTTPS](#https)
   - [Работа за обратным прокси](#работа-за-обратным-прокси)
+  - [Внешний MongoDB](#внешний-mongodb)
 - **[Эксплуатация](#эксплуатация)**
   - [Автотесты](#автотесты)
   - [Режим разработки](#режим-разработки)
@@ -382,6 +383,33 @@ server {
 >
 > 2. Не забудьте заменить плейсхолдеры `< ... >` и проверить конфигурацию командой `sudo nginx -t`
 
+### Внешний MongoDB
+
+По умолчанию **Salt.Box** использует собственный встроенный узел реплика-сета
+MongoDB, сервис `mongo`, который включается профилем Compose `mongo` в
+`COMPOSE_PROFILES`. При первом запуске он создаёт двух пользователей БД:
+основного, `MONGO_USER`/`MONGO_DB`, которым пользуется Core, и отдельного
+для модуля Migrations, `MIGRATION_MONGO_USER`/`MIGRATION_MONGO_DB`.
+
+Чтобы подключиться к уже существующему реплика-сету MongoDB вместо
+встроенного:
+
+1. Удалите `mongo` из `COMPOSE_PROFILES` в `override.env`, чтобы встроенный
+   контейнер не запускался
+2. Укажите внешний кластер одним из способов:
+   - `MONGO_HOSTS` – список участников реплика-сета через запятую в виде
+     `host[:port]`, порт по умолчанию `27017`
+   - `MONGO_URI` – полный URI подключения, который полностью переопределяет
+     `MONGO_HOSTS` и `MONGO_REPLICA_SET`
+3. Создайте на внешнем кластере учётные записи `MONGO_USER` и
+   `MIGRATION_MONGO_USER` самостоятельно, с доступом к `MONGO_DB` и
+   `MIGRATION_MONGO_DB` соответственно, и поместите их пароли в
+   `./secrets/mongo_user_password` и `./secrets/migration_mongo_user_password`
+
+> **ПРИМЕЧАНИЕ:**
+> `MONGO_CACHE_SIZE_GB` настраивает размер кэша WiredTiger только у
+встроенного контейнера, на внешний кластер эта переменная не влияет
+
 
 ## Эксплуатация
 
@@ -412,7 +440,7 @@ sudo ./bin/sb-compose.sh up autotests --pull=never
 Режим разработки позволяет собирать образы самостоятельно вместо загрузки
 готовых и добавляет ряд полезных `env` переопределений.
 
-Посмотрите раздел [**Dev options**](https://dev.saltbox.pro/saltbox/saltbox-compose/-/blob/dev/base.env?ref_type=heads#L251-298) в своей копии файла [`base.env`](base.env).
+Посмотрите раздел [**Dev options**](https://dev.saltbox.pro/saltbox/saltbox-compose/-/blob/dev/base.env?ref_type=heads#L229-277) в своей копии файла [`base.env`](base.env).
 Чтобы включить dev-опции, раскомментируйте нужные строки `COMPOSE_FILE=`.
 Затем запустите `compose` как обычно.
 
@@ -452,7 +480,7 @@ sudo ./bin/get_ca.sh
 #### Тестовые минионы
 
 Режим разработки поднимает несколько фейковых минионов в режиме
-`replica`. Необходимая настройка находится в файле [`base.env`](https://dev.saltbox.pro/saltbox/saltbox-compose/-/blob/dev/base.env?ref_type=heads#L286).
+`replica`. Необходимая настройка находится в файле [`base.env`](https://dev.saltbox.pro/saltbox/saltbox-compose/-/blob/dev/base.env?ref_type=heads#L266-268).
 
 > **ВНИМАНИЕ**
 >

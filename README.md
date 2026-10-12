@@ -45,6 +45,7 @@
 - **[Configuration](#configuration)**
   - [HTTPS](#https)
   - [Working behind a reverse proxy](#working-behind-a-reverse-proxy)
+  - [External MongoDB](#external-mongodb)
 - **[Operations](#operations)**
   - [Autotests](#autotests)
   - [Dev mode](#dev-mode)
@@ -373,6 +374,33 @@ with `proxy_pass` URL
 >
 > 2. Remember to edit `< ... >` placeholders and check config with `sudo nginx -t`
 
+### External MongoDB
+
+By default **Salt.Box** runs its own bundled MongoDB replica-set member, the
+`mongo` service, gated by the `mongo` Compose profile in
+`COMPOSE_PROFILES`. On first start it provisions two database users: the
+main one, `MONGO_USER`/`MONGO_DB`, used by Core, and a dedicated Migrations
+one, `MIGRATION_MONGO_USER`/`MIGRATION_MONGO_DB`.
+
+To connect to an already existing MongoDB replica set instead of the
+bundled one:
+
+1. Remove `mongo` from `COMPOSE_PROFILES` in `override.env` so the bundled
+   container is not started
+2. Point at the external cluster with either:
+   - `MONGO_HOSTS` – comma-separated list of replica set members as
+     `host[:port]`, port defaults to `27017`
+   - `MONGO_URI` – a full connection URI that overrides `MONGO_HOSTS` and
+     `MONGO_REPLICA_SET` entirely
+3. Create the `MONGO_USER` and `MIGRATION_MONGO_USER` accounts on the
+   external cluster yourself, with access to `MONGO_DB` and
+   `MIGRATION_MONGO_DB` respectively, and put their passwords into
+   `./secrets/mongo_user_password` and `./secrets/migration_mongo_user_password`
+
+> **NOTE:**
+> `MONGO_CACHE_SIZE_GB` only configures the bundled container's WiredTiger
+cache – it has no effect on an external cluster
+
 
 ## Operations
 
@@ -401,7 +429,7 @@ sudo ./bin/sb-compose.sh up autotests --pull=never
 Dev mode allows to build images instead of pulling pre-built and adds some
 useful `env` overrides.
 
-Look at [**Dev options**](https://dev.saltbox.pro/saltbox/saltbox-compose/-/blob/dev/base.env?ref_type=heads#L251-298) section of your [`base.env`](base.env) file copy.
+Look at [**Dev options**](https://dev.saltbox.pro/saltbox/saltbox-compose/-/blob/dev/base.env?ref_type=heads#L229-277) section of your [`base.env`](base.env) file copy.
 To enable dev options uncomment required `COMPOSE_FILE=` lines. Than run
 `compose` as usual.
 
@@ -440,7 +468,7 @@ sudo ./bin/get_ca.sh
 #### Dev minions
 
 Dev mode provides amount of impersistent minions in replica mode. Look for
-options in the [`base.env`](https://dev.saltbox.pro/saltbox/saltbox-compose/-/blob/dev/base.env?ref_type=heads#L286) file.
+options in the [`base.env`](https://dev.saltbox.pro/saltbox/saltbox-compose/-/blob/dev/base.env?ref_type=heads#L266-268) file.
 
 > **ATTENTION!**
 >
