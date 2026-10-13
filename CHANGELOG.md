@@ -27,6 +27,7 @@ if possible and purge browser redirects.
 - `compose.yaml`: mount host's `/etc/hosts` read-only into the `saltbox-core`
   container.
 - `install_saltbox.py`: add brand new Audit addon.
+- `_identity/` subdir for Keycloak User Federation related files.
 
 ### Changed
 
@@ -63,6 +64,7 @@ mode in config (`0o600` by default).
   (now `644`).
 - OPA `core.tasks.read` policy: allow `/tasks/{tid}/statuses`, `/minions`,
   `/minions/export` and `/jobs/returns` for non-admin users with task access.
+- No more a new anonimouse volume for RabbitMQ on every start.
 
 ### Removed
 
