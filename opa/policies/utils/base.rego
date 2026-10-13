@@ -170,6 +170,7 @@ is_git_repos_resource if {
 # Filters
 # GET /filters/schema
 # POST /filters/unique-grain-values
+# POST /filters/unique-extra-values
 # ==========================================
 is_filters_schema_route if {
     input.resource.service_name == "core"
@@ -182,6 +183,13 @@ is_unique_grain_values_route if {
     count(input.resource.path) == 2
     input.resource.path[0] == "filters"
     input.resource.path[1] == "unique-grain-values"
+}
+
+is_unique_extra_values_route if {
+    input.resource.service_name == "core"
+    count(input.resource.path) == 2
+    input.resource.path[0] == "filters"
+    input.resource.path[1] == "unique-extra-values"
 }
 
 # ==========================================
