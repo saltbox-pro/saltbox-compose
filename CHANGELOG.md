@@ -65,6 +65,8 @@ mode in config (`0o600` by default).
 - OPA `core.tasks.read` policy: allow `/tasks/{tid}/statuses`, `/minions`,
   `/minions/export` and `/jobs/returns` for non-admin users with task access.
 - No more a new anonimouse volume for RabbitMQ on every start.
+- `image_tags.py check` matches complex formed variables like
+`${VAR:-default}`.
 
 ### Removed
 

@@ -29,7 +29,7 @@ UPDATE_AND_RUN_LIST_SEP = ':,'
 
 Conf = NewType('Conf', Dict[str, Any])
 # Example: ${IMAGE_REGISTRY}/saltbox-core:${CORE_IMAGE_TAG}
-IMAGE_PATTERN = re.compile(r'^\$\{IMAGE_REGISTRY\}\/(?P<path>.*):\$\{(?P<tag_var>.*)\}$')
+IMAGE_PATTERN = re.compile(r'^\$\{IMAGE_REGISTRY\}\/(?P<path>.*):\$\{(?P<tag_var>.*?)(:|\}).*$')
 
 BIN_DIR = Path(__file__).parent.resolve()
 DOTENV_TOOL_PATH = BIN_DIR / 'dotenv_tool.sh'
