@@ -60,6 +60,8 @@ mode in config (`0o600` by default).
 
 - `secrets.json`: fix `keycloak_client_grafana_password` secret file mode
   (now `644`).
+- OPA `core.tasks.read` policy: allow `/tasks/{tid}/statuses`, `/minions`,
+  `/minions/export` and `/jobs/returns` for non-admin users with task access.
 
 ### Removed
 

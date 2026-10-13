@@ -53,8 +53,13 @@ is_action_read if {
 is_action_read if {
     utils.base.is_tasks_resource
     input.action.name == "read"
-    count(input.resource.path) == 3
-    input.resource.path[2] in ["jobs", "returns"]
+    array.slice(input.resource.path, 2, count(input.resource.path)) in [
+        ["jobs"],
+        ["jobs", "returns"],
+        ["statuses"],
+        ["minions"],
+        ["minions", "export"],
+    ]
 }
 
 is_owner if {
