@@ -246,6 +246,8 @@ services:
       - rabbitmq_amqp_password
     healthcheck:
       test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+    volumes:
+      - 'rabbitmq_home:/var/lib/rabbitmq/'  # Check it not changed on rabbitmq image update
 
   saltbox-gateway:
     <<: *default
@@ -545,6 +547,7 @@ volumes:
   keycloak-db_data: {}
   mongo_data: {}
   proxy_certs: {}
+  rabbitmq_home: {}
   redis_salt_certs: {}
   redis_salt_data: {}
   redis_taskiq_certs: {}
