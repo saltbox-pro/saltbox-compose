@@ -880,6 +880,15 @@ ADDONS_MODULES = [
         required_compatibility_level=1,
     ),
     AddonModule(
+        name='Audit',
+        url='https://dev.saltbox.pro/saltbox/saltbox-audit-compose',
+        base_dir='saltbox-audit-compose',
+        env_file='.env',
+        license='EULA',  # =(
+        is_token_required=True,
+        required_compatibility_level=1,
+    ),
+    AddonModule(
         name='ClientToolkit',
         url='https://dev.saltbox.pro/saltbox/saltbox-client-toolkit-compose',
         base_dir='saltbox-client-toolkit-compose',

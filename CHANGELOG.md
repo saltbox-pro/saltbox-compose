@@ -26,6 +26,7 @@ if possible and purge browser redirects.
   to an external MongoDB cluster.
 - `compose.yaml`: mount host's `/etc/hosts` read-only into the `saltbox-core`
   container.
+- `install_saltbox.py`: add brand new Audit addon.
 
 ### Changed
 
