@@ -54,6 +54,7 @@ if possible and purge browser redirects.
 - `make_secrets.py` set access mode to new directory and files, secret file
 mode in config (`0o600` by default).
 - Individual variables for frontend images.
+- `MONGO_EXPOSE_SOCKET` defaults to `0.0.0.0`
 
 ### Fixed
 
