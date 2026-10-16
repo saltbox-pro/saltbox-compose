@@ -57,6 +57,12 @@ if possible and purge browser redirects.
 mode in config (`0o600` by default).
 - Individual variables for frontend images.
 - `MONGO_EXPOSE_SOCKET` defaults to `0.0.0.0`
+- `update_and_run.sh` now always imlicitly add the main `secrets.json` config
+to `make_secrets.py` commandline to avoid missing secrets on overwrited
+`_UPDATE_AND_RUN_EXTRA_SECRETS_CONFS`.
+- `make_secrets.py` now does not fails but warns on duplicated files in args
+(paths are resolved, i.e. `path/secrets.json` and `path/../path/secrets.json`
+are detected as the same file).
 
 ### Fixed
 

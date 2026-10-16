@@ -5,6 +5,11 @@ declare -r override_env='override.env'
 declare -r deprecated_env='.env'
 bin_dir="$(dirname "$(realpath --relative-to "$(pwd)" "$0")")"
 declare -r bin_dir
+compose_dir_abs="$(realpath "${bin_dir}/..")"
+declare -r compose_dir_abs
+default_secrets_conf="$(
+  realpath --relative-to "$(pwd)" "${compose_dir_abs}/secrets.json")"
+declare default_secrets_conf
 declare -r compose_cmd="${bin_dir}/sb-compose.sh"
 declare -r admin_password_file='secrets/saltbox_admin_password'
 declare -ir msg_sleep=4
@@ -221,7 +226,11 @@ if [ "$(git_pull_required)" = 1 ]; then
 fi
 
 secr_confs=$(bin/dotenv_tool.sh extra-secrets-confs)
-mapfile -t make_secrets_arg <<< "$secr_confs"
+make_secrets_arg=()
+if [[ -n $secr_confs ]]; then
+  mapfile -t make_secrets_arg <<< "$secr_confs"
+fi
+make_secrets_arg=("$default_secrets_conf" "${make_secrets_arg[@]}")
 echo_run ./bin/make_secrets.py "${make_secrets_arg[@]}"
 
 if [ $login_flag = 1 ]; then

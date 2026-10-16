@@ -20,10 +20,10 @@ import secrets
 import shutil
 import string
 import sys
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 SECRET_ALPHABET = string.ascii_letters + string.digits
 DIR_MODE = 0o700
@@ -158,7 +158,18 @@ def validate_conf(data: Any) -> List[Secret]:
     return result
 
 
-def parse_configs(paths: List[Union[str, Path]]) -> List[Secret]:
+def normalize_filelist(files: List[str]) -> List[Path]:
+    map = defaultdict(list)
+    for f in files:
+        map[Path(f).resolve()].append(f)
+    for files in map.values():
+        if len(files) > 1:
+            err = f'Same file: {", ".join(files)}'
+            print(f'WARN {err}', file=sys.stderr)
+    return list(map.keys())
+
+
+def parse_configs(paths: List[Path]) -> List[Secret]:
     result = []
     for path in paths:
         print(f'Reading "{path}"')
@@ -214,7 +225,8 @@ def main() -> None:
     print(f'Secrets dir is "{secrets_dir}"')
 
     try:
-        secrets = parse_configs(args.file)
+        files = normalize_filelist(args.file)
+        secrets = parse_configs(files)
     except (ValueError, OSError) as err:
         print(f'ERROR {err}', file=sys.stderr)
         sys.exit(1)
