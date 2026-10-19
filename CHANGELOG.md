@@ -28,6 +28,10 @@ if possible and purge browser redirects.
   container.
 - `install_saltbox.py`: add brand new Audit addon.
 - `_identity/` subdir for Keycloak User Federation related files.
+- OPA `core.extra_data.items.import_items` policy for
+  `POST /extra-data/items/import`: admins, collections admins, or users with
+  the extra data `import` permission and read access to (or ownership of) the
+  collection.
 
 ### Changed
 
