@@ -161,6 +161,8 @@ def validate_conf(data: Any) -> List[Secret]:
 def normalize_filelist(files: List[str]) -> List[Path]:
     map = defaultdict(list)
     for f in files:
+        if not f:
+            continue
         map[Path(f).resolve()].append(f)
     for files in map.values():
         if len(files) > 1:
