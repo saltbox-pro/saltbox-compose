@@ -37,6 +37,21 @@ collection := col if {
     col := resp.body
 }
 
+# TODO: перейти на GET /collections/{id}, когда основная ручка получения коллекции переедет со slug на id
+collection := col if {
+    not input.resource.body.collection_slug
+    collection_id := input.resource.body.collection_id
+    resp := http.send({
+        "method": "POST",
+        "headers": {"X-User-Id": input.subject.sub, "X-User-Email": input.subject.email},
+        "url": "http://saltbox-core:8000/collections/list",
+        "body": {"query": {"_id": collection_id}, "limit": 1},
+    })
+    resp.status_code == 200
+    resp.body.total == 1
+    col := resp.body.data[0]
+}
+
 # 1) Имеет ли доступ к коллекции по которой создается таска (получаем коллекцию по api) или является ее овнером
 can_read_collection if {
     collection_object := collection
