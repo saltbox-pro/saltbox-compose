@@ -6,19 +6,19 @@ default allow := false
 default can_create_task := false
 default can_read_collection := false
 default is_collection_owner := false
-default can_read_task_template := false
+# default can_read_task_template := false
 
 allow if is_admin
 allow if is_tasks_admin
 allow if {
     can_create_task
     can_read_collection
-    can_read_task_template
+    # can_read_task_template
 }
 allow if {
     can_create_task
     is_collection_owner
-    can_read_task_template
+    # can_read_task_template
 }
 
 
@@ -58,25 +58,27 @@ is_collection_owner if {
 }
 
 # 2) Имеет ли доступ к шаблону таски (получаем шаблон таски по api)
-can_read_task_template if {
-    tpl_id := input.resource.body.task_template_id
-    task_template_response := http.send({
-        "method": "GET",
-        "headers": {"X-User-Id": input.subject.sub, "X-User-Email": input.subject.email},
-        "url": sprintf("http://saltbox-core:8000/tasks/template/%s", [tpl_id]),
-    })
-    task_template_response.status_code == 200
-    task_template_object := task_template_response.body
-    # check_user_permissions(permissions, service_name, resource, action, subject, object) -> bool
-    utils.conditions.check_user_permissions(
-        data.permissions,
-        input.resource.service_name,
-        "tasks/template",
-        "read",
-        input.subject,
-        task_template_object
-    )
-}
+# can_read_task_template if {
+#     tpl_id := input.resource.body.task_template_id
+#     source_id := input.resource.body.task_template_source_id
+#     task_template_response := http.send({
+#         "method": "GET",
+#         "headers": {"X-User-Id": input.subject.sub, "X-User-Email": input.subject.email},
+#         "url": sprintf("http://saltbox-core:8000/task-template-sources/%s/templates/%s", [source_id, tpl_id]),
+#     })
+#     task_template_response.status_code == 200
+#     task_template_object := task_template_response.body
+#     # check_user_permissions(permissions, service_name, resource, action, subject, object) -> bool
+#     utils.conditions.check_user_permissions(
+#         data.permissions,
+#         input.resource.service_name,
+#         # TODO: Change resource to match the actual API endpoint for task templates
+#         "tasks/template",
+#         "read",
+#         input.subject,
+#         task_template_object
+#     )
+# }
 
 # 3) Имеет ли доступ к созданию тасок
 # Пользователь может создавать таски, если у него есть разрешение на создание в data.permissions
