@@ -162,8 +162,8 @@ services:
     ports:
       - '4505-4506:4505-4506'
     volumes:
-      - '${SALT_ROSTER_STORAGE_PATH}:/srv/roster/'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/salt_custom/'
+      - '${SALT_ROSTER_STORAGE_PATH}:/srv/roster/'
       - '${SSHFS_STORAGE_PATH}:/srv/sshfs/'
       - 'redis_salt_certs:/etc/redis/certs/:ro'
       - 'salt_master_pki:/etc/salt/pki/'
@@ -550,7 +550,6 @@ services:
       - '${SSHFS_MIGRATION_PATH}:/srv/migrator/'
       - 'salt_repos:/srv/master/salt/'
       - '${SALT_MASTER_STORAGE_PATH}:/srv/master/salt_custom/'
-      - '${SALT_ROSTER_STORAGE_PATH}:/srv/master/roster/'
       - './sshfs_conf/users.json:/mnt/sshfs_users.json:ro'
       - 'sshfs_host_keys:/etc/openssh-keys/'
 
