@@ -4,6 +4,7 @@ import grp
 import json
 import os
 import pwd
+import shutil
 import stat
 import subprocess
 import sys
@@ -40,6 +41,8 @@ GID_MAX = 60000
 SSH_HOST_KEY_DIR = Path('/etc/openssh-keys')
 SSHD_EXEC = '/usr/sbin/sshd'
 DEFAULT_SHELL = '/usr/sbin/nologin'
+
+ROSTER_TEMPLATE_PATH = Path('/usr/local/share/sshfs/roster_format.yaml')
 
 AUTHORIZED_KEYS_COMMAND_PATH = Path('/usr/local/bin/authorized-keys-cmd')
 AUTHORIZED_KEYS_COMMAND_MODE = 0o700
@@ -141,6 +144,14 @@ def run_sshd(port: Any) -> None:
     os.execv(SSHD_EXEC, [SSHD_EXEC, '-D', '-e', '-p', str(port)])
 
 
+def install_default_roster(roster_dir: str) -> None:
+    roster_path = Path(roster_dir) / 'roster'
+    if roster_path.exists():
+        return
+    roster_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(ROSTER_TEMPLATE_PATH, roster_path)
+
+
 def make_authorized_keys_command(url_template: str) -> None:
     with AUTHORIZED_KEYS_COMMAND_PATH.open('w') as file:
         file.write(AUTHORIZED_KEYS_COMMAND_TEMPLATE.format(url_template=url_template))
@@ -150,5 +161,6 @@ def make_authorized_keys_command(url_template: str) -> None:
 if __name__ == '__main__':
     del_users()
     create_users(os.environ['USERS_FILE'])
+    install_default_roster(os.environ['ROSTER_DIR'])
     make_authorized_keys_command(os.environ['AUTHORIZED_KEYS_URL'])
     run_sshd(os.environ['PORT'])

@@ -15,9 +15,11 @@ EOF
 
 COPY sshd_config /etc/openssh/
 COPY --chmod=755 sshd_entrypoint.py /usr/local/bin/
+COPY --chmod=644 roster_format.yaml /usr/local/share/sshfs/
 
 ENV PORT=1022
 ENV USERS_FILE='/mnt/users.json'
+ENV ROSTER_DIR='/srv/master/roster/'
 ENV AUTHORIZED_KEYS_URL='http://example.local/authorized_keys/${user}'
 EXPOSE $PORT
 

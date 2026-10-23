@@ -32,6 +32,12 @@ if possible and purge browser redirects.
   `POST /extra-data/items/import`: admins, collections admins, or users with
   the extra data `import` permission and read access to (or ownership of) the
   collection.
+- `SALT_ROSTER_STORAGE_PATH` variable: host directory with the Salt SSH roster
+  file. It is mounted into `salt-master` as `/srv/roster/` and into `sshfs` as
+  `/srv/master/roster/` to be synced by remote masters.
+- `sshfs`: on start, create a default fully commented `roster` file describing
+  the roster format in `ROSTER_DIR`, `/srv/master/roster/` by default. An
+  existing `roster` file is never overwritten.
 
 ### Changed
 
