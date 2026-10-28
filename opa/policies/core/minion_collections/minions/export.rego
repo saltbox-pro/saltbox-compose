@@ -51,5 +51,6 @@ is_collection_owner if {
 is_action_export if {
     utils.base.is_minions_resource
     input.action.name == "export"
-    count(input.resource.path) == 1
+    count(input.resource.path) == 2
+    input.resource.path[1] == "export"
 }
