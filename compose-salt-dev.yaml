@@ -30,7 +30,7 @@ services:
           target: '/srv/salt_local/'
         - path: '${SALT_BUILD_DIR}/saltbox_bridge/'
           action: 'sync+restart'
-          target: '/root/saltbox_bridge/'
+          target: '/mnt/saltbox-bridge/saltbox_bridge/'
         - path: '${BRIDGE_MESSAGES_DIR}'
           action: 'restart'
     ports:
