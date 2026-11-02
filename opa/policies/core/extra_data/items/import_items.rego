@@ -6,16 +6,19 @@ default allow := false
 default can_import := false
 default can_read_collection := false
 default is_collection_owner := false
+default can_create_unknown_minions := false
 
 allow if is_admin
 allow if is_collections_admin
 allow if {
     can_import
     can_read_collection
+    can_create_unknown_minions
 }
 allow if {
     can_import
     is_collection_owner
+    can_create_unknown_minions
 }
 
 # Variables
@@ -63,6 +66,22 @@ can_import if {
         input.resource.body.fields
     )
 }
+
+can_create_unknown_minions if not is_create_unknown_minions
+can_create_unknown_minions if {
+    is_create_unknown_minions
+    # check_user_permissions(permissions, service_name, resource, action, subject, object) -> bool
+    utils.conditions.check_user_permissions(
+        data.permissions,
+        input.resource.service_name,
+        "minions",
+        "create",
+        input.subject,
+        input.resource.body.fields
+    )
+}
+
+is_create_unknown_minions if input.resource.body.fields.on_unknown_minion == "create"
 
 is_action_import if {
     utils.base.is_extra_data_items_resource

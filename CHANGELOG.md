@@ -13,6 +13,11 @@ if possible and purge browser redirects.
 
 ## [x.x.x] - YYYY-MM-DD
 
+### Changed
+
+- OPA `core.extra_data.items.import_items` policy: importing with
+  `on_unknown_minion=create` also requires the minions `create` permission.
+
 ### Removed
 
 - `install_saltbox.py` now is a separate
