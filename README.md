@@ -529,7 +529,7 @@ In contrast scripts MUST be tested with the lesser compatible Python version
 
 ```bash
 pyenv install
-pyenv exec python3 ./bin/install_saltbox.py
+pyenv exec python3 ./bin/make_secrets.py
 ```
 
 - The [pyenv](https://github.com/pyenv/pyenv) utility takes version from the
