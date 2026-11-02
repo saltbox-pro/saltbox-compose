@@ -430,7 +430,7 @@ services:
     command: 'shell saltbox-salt-buffer-manager'
     expose: []
     deploy:
-      replicas: '${CORE_TASKIQ_WORKERS_COUNT:-1}'
+      replicas: '${CORE_TASKIQ_WORKERS_COUNT:-1}' # FIXME Dangling variable
 
   saltbox-core-taskiq-worker:
     <<: *core

@@ -1,7 +1,7 @@
 ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
 
 FROM "$BASE_IMG"
-LABEL version="0.2"
+LABEL version="0.3"
 # Increase to trigger build. Drop to 0 on version change.
 LABEL release="0"
 
@@ -18,16 +18,15 @@ EOF
 ARG MONGOSH_VERSION='2.5.8'
 ARG MONGOSH_DIST_SHA256='d78e83e72e3b6b56afdf845895881c1d54a6ee589b5111bb4d36feaae813c36c'
 
-WORKDIR /root/dist/
 RUN --mount=type=cache,target=/root/dist/ <<EOF
 set -e
+cd /root/dist/
 mongosh_dist="mongodb-mongosh-shared-openssl3-"$MONGOSH_VERSION".x86_64.rpm"
 if [ ! -f "$mongosh_dist" ]; then
   wget "https://github.com/mongodb-js/mongosh/releases/download/v${MONGOSH_VERSION}/${mongosh_dist}"
 fi
 echo "${MONGOSH_DIST_SHA256} ${mongosh_dist}" | sha256sum -c -
 rpm --install "$mongosh_dist"
-rm "$mongosh_dist"
 echo 'disableTelemetry()' | mongosh --nodb
 EOF
 
