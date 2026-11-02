@@ -33,12 +33,13 @@
 </td></tr>
 </table>
 
+
 ## Table of Contents
 
 - **[About](#about)**
 - **[Quick Start](#quick-start)**
   - [Requirements](#requirements)
-  - [Install with `install_saltbox.py`](#install-with-install_saltboxpy)
+  - [Install with `install-saltbox`](#install-with-install-saltbox)
 - **[Manual Setup](#manual-setup)**
   - [Helper scripts](#helper-scripts)
   - [The startup script `update_and_run.sh`](#the-startup-script-update_and_runsh)
@@ -82,29 +83,61 @@ web UI as a single instance:
 > Configuration logic itself lives outside this repo, in separate SLS
 repositories called [**Configuration Boxes**](https://dev.saltbox.pro/configuration.boxes)
 
-## Quick Start
 
-Get a local **Salt.Box** instance running in a few minutes.
+## Environment requirements
 
-> **NOTE:** 
-> Examples assume a **NON** root shell – `docker` itself needs root
-> privileges. Drop `sudo` if you already run as root or use [rootless
-> Docker](https://docs.docker.com/engine/security/rootless/)
+> **NOTE:** Default Docker setup requires root access to operate. Prepend
+> commands with `sudo` or switch to a superuser shell (`sudo -s`).
 
-> **ATTENTION!**
->
-> Adding your user to the `docker` group is effectively **root
-> access** – it lets that user run privileged commands through the `Docker
-> Engine`. Prefer [rootless mode](https://docs.docker.com/engine/security/rootless/)
-> if this is a concern
+> **ATTENTION!** Adding your user to the `docker` group is effectively **root
+> access** — it lets that user run privileged commands through the `Docker
+> Engine`. Prefer [rootless mode](https://docs.docker.com/engine/security/rootless/) if this is a concern.
 
-### Requirements
+| Requirement     | Version    |
+|-----------------|------------|
+| GNU/Linux amd64 |            |
+| Docker Engine   | >= 25.0    |
+| Docker Compose  | >= 2.20.2  |
+| Python\*        | >= 3.7.3   |
 
-| Requirement    | Version    |
-|----------------|------------|
-| Docker Engine  | >= 25.0    |
-| Docker Compose | >= 2.20.2  |
-| Python         | >= 3.7.3   |
+_\* Required by some helper scripts_
+
+
+## Install with `install-saltbox`
+
+Follow to [Install Salt.Box repository](https://dev.saltbox.pro/saltbox/install-saltbox/) for details.
+
+
+## Helper scripts
+
+Useful scripts are collected in the [`./bin/`](./bin/) directory. They are
+supposed to be run from the repo root by relative path, e.g. `./bin/sb-compose.sh`.
+
+| Script                           | Purpose                                                            |
+|-----------------------------------|---------------------------------------------------------------------|
+| `sb-compose.sh`                   | **Recommended way** to manage an instance. Passes aditional dotenv files to `docker compose` |
+| `update_and_run.sh`               | Main startup script                                                  |
+| `sb-exec.sh`                      | Shortcuts for common commands                                        |
+| `dotenv_tool.sh`                  | Read values from `env-files`, e.g. `./bin/dotenv_tool.sh list`         |
+| `validate_dotenv.py`              | Check `override.env` for major issues                                |
+| `make_secrets.py`                 | Create required system passwords                                     |
+| `get_ca.sh`                       | Obtain the local CA `ca.crt` (optionally inject into Firefox)        |
+| `install_saltbox_migrations.sh`   | Download **Salt.Box Migration Compose**, configure and run              |
+| `sb-images-export.sh`             | Dump current images to disk, e.g. for an offline host                |
+| `sb-images-import.sh`             | Load images dumped by `sb-images-export.sh`                          |
+| `image_tags.py`                   | Check latest release tags for used images                            |
+| `git_pull_dev_repos.py`           | _Dev only_ – update source Git repositories                          |
+
+Script must be executable. Ensure with command:
+
+```bash
+chmod a+x ./bin/*
+```
+
+Scripts ineractions are reflected in [SCRIPTS_HIERARCHY.md](./SCRIPTS_HIERARCHY.md) document.
+
+
+## Manual Setup
 
 **Redis** requires memory `overcommit` – set it as a recommended host setting:
 
@@ -113,139 +146,13 @@ sudo sh -c "echo 'vm.overcommit_memory=1' > /etc/sysctl.d/saltbox.conf"
 sudo sysctl -p /etc/sysctl.d/saltbox.conf
 ```
 
-### Install with `install_saltbox.py`
-
-Obtain the [`install_saltbox.py`](./bin/install_saltbox.py) script and run in a
-directory where you prefer to have [**Salt.Box Compose**](https://dev.saltbox.pro/saltbox/saltbox-compose/-/tree/dev/) repository related stuff.
-
-```bash
-python3 ./install_saltbox.py
-```
-<details>
-<summary><b>Show install preview</b></summary>
-
-<img src="https://dev.saltbox.pro/saltbox/saltbox-assets/-/raw/main/install_saltbox_compose_preview.gif?ref_type=heads" alt="install preview" width="800px">
-
-</details>
-
----
-
-When `install_saltbox.py` finishes downloading and configuring, the startup
-script [`update_and_run.sh`](#the-startup-script-update_and_runsh) is executed
-**automatically** – the instance **Salt.Box** ends up running with no further steps required.
-
-#### Usage
-
-```
-usage: install_saltbox.py [-h] [--list-addons] [--addons ADDONS]
-                          [--admin ADMIN]
-                          [--compose-ref {RELEASE,PRERELEASE,dev}] [--cleanup]
-                          [--explicit-secret EXPLICIT_SECRET] [--git]
-                          [--host HOST] [--host-is-name] [--port PORT] [-n]
-                          [--no-cache] [--no-progress] [-s] [-u] [-v]
-                          [OVERRIDE ...]
-
-Run Salt.Box Docker Compose based instance from scratch
-
-positional arguments:
-  OVERRIDE              Extra values to include into dotenv in form of
-                        NAME='VAL'
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --list-addons         List addons in JSON format and exit
-  --addons ADDONS       Install also official Salt.Box Addons: `FileBrowser`,
-                        `Inventory`, `Metric`, `Scheduler`, `ClientToolkit`,
-                        `Migrations`, `FREE`, `ALL`, `NONE`. `FREE` by
-                        default. SOME ADDONS ARE PROPRIETARY, TOKEN REQUIRED.
-                        Can be specified multiple times.
-  --admin ADMIN         The Salt.Box Administrator's login
-  --compose-ref {RELEASE,PRERELEASE,dev}
-                        Salt.Box Compose Git reference to obtain. `RELEASE`
-                        for latest release, `PRERELEASE` for latest release OR
-                        pre-release (what is the latest). `dev` for the same
-                        name branch. `RELEASE` by default.
-  --cleanup             Cleanup possibly existing Salt.Box instance with the
-                        same COMPOSE_PROJECT_NAME. BEWARE OF DATA LOST!
-  --explicit-secret EXPLICIT_SECRET
-                        Set a secret value explicitly in form of `NAME=VALUE`,
-                        use `saltbox_admin_password=VALUE` to set the Salt.Box
-                        Administrator's password. Can be specified multiple
-                        times.
-  --git                 Clone Git repositories instead of downloading archives
-  --host HOST           Hostname or real address to serve on, `saltbox.local`
-                        by default
-  --host-is-name        Force SSL cert for DNS name even if `host` looks like
-                        IP address
-  --port PORT           Port to serve HTTPS, `443` by default
-  -n, --non-interactive
-                        Do not ask to input, use defaults
-  --no-cache            Remove previously downloaded archives of repositories
-  --no-progress         Do not show downloading progress, CI-friendly
-  -s, --skip-check      Do not check Docker install before run
-  -u, --skip-run        Prepare but do not run
-  -v, --verbose         Print more info
-
-Set `SALTBOX_INSTALL_TOKEN` environment variable to use access token for
-proprietary modules
-```
-
-#### Under the hood
-
-Simplified [`install_saltbox.py`](./bin/install_saltbox.py) script calls hierarchy:
-
-
-<p style="text-align: center; margin-bottom: 0;">
-  <img src="./docs/scripts_hierarchy.svg" height="auto" width="auto" margin-bottom="0px" alt="Salt.Box logo" />
-</p>
-
-
-## Manual Setup
-
-Use this path if you don't want [`install_saltbox.py`](./bin/install_saltbox.py) to manage the download
-and configuration for you – e.g. on an already prepared checkout.
-
-### Helper scripts
-
-Useful scripts are collected in the [`./bin/`](./bin/) directory. They are
-supposed to be run from the repo root by relative path, e.g. `./bin/sb-compose.sh`.
-
-| Script                           | Purpose                                                            |
-|-----------------------------------|---------------------------------------------------------------------|
-| `sb-compose.sh`                   | **Recommended way** to manage a running instance – thin wrapper over `docker compose` |
-| `update_and_run.sh`               | Main startup script                                                  |
-| `sb-exec.sh`                      | Shortcuts for common commands                                        |
-| `dotenv_tool.sh`                  | Read values from `env-files`, e.g. `./bin/dotenv_tool.sh list`         |
-| `validate_dotenv.py`              | Check `override.env` for major issues                                |
-| `make_secrets.py`                 | Create required system passwords                                     |
-| `get_ca.sh`                       | Obtain the local CA `ca.crt` (optionally inject into Firefox)        |
-| `install_saltbox.sh`              | Download [**Salt.Box Compose**](https://dev.saltbox.pro/saltbox/saltbox-compose/-/tree/dev/), configure and run                         |
-| `install_saltbox_migrations.sh`   | Download **Salt.Box Migration Compose**, configure and run              |
-| `sb-images-export.sh`             | Dump current images to disk, e.g. for an offline host                |
-| `sb-images-import.sh`             | Load images dumped by `sb-images-export.sh`                          |
-| `image_tags.py`                   | Check latest release tags for used images                            |
-| `git_pull_dev_repos.py`           | _Dev only_ – update source Git repositories                          |
-
-`sb-compose.sh` also passes additional `dotenv files` to Docker Compose.
-
-#### Priority of `dotenv` files
-```
-base.env → _UPDATE_AND_RUN_EXTRA_ENV_FILES → override.env
-```
-
-Some scripts depend on another. They are supposed to be **executable** – if a
-system drops the flag, re-add it:
-
-```bash
-chmod a+x ./bin/*
-```
-
 ### The startup script `update_and_run.sh`
 
 Easy way to startup the system is to execute:
 
 ```bash
-sudo ./bin/update_and_run.sh
+# sudo may require
+./bin/update_and_run.sh
 ```
 
 The script:
@@ -254,7 +161,9 @@ The script:
 - Prints default administrator credentials
 - Runs the Salt.Box instance with `./bin/sb-compose.sh`
 
-Use `override.env` to redefine `base.env` default values.
+Use `override.env` to redefine `base.env` default values. If addon modules are
+connected with `_UPDATE_AND_RUN_EXTRA_ENV_FILES`, respective repositories must
+me also cloned matching speicfied paths.
 
 > **NOTE:**
 > `override.env` has *HEIGHES* priority ans overrides all other values.
@@ -275,6 +184,10 @@ confusing errors
 
 ## Configuration
 
+### Precedence of dotenv files
+
+`base.env` → overrides from `_UPDATE_AND_RUN_EXTRA_ENV_FILES` → `override.env`
+
 ### HTTPS
 
 System requires HTTP connections to be **SSL** terminated. System creates a private
@@ -283,11 +196,12 @@ CA and a certificate for the web server on first run.
 The authority certificate can be obtained with the command:
 
 ```bash
-sudo ./bin/get_ca.sh
+# sudo may require
+./bin/get_ca.sh
 ```
 
 > **ATTENTION!**
-> 
+>
 > System have to had been started at least once
 
 It will be saved to `ca.crt` file in the current directory and may be installed
@@ -308,7 +222,8 @@ DNS name. Both variables may be in form of comma separate list.
 *Out-of-the-box* certificate can be also replaced with a relative one:
 
 ```bash
-sudo ./bin/sb-compose.sh cp CUSTOM_CERT proxy:/etc/nginx/ssl/proxy.crt
+# sudo may require
+./bin/sb-compose.sh cp CUSTOM_CERT proxy:/etc/nginx/ssl/proxy.crt
 sudo ./bin/sb-compose.sh cp CUSTOM_CERT_KEY proxy:/etc/nginx/ssl/proxy.key
 ```
 
@@ -410,7 +325,8 @@ To run test suites enable `compose-autotests.yaml` in the local `override.env`
 file. Then execute:
 
 ```bash
-sudo ./bin/sb-compose.sh up autotests
+# sudo may require
+./bin/sb-compose.sh up autotests
 ```
 
 Autotests depends on direct access to **API Keycloak**, so existing `realm` should be recreated. As alternative the `Direct access grants` checkbox may be checked at
@@ -419,7 +335,8 @@ Keycloak client settings.
 To prevent pulling a new image:
 
 ```bash
-sudo ./bin/sb-compose.sh up autotests --pull=never
+# sudo may require
+./bin/sb-compose.sh up autotests --pull=never
 ```
 
 ### Dev mode
@@ -445,7 +362,8 @@ may change the data
 To build clean images use command with enabled `COMPOSE_FILE` overrides:
 
 ```bash
-sudo ./bin/sb-compose.sh build --no-cache
+# sudo may require
+./bin/sb-compose.sh build --no-cache
 ```
 
 - `--no-cache` guarantees build with latest dependencies
@@ -458,7 +376,8 @@ a certificate validation (option like `--insecure`) or use a CA certificate.
 The last may be obtained with command:
 
 ```bash
-sudo ./bin/get_ca.sh
+# sudo may require
+./bin/get_ca.sh
 ```
 
 > **ATTENTION!**
@@ -479,7 +398,8 @@ Some operations may lead to lost minions. It that keys try the
 following command, which should reconnect minions:
 
 ```bash
-sudo ./bin/sb-compose.sh restart salt-master
+# sudo may require
+./bin/sb-compose.sh restart salt-master
 ```
 
 > **NOTE:**
@@ -508,7 +428,8 @@ To fix startup problems on developement environment stop containters with `^C`
 and make them down:
 
 ```bash
-sudo ./bin/sb-compose.sh -f compose.yaml -f compose-dev-override.yaml down --volumes
+# sudo may require
+./bin/sb-compose.sh -f compose.yaml -f compose-dev-override.yaml down --volumes
 ```
 
 > **ATTENTION!**
@@ -520,8 +441,9 @@ to data lost. Be sure to not lost production data
 Run following commands:
 
 ```bash
-sudo ./bin/sb-compose.sh down
-sudo ./bin/sb-compose.sh down keycloak-db --volume
+# sudo may require
+./bin/sb-compose.sh down
+./bin/sb-compose.sh down keycloak-db --volume
 ```
 
 On the next start the realm will be recreated.
@@ -532,7 +454,8 @@ While changing code and configs new layers and other objects are created. To
 free resources run time to time the following command:
 
 ```bash
-sudo docker system prune --force
+# sudo may require
+docker system prune --force
 ```
 
 - Usually it is safe and deletes only stale data.
@@ -551,7 +474,7 @@ requirements](#requirements) are installed. <u>The way to bring images on it is<
    > **NOTE:**
    > Enabled [Compose dev overrides](#dev-mode) with `service[].build` sections may require additional base images to be transferred manually
 
-2. Export images with `sudo ./bin/sb-images-export.sh` command. The **Salt.Box** install may be stopped but
+2. Export images with `[sudo] ./bin/sb-images-export.sh` command. The **Salt.Box** install may be stopped but
    not downed. Images will be saved into `./images/` directory by default
 
 3. Put local git repositories of required SLS repositories a.k.a [**Configuration Boxes**](https://dev.saltbox.pro/configuration.boxes)
@@ -561,9 +484,10 @@ requirements](#requirements) are installed. <u>The way to bring images on it is<
 4. Add the new repositories on «Configuration Templates» page with URLs in form of
    `file:///mnt/config-boxes/REPO_NAME` where `REPO_NAME` corresponds to local repository name
 
-5. On «Configuration Templates» page of the offline instance switch every added repository on and
-   click «Connect» button in actions next to the switch. After click «Sync». Check new files are obtained with `sudo
-   ./bin/sb-exec.sh salt-run fileserver.file_list`
+5. On «Configuration Templates» page of the offline instance switch every added
+   repository on and click «Connect» button in actions next to the switch.
+After click «Sync». Check new files are obtained with `[sudo] ./bin/sb-exec.sh
+salt-run fileserver.file_list`
 
    - The local Salt Master must be enabled
 
@@ -571,10 +495,11 @@ requirements](#requirements) are installed. <u>The way to bring images on it is<
    Change current working directory to the new `saltbox-compose` one. If some modules are connected
    with `_UPDATE_AND_RUN_EXTRA_*` env variables, __corresponding directories must be also copied__
 
-7. Import images with `sudo ./bin/sb-images-import.sh` command
+7. Import images with `[sudo] ./bin/sb-images-import.sh` command
 
-8. Run the [startup script](#the-startup-script-update_and_runsh): `sudo ./bin/update_and_run.sh --no-pull`.
-   `--no-pull` flag makes Compose uses local images
+8. Run the [startup script](#the-startup-script-update_and_runsh):
+   `[sudo] ./bin/update_and_run.sh --no-pull`. `--no-pull` flag makes Compose uses
+local images
 
 9. Add local repositories on «Configuration Templates» page again as in an earlier step
 

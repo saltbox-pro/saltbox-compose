@@ -13,6 +13,13 @@ if possible and purge browser redirects.
 
 ## [x.x.x] - YYYY-MM-DD
 
+### Removed
+
+- `install_saltbox.py` now is a separate
+[`install-saltbox`](https://dev.saltbox.pro/saltbox/install-saltbox/) project.
+
+## [0.4.0] - 2026-10-21
+
 ### Added
 
 - `MONGO_HOSTS` variable: comma-separated list of MongoDB replica set members

@@ -1,13 +1,15 @@
-flowchart TB
-    subgraph install_saltbox.py
+# Salt.Box Compose helper scripts hierarchy
+
+```mermaid
+flowchart LR
+    subgraph install-saltbox
     direction TB
-        subgraph row1[" "]
-        direction LR
-            check[Check requirements] --> pull_repos["Pull Compose(s)"] --> conf[Configure `override.env`]
-        end
-        row1 --> update_and_run.sh
+    check[Check requirements]
+        --> pull_repos["Pull Compose(s)"]
+        --> conf[Configure `override.env`]
+        --> update_and_run.sh
         subgraph update_and_run.sh
-        direction LR
+            direction TB
             subgraph validate_dotenv.py
                dotenv_tool_validate[dotenv_tool.sh] --> validate_dotenv[Validate `override.env`]
             end
@@ -26,3 +28,4 @@ flowchart TB
         end
         update_and_run.sh --> install_saltbox_migrations.py
     end
+```
