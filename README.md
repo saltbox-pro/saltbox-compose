@@ -224,7 +224,7 @@ DNS name. Both variables may be in form of comma separate list.
 ```bash
 # sudo may require
 ./bin/sb-compose.sh cp CUSTOM_CERT proxy:/etc/nginx/ssl/proxy.crt
-sudo ./bin/sb-compose.sh cp CUSTOM_CERT_KEY proxy:/etc/nginx/ssl/proxy.key
+./bin/sb-compose.sh cp CUSTOM_CERT_KEY proxy:/etc/nginx/ssl/proxy.key
 ```
 
 > **ATTENTION!**
