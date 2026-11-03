@@ -529,6 +529,8 @@ services:
       - '--log-level=${OPA_LOG_LEVEL:-info}'
       - '--set=decision_logs.console=false'
       - '/policies/'
+    volumes:
+      - './opa/policies/:/policies/:ro'
     ports:
       - '8181:8181'
 

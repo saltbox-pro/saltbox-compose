@@ -19,12 +19,12 @@ Build Redis image:
     CONTEXT_PATH: 'redis/'
 
 
-Build OPA image:
-  extends: .build-image
+Mirror OPA image:
+  extends: .mirror-image
   stage: build
   variables:
+    SOURCE_IMAGE: 'openpolicyagent/opa:latest-istio-static'
     REGISTRY_ADDITIONAL_PATH: '/opa'
-    CONTEXT_PATH: 'opa/'
 
 
 Build SSHFS image:
