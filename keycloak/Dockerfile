@@ -1,6 +1,6 @@
 ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
 
-#hadolint global ignore=DL3006,DL3015
+#hadolint global ignore=DL3006,DL3015,DL3025
 FROM "$BASE_IMG" AS base
 
 RUN \
@@ -60,8 +60,8 @@ ENV KEYCLOAK_BASE_URL=/
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/startup.sh"]
-HEALTHCHECK --start-period=30s CMD [ "wget", \
-    "--no-verbose", \
-    "--tries=1", \
-    "--spider", \
-    "http://localhost:9000${KEYCLOAK_BASE_URL}/health/ready" ]
+HEALTHCHECK --start-period=30s CMD wget \
+  --no-verbose \
+  --tries=1 \
+  --spider \
+  "http://localhost:9000${KEYCLOAK_BASE_URL}/health/ready"
