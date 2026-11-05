@@ -1,5 +1,8 @@
-FROM registry.altlinux.org/alt/alt:p11 AS base
-LABEL version='0.2'
+ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
+
+#hadolint global ignore=DL3006,DL3015
+FROM "$BASE_IMG" AS base
+LABEL version="0.3"
 EXPOSE 80
 
 RUN \
@@ -9,7 +12,8 @@ RUN \
 set -e
 mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
-apt-get install -y gettext nginx
+apt-get install -y gettext=0.21-alt2 \
+                   nginx=1.30.6-alt1
 EOF
 
 COPY nginx.conf /etc/nginx/

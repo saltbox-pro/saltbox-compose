@@ -1,4 +1,6 @@
 ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
+
+#hadolint global ignore=DL3006,DL3015
 FROM "$BASE_IMG" AS base
 
 RUN \
@@ -17,7 +19,6 @@ EOF
 
 FROM base AS builder
 
-LABEL version="2.0"
 #NOTE: Increase to trigger build. Drop to 0 on version change.
 LABEL release="0"
 
@@ -59,8 +60,8 @@ ENV KEYCLOAK_BASE_URL=/
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/startup.sh"]
-HEALTHCHECK --start-period=30s CMD wget \
-  --no-verbose \
-  --tries=1 \
-  --spider \
-  "http://localhost:9000${KEYCLOAK_BASE_URL}/health/ready"
+HEALTHCHECK --start-period=30s CMD [ "wget", \
+    "--no-verbose", \
+    "--tries=1", \
+    "--spider", \
+    "http://localhost:9000${KEYCLOAK_BASE_URL}/health/ready" ]

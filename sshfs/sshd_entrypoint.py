@@ -7,7 +7,6 @@ import pwd
 import stat
 import subprocess
 import sys
-
 from pathlib import Path
 from typing import Any
 
@@ -62,9 +61,11 @@ class User:
         self.uid = data['uid']
         if not UID_MIN <= self.uid <= UID_MAX:
             raise RuntimeError(f'uid={self.uid} but expected to be in [{UID_MIN}, {UID_MAX}]')
+
         self.gid = data['gid']
         if not GID_MIN <= self.gid <= GID_MAX:
             raise RuntimeError(f'gid={self.gid} but expected to be in [{GID_MIN}, {GID_MAX}]')
+
         self.home_dir = data['home_dir']
         self.password = self._get_password(data)
         self.shell = data.get('shell') or DEFAULT_SHELL
@@ -73,8 +74,8 @@ class User:
     def _get_password(data: dict[str, Any]) -> Any:
         result = data.get('password')
         if result is None:
-            warn(f'No password for {data.get('name')} specified, trying to get a password_file')
-            with open(data['password_file'], 'r') as file:
+            warn(f"No password for {data.get('name')} specified, trying to get a password_file")
+            with open(data['password_file']) as file:
                 result = file.read().strip()
         return result
 
@@ -82,12 +83,13 @@ class User:
         try:
             group = grp.getgrgid(self.gid)
         except KeyError:
-            ...
+            warn(f"Unknown group id: {self.gid}. Skipping group deletion")
         else:
             warn(f'Deleting existing group name={group.gr_name}, gid={group.gr_gid}')
-            subprocess.run(['groupdel', group.gr_name])
-        subprocess.run(['groupadd', '--gid', str(self.gid), self.name], check=True)
-        subprocess.run([
+            _ = subprocess.run(['groupdel', group.gr_name])
+
+        _ = subprocess.run(['groupadd', '--gid', str(self.gid), self.name], check=True)
+        _ = subprocess.run([
             'useradd',
             '--shell', self.shell,
             '--groups', 'users',
@@ -97,7 +99,7 @@ class User:
             '--create-home',
             self.name
         ], check=True)
-        subprocess.run(
+        _ = subprocess.run(
             ['passwd', '--stdin', self.name],
             input=self.password.encode(),
             check=True)
@@ -110,11 +112,11 @@ class User:
 def del_users() -> None:
     old_users = [user for user in pwd.getpwall() if UID_MIN <= user.pw_uid <= UID_MAX]
     for user in old_users:
-        subprocess.run(['userdel', user.pw_name], check=True)
+        _ = subprocess.run(['userdel', user.pw_name], check=True)
 
 
-def create_users(users_file_path) -> None:
-    with open(users_file_path, 'r') as file:
+def create_users(users_file_path: Path) -> None:
+    with open(users_file_path) as file:
         users_data = json.load(file)
 
     for user_dict in users_data:
@@ -129,13 +131,22 @@ def run_sshd(port: Any) -> None:
     for key_type in ('rsa', 'ecdsa', 'ed25519'):
         key_path = SSH_HOST_KEY_DIR / f'ssh_host_{key_type}_key'
         if not key_path.exists():
-            subprocess.run(
-                ['ssh-keygen', '-q', '-t', key_type, '-N', '', '-f', str(key_path)],
+            _ = subprocess.run(
+                [
+                    'ssh-keygen',
+                    '-q',
+                    '-t',
+                    key_type,
+                    '-N',
+                    '',
+                    '-f',
+                    str(key_path)
+                 ],
                 check=True,
             )
 
     # Test run
-    subprocess.run(['/usr/sbin/sshd', '-t'], check=True)
+    _ = subprocess.run(['/usr/sbin/sshd', '-t'], check=True)
 
     # Replace current script with sshd
     os.execv(SSHD_EXEC, [SSHD_EXEC, '-D', '-e', '-p', str(port)])
@@ -143,12 +154,23 @@ def run_sshd(port: Any) -> None:
 
 def make_authorized_keys_command(url_template: str) -> None:
     with AUTHORIZED_KEYS_COMMAND_PATH.open('w') as file:
-        file.write(AUTHORIZED_KEYS_COMMAND_TEMPLATE.format(url_template=url_template))
+        _ = file.write(AUTHORIZED_KEYS_COMMAND_TEMPLATE.format(url_template=url_template))
     AUTHORIZED_KEYS_COMMAND_PATH.chmod(AUTHORIZED_KEYS_COMMAND_MODE)
+
+
+def ensure_users_path_is_exist() -> Path:
+    users_file_path_env: str = os.environ['USERS_FILE']
+    path = Path(users_file_path_env)
+    if path.is_file():
+        return path
+    else:
+        warn(f"Users definition on JSON file: {users_file_path_env!r} does not exist!")
+        exit(1)
 
 
 if __name__ == '__main__':
     del_users()
-    create_users(os.environ['USERS_FILE'])
+    users_file_path: Path = ensure_users_path_is_exist()
+    create_users(users_file_path)
     make_authorized_keys_command(os.environ['AUTHORIZED_KEYS_URL'])
     run_sshd(os.environ['PORT'])
