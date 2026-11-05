@@ -110,7 +110,8 @@ services:
       KC_HOSTNAME_STRICT: false
       # TODO (a.karmanov): Dynamic hostname (currently gives sporadic 401)
       # KC_PROXY_HEADERS: xforwarded
-      KEYCLOAK_ADMIN: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE: false
       KEYCLOAK_BASE_URL: '${KEYCLOAK_BASE_URL}'
     secrets:
       - keycloak_admin_password

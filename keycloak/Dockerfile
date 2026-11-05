@@ -31,7 +31,7 @@ ARG KC_HTTP_RELATIVE_PATH=/auth/keycloak
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
 ENV KC_HTTP_RELATIVE_PATH=$KC_HTTP_RELATIVE_PATH
-
+ENV KC_FEATURES_DISABLED=identity-brokering-api,twitter-broker
 RUN kc.sh build --verbose
 
 
