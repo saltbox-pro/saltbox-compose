@@ -16,13 +16,14 @@
 
 <h4>Salt.Box is a web UI for <a href="https://saltproject.io/" target="_blank">SaltStack</a> configuration management</h4>
 
-<a href="https://dev.saltbox.pro/saltbox/saltbox-compose/-/badges/release.svg"><img src="https://dev.saltbox.pro/saltbox/saltbox-compose/-/badges/release.svg" alt="Last Release"></a>
+<a href="https://dev.saltbox.pro/saltbox/saltbox-compose/-/releases"><img src="https://dev.saltbox.pro/saltbox/saltbox-compose/-/badges/release.svg" alt="Last Release"></a>
 <a href="./LICENSE.txt"><img src="./docs/license.svg" alt="License"></a>
 <a href="https://img.shields.io/badge/Docker%20Engine-%3E%3D%2025.0-2496ED?logo=docker&logoColor=white"><img src="./docs/docker_engine_req.svg"></a>
 <br>
 <a href="https://img.shields.io/badge/Docker%20Compose-%3E%3D%202.20.2-2496ED?logo=docker&logoColor=white"><img src="./docs/docker_compose_req.svg" alt="Docker Compose"></a>
 <a href="https://img.shields.io/badge/Python-%3E%3D%203.7.3-3776AB?logo=python&logoColor=white"><img src="./docs/python_req.svg" alt="Python"></a>
-
+<br>
+<a href="https://dev.saltbox.pro/saltbox/saltbox-compose/-/pipelines?ref=dev"><img src="https://dev.saltbox.pro/saltbox/saltbox-compose/badges/dev/pipeline.svg" alt="Pipeline Status"></a>
 <h3>The official Salt.Box documentation</h3>
 
 <a href="https://saltbox.pro/docs/intro/"><img src="./docs/en.svg"></a>
