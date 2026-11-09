@@ -1,4 +1,7 @@
 ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
+ARG AUTHENTICATOR_IMG="registry.saltbox.pro/saltbox/saltbox-keycloak-authenticator:dev"
+
+FROM "$AUTHENTICATOR_IMG" AS authenticator
 
 #hadolint global ignore=DL3006,DL3015,DL3025
 FROM "$BASE_IMG" AS base
@@ -26,6 +29,8 @@ RUN \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     apt-install keycloak
+
+COPY --from=authenticator /saltbox-keycloak-authenticator.jar /usr/lib/keycloak/providers/
 
 ARG KC_HTTP_RELATIVE_PATH=/auth/keycloak
 ENV KC_DB=postgres
