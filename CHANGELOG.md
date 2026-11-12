@@ -20,8 +20,9 @@ if possible and purge browser redirects.
 
 ### Removed
 
-- `install_saltbox.py` now is a separate
+- `install_saltbox.py`, `install_saltbox_migrations.py` now is a separate
 [`install-saltbox`](https://dev.saltbox.pro/saltbox/install-saltbox/) project.
+- `sb-exec.sh` helper script removed.
 
 ## [0.4.0] - 2026-10-21
 

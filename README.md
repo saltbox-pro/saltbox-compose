@@ -118,12 +118,10 @@ supposed to be run from the repo root by relative path, e.g. `./bin/sb-compose.s
 |-----------------------------------|---------------------------------------------------------------------|
 | `sb-compose.sh`                   | **Recommended way** to manage an instance. Passes aditional dotenv files to `docker compose` |
 | `update_and_run.sh`               | Main startup script                                                  |
-| `sb-exec.sh`                      | Shortcuts for common commands                                        |
 | `dotenv_tool.sh`                  | Read values from `env-files`, e.g. `./bin/dotenv_tool.sh list`         |
 | `validate_dotenv.py`              | Check `override.env` for major issues                                |
 | `make_secrets.py`                 | Create required system passwords                                     |
 | `get_ca.sh`                       | Obtain the local CA `ca.crt` (optionally inject into Firefox)        |
-| `install_saltbox_migrations.sh`   | Download **Salt.Box Migration Compose**, configure and run              |
 | `sb-images-export.sh`             | Dump current images to disk, e.g. for an offline host                |
 | `sb-images-import.sh`             | Load images dumped by `sb-images-export.sh`                          |
 | `image_tags.py`                   | Check latest release tags for used images                            |
@@ -487,8 +485,8 @@ requirements](#requirements) are installed. <u>The way to bring images on it is<
 
 5. On «Configuration Templates» page of the offline instance switch every added
    repository on and click «Connect» button in actions next to the switch.
-After click «Sync». Check new files are obtained with `[sudo] ./bin/sb-exec.sh
-salt-run fileserver.file_list`
+After click «Sync». Check new files are obtained with `[sudo] ./bin/sb-compose.sh exec
+salt-master salt-run fileserver.file_list`
 
    - The local Salt Master must be enabled
 
