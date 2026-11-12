@@ -1,6 +1,6 @@
 ARG BASE_IMAGE="rabbitmq:3-management"
 
-#hadolint global ignore=DL3006,DL3015
+#hadolint global ignore=DL3015,DL3008,DL3006
 FROM "${BASE_IMAGE}"
 
 RUN \
@@ -10,7 +10,7 @@ RUN \
 set -e
 mkdir -p /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
-apt-get install -y gettext-base=0.21-14ubuntu2
+apt-get install -y gettext-base
 EOF
 
 COPY --chmod=755 entrypoint.sh healthcheck.sh /usr/local/bin/

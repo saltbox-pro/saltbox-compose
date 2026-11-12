@@ -1,6 +1,6 @@
 ARG BASE_IMG="registry.altlinux.org/alt/alt:p11"
 
-#hadolint global ignore=DL3006,DL3015
+#hadolint global ignore=DL3015,DL3008,DL3006
 FROM "$BASE_IMG"
 LABEL version="0.4"
 #NOTE: Increase to trigger build. Drop to 0 on version change.
@@ -13,10 +13,7 @@ RUN \
 set -e
 mkdir --parents /var/cache/apt/archives/partial/ /var/lib/apt/lists/partial/
 apt-get update
-apt-get install --yes glibc-pthread=2.38.0.223.f053ff-alt1.p11.1 \
-                      gosu=1.17-alt1 \
-                      mongo7.0-server-mongod=7.0.45-alt1 \
-                      wget=1.25.0-alt6
+apt-get install --yes glibc-pthread gosu mongo7.0-server-mongod wget
 EOF
 
 ARG MONGOSH_VERSION='2.5.8'

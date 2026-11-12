@@ -3,7 +3,7 @@ ARG AUTHENTICATOR_IMG="registry.saltbox.pro/saltbox/saltbox-keycloak-authenticat
 
 FROM "$AUTHENTICATOR_IMG" AS authenticator
 
-#hadolint global ignore=DL3006,DL3015,DL3025
+#hadolint global ignore=DL3025,DL3015,DL3006
 FROM "$BASE_IMG" AS base
 
 RUN \
