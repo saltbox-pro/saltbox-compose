@@ -451,6 +451,14 @@ services:
     ports: []
     depends_on: *core-taskiq-depends
 
+  saltbox-core-taskiq-membership-worker:
+    <<: *core
+    command: 'taskiq-membership-worker'
+    ports: []
+    depends_on: *core-taskiq-depends
+    deploy:
+      replicas: '${CORE_TASKIQ_MEMBERSHIP_WORKERS_COUNT:-1}'
+
   saltbox-core-taskiq-scheduler:
     <<: *core
     command: 'taskiq-scheduler'

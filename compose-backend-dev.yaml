@@ -75,6 +75,9 @@ services:
   saltbox-core-taskiq-notify-worker:
     <<: *core
 
+  saltbox-core-taskiq-membership-worker:
+    <<: *core
+
   saltbox-core-taskiq-scheduler:
     <<: *core
 
