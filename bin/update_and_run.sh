@@ -105,7 +105,7 @@ function git_pull_required() {
   fi
 
   if ! branch=$(git branch --show-current 2> /dev/null); then
-    warn "Error on running git branch subcommand, skipping 'git pull'"
+    warn "Error on running git branch subcommand, skipping \`git pull\`"
     echo 0
     return
   fi
@@ -136,12 +136,25 @@ function retry() {
   done
 }
 
+function drop_volumes() {
+  # Fails when unable to delete an attached volumes rather than
+  # `docker compose down --volumes`
+  local vols
+  vols=$(as_root "$compose_cmd" volumes --format '{{.Name}}')
+  if [ -z "$vols" ]
+  then echo 'No volumes to delete' && return
+  else echo 'Volumes cleanup!'
+  fi
+  for v in $vols; do
+    echo_run docker volume rm --force "$v"
+  done
+}
+
 up_args=('--remove-orphans')
 pull_args=('--ignore-buildable')
-down_args=()
-down_drop_args=('--volumes' '--remove-orphans')
+down_args=('--remove-orphans')
 detach_flag=0
-drop_data_flag=0
+drop_data_state=0
 force_flag=0
 git_pull_flag=1
 image_pull_flag=1
@@ -153,7 +166,7 @@ for i in "$@"; do
   # shellcheck disable=SC2059
   case $i in
     -d|--detach) detach_flag=1 ;;
-    --drop-data) drop_data_flag=1 ;;
+    --drop-data) drop_data_state=1 ;;
     -f|--force) force_flag=1 ;;
     -h|--help) printf "$usage_str" && exit 0 ;;
     -l|--login) login_flag=1 ;;
@@ -171,7 +184,7 @@ done
 
 # Update sudo cached credentials
 if sudo_predic; then
-  msg="Failed to execute by root. Run by root or configure sudo for the user."
+  msg='Failed to execute by root. Run by root or configure sudo for the user.'
   sudo --validate || err "$msg"
 fi
 
@@ -237,7 +250,7 @@ if [ $login_flag = 1 ]; then
   registry=$(get_env_var 'IMAGE_REGISTRY' | cut --delimiter '/' --fields 1)
 
   if [ -z "$registry" ]; then
-    err "Failed to get registry from dotenv files IMAGE_REGISTRY variable"
+    err 'Failed to get registry from dotenv files IMAGE_REGISTRY variable'
   fi
   echo_run as_root docker login "$registry"
 fi
@@ -251,21 +264,25 @@ echo_run as_root "$compose_cmd" build
 
 if [ $last_stage = 'build' ]; then exit 0; fi
 
-if [ $drop_data_flag = 1 ]; then
+if [ $drop_data_state = 1 ]; then
   if [ $force_flag = 1 ]; then
       REPLY='y'
   else
-    read -p "Delete volumes? IT MEANS SYSTEM DATA LOSS (y/n): " -n 1 -r
+    read -p 'Delete volumes? IT MEANS SYSTEM DATA LOSS (y/n): ' -n 1 -r
     echo
   fi
   if [[ $REPLY =~ ^[Yy]$ ]]; then
-      down_args+=("${down_drop_args[@]}")
+    drop_data_state=2
   else
-      warn "Skipping data deletion"
+      warn 'Skipping data deletion'
   fi
 fi
 
 echo_run as_root "$compose_cmd" down "${down_args[@]}"
+
+if [ $drop_data_state = 2 ]; then
+  drop_volumes
+fi
 
 if [ $detach_flag = 0 ]; then success_msg; fi
 

@@ -17,6 +17,7 @@ if possible and purge browser redirects.
 
 - OPA `core.extra_data.items.import_items` policy: importing with
   `on_unknown_minion=create` also requires the minions `create` permission.
+- `update_and_run.sh --drop-data` fails on undeleted attached volume.
 
 ### Removed
 
