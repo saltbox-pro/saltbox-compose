@@ -1,5 +1,6 @@
 #! /bin/bash
 set -eu -o pipefail
+trap '[ $? -ne 0 ] && printf "__\nError in \`$0\`\n" >&2' EXIT
 
 declare -r base_env_file='base.env'
 declare -r local_env_file='override.env'

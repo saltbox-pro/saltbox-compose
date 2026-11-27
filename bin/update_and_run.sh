@@ -139,14 +139,27 @@ function retry() {
 function drop_volumes() {
   # Fails when unable to delete an attached volumes rather than
   # `docker compose down --volumes`
+  #
+  # MUST be involved AFTER setting up the project
+  #
   local vols
-  vols=$(as_root "$compose_cmd" volumes --format '{{.Name}}')
+  local proj
+
+  # Compose volumes subcommand exists since v2.38.0
+  #vols=$(as_root "$compose_cmd" volumes --format '{{.Name}}')
+  proj=$(as_root "$compose_cmd" config 2>/dev/null | sed -n 's/^name: //p' )
+  vols=$(
+    as_root docker volume ls \
+      --filter "label=com.docker.compose.project=${proj}" \
+      --format='{{ .Name }}'
+  )
+
   if [ -z "$vols" ]
   then echo 'No volumes to delete' && return
   else echo 'Volumes cleanup!'
   fi
   for v in $vols; do
-    echo_run docker volume rm --force "$v"
+    echo_run as_root docker volume rm --force "$v"
   done
 }
 
